@@ -1345,6 +1345,7 @@ def main():
     burst_start = 0.0
     last_enemy_spotted = False
     last_combat_time = 0.0
+    combat_strafe_start = 0.0
     last_combat_snap = 0.0
     last_target_dx = 0.0
     last_target_dy = 0.0
@@ -1736,36 +1737,43 @@ def main():
                     pitch_drift = int(np.clip(pitch_drift + step_dy, -1200, 1200))
                     last_combat_time = now
 
-                    # 3. Hybrid Neural Evasion & Combat Stance (p_keys with Epsilon-Exploration)
+                    # 3. Guided Tactical Evasion & Counter-Strafing Stance
                     if not in_spawn_grace:
-                        if random.random() < 0.20:
-                            # 20% exploration: try sudden combat strafe/crouch
-                            rand_evasion = random.choice(["a", "d", "ctrl", "none"])
-                            if rand_evasion != "none":
-                                desired_keys.add(rand_evasion)
-                        else:
-                            # Policy Brain tactical decisions
-                            if p_keys[2] > 0.35: desired_keys.add("a")
-                            elif p_keys[3] > 0.35: desired_keys.add("d")
-                            if p_keys[4] > 0.75: desired_keys.add("space")
-                            if p_keys[5] > 0.50: desired_keys.add("ctrl")
-                            if p_keys[0] > 0.40 and dist_norm > 0.30: desired_keys.add("w")
+                        if not last_enemy_spotted:
+                            combat_strafe_start = now
 
-                        # If no lateral strafe requested, counter-strafe to stop moving for first-bullet laser accuracy
-                        if "a" not in desired_keys and "d" not in desired_keys and "w" not in desired_keys:
-                            if current_keys:
-                                execute_counter_strafe(current_keys)
+                        # НАВЫК 1: Остановка перед выстрелом (Counter-Strafing)
+                        # Запрещаем бежать вперед (W) во время прицеливания и стрельбы,
+                        # чтобы разброс первого выстрела был 0%
+                        desired_keys.discard("w")
+
+                        # НАВЫК 2: Приседание при стрельбе (Duck-Spray)
+                        # Если бот уже стреляет (burst_start > 0) или цель на дистанции,
+                        # садимся (Ctrl) для снижения отдачи и разброса на 50%
+                        should_crouch = (can_fire and burst_start > 0.0) or (primary["dist"] > 240) or (p_keys[5] > 0.35)
+                        if should_crouch:
+                            desired_keys.add("ctrl")
+                            desired_keys.discard("a")
+                            desired_keys.discard("d")
+                        else:
+                            # НАВЫК 3: Ритмичный боковой стрейф (A-D-A-D Evasion)
+                            # Пока стоим на ногах — ритмично двигаемся влево-вправо каждые 320мс,
+                            # сбивая прицел снайперам и ботам
+                            strafe_phase = int((now - combat_strafe_start) / 0.32) % 2
+                            if strafe_phase == 0:
+                                desired_keys.add("a")
+                                desired_keys.discard("d")
+                            else:
+                                desired_keys.add("d")
+                                desired_keys.discard("a")
                     else:
                         desired_keys.add("w")
 
-                    # Neural Stance Policy: Duck/Crouch spray if combat head signals or close-range
-                    if (t_combat[1] > 0.5 or primary["dist"] < 150) and (not in_spawn_grace):
-                        desired_keys.add("ctrl")
-
-                    # 4. Neural-Assisted Precision Shooting Condition
+                    # 4. Neural-Assisted Precision Shooting & Recoil Compensation
                     if can_fire:
-                        recoil_pull = max(3, min(8, int(round(t_aim[1])))) if t_aim[1] > 0.5 else 3
-                        action_status = f"COMBAT: FIRING (dx={dx:+.0f}, dy={dy:+.0f}, rec={recoil_pull})"
+                        recoil_pull = max(4, min(10, int(round(t_aim[1])) + 4)) if t_aim[1] > 0.5 else 5
+                        stance_label = "DUCK" if "ctrl" in desired_keys else "ADAD"
+                        action_status = f"COMBAT: FIRING (dx={dx:+.0f}, dy={dy:+.0f}, rec={recoil_pull}, {stance_label})"
 
                         if burst_start == 0.0:
                             burst_start = now
@@ -1774,10 +1782,10 @@ def main():
                             play_beep(1600, 25)
 
                         burst_time = now - burst_start
-                        if burst_time < 0.28:  # 3-4 lethal rifle rounds
+                        if burst_time < 0.30:  # 3-4 lethal rifle rounds
                             send_mouse_move(0, recoil_pull)  # Neural recoil pull-down
                             pitch_drift = int(np.clip(pitch_drift + recoil_pull, -1200, 1200))
-                        elif burst_time < 0.38:
+                        elif burst_time < 0.40:
                             if firing:
                                 send_mouse_up()
                                 firing = False
