@@ -1,0 +1,35 @@
+# Counter-Strike 1.6 Game files and binaries
+CS 1.6 GoldClient/
+cstrike/
+*.dll
+*.exe
+*.asi
+*.wad
+*.bsp
+*.mdl
+*.wav
+*.mp3
+extract_demo
+
+# Large Datasets & Demos
+dataset/
+*.dem
+*.jsonl
+backup_poisoned_*/
+
+# Debug & Temporary
+debug_visuals/
+debug_*.png
+models/test_annotated.png
+*.log
+*.tmp
+*.tmp.npz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.env
+venv/
+.venv/

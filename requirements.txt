@@ -1,0 +1,8 @@
+torch
+onnxruntime
+opencv-python
+mss
+pynput
+sounddevice
+numpy
+Pillow
