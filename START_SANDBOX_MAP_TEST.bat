@@ -4,13 +4,18 @@ cls
 echo ===============================================================
 echo     CS 1.6 - AI TRAINING SANDBOX MAP TEST
 echo     Map: aim_ai_sandbox (Green Floor / Red Walls)
+echo     Dummies: 11 Frozen Crash-Test Dummies with Bullseye Head
 echo ===============================================================
 echo.
-echo   Loading map with 11 standing dummy targets (bot_stop 1)...
-echo   Walk along green corridors, inspect red barriers and target dots!
+echo   Closing any existing CS 1.6 processes...
+taskkill /F /IM hl.exe >nul 2>&1
+taskkill /F /IM cstrike.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+echo.
+echo   Loading aim_ai_sandbox...
 echo   Weapon racks: AK47, M4A1, AWP, MP5, Shotgun, Armor, Grenades (HE, Flash, Smoke)
 echo.
 cd /d "D:\CS 1.6 GoldClient"
-start hl.exe -game cstrike -nomaster -novid -steam -noforcemparms +maxplayers 16 +map aim_ai_sandbox +exec sandbox.cfg
+start hl.exe -game cstrike -nomaster -novid -steam -noforcemparms +maxplayers 16 +map aim_ai_sandbox +bot_join_team T +bot_stop 1 +bot_freeze 1 +bot_zombie 1 +bot_difficulty 0 +bot_quota 11 +bot_quota_mode fill +cl_minmodels 1 +exec maps/aim_ai_sandbox.cfg
 echo Launched! Check your CS 1.6 window.
 pause
