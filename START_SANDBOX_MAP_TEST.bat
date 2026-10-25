@@ -10,6 +10,6 @@ echo   Loading map with 11 standing dummy targets (bot_stop 1)...
 echo   Walk along green corridors, inspect red barriers and target dots!
 echo.
 cd /d "D:\CS 1.6 GoldClient"
-start hl.exe -game cstrike -nomaster -novid +map aim_ai_sandbox +bot_quota 11 +bot_stop 1 +bot_difficulty 0 +mp_freezetime 0
+start hl.exe -game cstrike -nomaster -novid +map aim_ai_sandbox +bot_join_team T +bot_quota 11 +bot_stop 1 +bot_difficulty 0 +cl_minmodels 1 +mp_freezetime 0
 echo Launched! Check your CS 1.6 window.
 pause

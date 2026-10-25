@@ -7,6 +7,8 @@ cstrike/
 *.wad
 *.bsp
 *.mdl
+!cstrike_downloads/**/*.bsp
+!cstrike_downloads/**/*.mdl
 *.wav
 *.mp3
 extract_demo
@@ -20,7 +22,8 @@ backup_poisoned_*/
 # Debug & Temporary
 debug_visuals/
 debug_*.png
-models/test_annotated.png
+*.png
+!assets/*.png
 *.log
 *.tmp
 *.tmp.npz
