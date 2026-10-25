@@ -249,35 +249,36 @@ class CS16MemoryReader:
             pitch_deg = 0.0
         return float(x), float(y), float(z), float(yaw_deg), float(pitch_deg)
 
-# Tactical Routes for map $2000$ (Coordinates calibrated against BSP geometry)
-# T Spawns at Y in [124, 252], CT Spawns at Y in [1272, 1400], Center line Y=762
+# Tactical Routes for map $2000$ (Calibrated directly from $2000$.bsp entity geometry)
+# Center line: Y=762 | T Spawn: Y in [124, 252] (Exit at Y=360) | CT Spawn: Y in [1272, 1400] (Exit at Y=1164)
 MAP_ROUTES_T = [
-    # Route 0: LEFT COURTYARD CORRIDOR (Fast push through left lane with crate cover)
-    [(-1150, 260), (-1150, 500), (-1150, 762), (-1150, 1020), (-1150, 1260), (-760, 1320)],
+    # Route 0: CENTER COURTYARD RUSH (Straight through center lane past weapons into CT spawn)
+    [(-772, 360), (-772, 550), (-772, 762), (-772, 1050), (-772, 1300)],
 
-    # Route 1: RIGHT COURTYARD CORRIDOR (Fast push through right lane with crate cover)
-    [(-375, 260), (-375, 500), (-375, 762), (-375, 1020), (-375, 1260), (-760, 1320)],
+    # Route 1: LEFT FLANK ALLEY (Exit spawn to Y=360, move to left corridor X=-1185, push CT flank)
+    [(-772, 360), (-1185, 380), (-1185, 600), (-1185, 762), (-1185, 1080), (-900, 1300)],
 
-    # Route 2: CENTER COURTYARD ADVANCE (Curves past center crate into CT courtyard)
-    [(-760, 320), (-670, 500), (-670, 762), (-670, 1020), (-760, 1260), (-760, 1350)],
+    # Route 2: RIGHT FLANK ALLEY (Exit spawn to Y=360, move to right corridor X=-360, push CT flank)
+    [(-772, 360), (-360, 380), (-360, 600), (-360, 762), (-360, 1080), (-600, 1300)],
 
-    # Route 3: LEFT FLANK ALLEY (Surprise wrap-around behind CT spawn)
-    [(-1460, 200), (-1460, 500), (-1460, 762), (-1460, 1020), (-1460, 1280), (-1250, 1350), (-760, 1350)],
+    # Route 3: CENTER-TO-LEFT WRAP (Push center, flank into left CT corridor)
+    [(-772, 360), (-772, 600), (-1000, 762), (-1185, 1050), (-900, 1320)],
 
-    # Route 4: RIGHT FLANK ALLEY (Surprise wrap-around behind CT spawn)
-    [(-60, 200), (-60, 500), (-60, 762), (-60, 1020), (-60, 1280), (-270, 1350), (-760, 1350)]
+    # Route 4: CENTER-TO-RIGHT WRAP (Push center, flank into right CT corridor)
+    [(-772, 360), (-772, 600), (-550, 762), (-360, 1050), (-600, 1320)]
 ]
 
 MAP_ROUTES_CT = [
+    # Flipped for CT: Y mirror around center line 762 (1524 - y)
     [(x, 1524 - y) for x, y in r] for r in MAP_ROUTES_T
 ]
 
 ROUTE_NAMES = [
-    "LEFT COURTYARD CORRIDOR",
-    "RIGHT COURTYARD CORRIDOR",
-    "CENTER COURTYARD ADVANCE",
-    "LEFT FLANK ALLEY (TUNNEL)",
-    "RIGHT FLANK ALLEY (TUNNEL)"
+    "CENTER COURTYARD RUSH",
+    "LEFT FLANK ALLEY",
+    "RIGHT FLANK ALLEY",
+    "CENTER-TO-LEFT WRAP",
+    "CENTER-TO-RIGHT WRAP"
 ]
 
 # Virtual Key Codes (Win32 / SDL2 WM_KEYDOWN compatibility)
@@ -1570,37 +1571,33 @@ def main():
                 # 1. Vision Detection (YOLOv8)
                 raw_targets = detector.detect(frame_bgr)
                 cur_time_in_round = now - round_start_time
-                spawn_grace_period = 2.2  # Calibrated for $2000$: clear starting wall, fire immediately on contact
+                spawn_grace_period = 3.8  # Calibrated for $2000$: clear starting wall and crates without shooting teammates
                 in_spawn_grace = (cur_time_in_round < spawn_grace_period)
 
                 # Dynamic team and spawn zone determination on $2000$
-                # T Spawns at Y in [124, 252] (base crates end around Y=450)
-                # CT Spawns at Y in [1272, 1400] (base crates end around Y=1074)
                 is_terrorist = True
                 in_own_spawn = False
                 if pose is not None:
                     cur_x, cur_y, cur_z, cur_yaw = pose[:4]
                     is_terrorist = (cur_y < 762.0)
-                    in_own_spawn = (cur_y < 520.0) if is_terrorist else (cur_y > 1004.0)
+                    in_own_spawn = (cur_y < 440.0) if is_terrorist else (cur_y > 1084.0)
                 else:
                     is_terrorist = True
-                    in_own_spawn = (cur_time_in_round < 2.5)
+                    in_own_spawn = (cur_time_in_round < 3.8)
 
-                # Filter teammates and safe spawn zone
+                # STRICT SPAWN PEACE LOCK: Absolute fire & target ban on spawn!
+                # Nobody from enemy team can be in our spawn in first 3.8s. All entities are teammates!
+                spawn_peace_active = in_spawn_grace or in_own_spawn or (cur_time_in_round < 3.8)
+
                 targets = []
-                # In spawn grace period (first 2.2 seconds): ignore targets to clear spawn crates!
-                if not in_spawn_grace:
+                if not spawn_peace_active:
                     for t in raw_targets:
-                        # Skip teammates right beside bot in own spawn
-                        if in_own_spawn and t["dist"] < 320:
-                            continue
-
                         # Anti-Decal Guard: Reject blood splatters on crates
                         bx1, by1, bx2, by2 = t.get("box", (0, 0, 0, 0))
                         if bx2 > bx1 and by2 > by1:
                             th = by2 - by1
                             tw = bx2 - bx1
-                            torso = frame_bgr[by1 + int(th * 0.20):by1 + int(th * 0.50), bx1 + int(tw * 0.25):bx1 + int(tw * 0.75)]
+                            torso = frame_bgr[by1 + int(th * 0.15):by1 + int(th * 0.55), bx1 + int(tw * 0.20):bx1 + int(tw * 0.80)]
                             if torso.size >= 16:
                                 hsv = cv2.cvtColor(torso, cv2.COLOR_BGR2HSV)
                                 mean_h, mean_s, mean_v = hsv.mean(axis=(0, 1))
@@ -1608,15 +1605,24 @@ def main():
                                 if is_blood_red:
                                     continue
 
-                                # Teammate Discrimination for cl_minmodels 1 (CT=gign, T=leet)
-                                if t["dist"] < 650:
-                                    tb, tg, tr = torso.mean(axis=(0, 1))
-                                    is_t_model = (tr > tb + 18 and tg > tb + 10)
-                                    is_ct_model = (tb >= tr - 6)
-                                    if is_terrorist and is_t_model and not is_ct_model:
-                                        continue  # Teammate Terrorist
-                                    elif (not is_terrorist) and is_ct_model and not is_t_model:
-                                        continue  # Teammate CT
+                                # Enhanced Teammate Discrimination (cl_minmodels 1: CT=GIGN Blue, T=LEET Tan/Yellow)
+                                tb, tg, tr = torso.mean(axis=(0, 1))
+                                
+                                # GIGN has prominent blue uniform and navy helmet
+                                is_ct_model = (tb > tr + 6) or (tb > tg and tb > 55) or (mean_h >= 95 and mean_h <= 135 and mean_s > 25)
+                                # Leet has prominent yellow/tan shirt and khaki cargo pants
+                                is_t_model = (tr > tb + 10 and tg > tb + 4) or (mean_h >= 15 and mean_h <= 45 and mean_s > 25)
+
+                                if is_terrorist:
+                                    # Bot is Terrorist: Target MUST be confirmed CT!
+                                    # If target has Terrorist colors or lacks clear CT blue -> TEAMMATE! Ignore!
+                                    if is_t_model or not is_ct_model:
+                                        continue
+                                else:
+                                    # Bot is CT: Target MUST be confirmed Terrorist!
+                                    # If target has CT blue or lacks Leet colors -> TEAMMATE! Ignore!
+                                    if is_ct_model or not is_t_model:
+                                        continue
 
                         targets.append(t)
 
@@ -1645,7 +1651,7 @@ def main():
                     # Policy network can initiate or sustain bursts
                     dist_norm = float(primary["dist"]) / float(math.hypot(crop_w, crop_h))
                     policy_fire = (p_clicks[0] > 0.35 and dist_norm < 0.65 and abs(dx) < max(42.0, body_w * 1.1))
-                    can_fire = (is_locked == 1.0 or policy_fire) and (not in_spawn_grace)
+                    can_fire = (is_locked == 1.0 or policy_fire) and (not spawn_peace_active)
                     
                     dx_norm = float(dx) / float(crop_w)
                     dy_norm = float(dy) / float(crop_h)
@@ -1908,6 +1914,14 @@ def main():
                         is_terrorist = (cur_y < 762.0)
                         active_waypoints = MAP_ROUTES_T[active_route_idx] if is_terrorist else MAP_ROUTES_CT[active_route_idx]
 
+                        # 0. SPAWN AUTO-ORIENT: Half the spawns face backward into the back wall!
+                        # Immediately turn towards the battlefield exit (+Y for T, -Y for CT)
+                        target_spawn_yaw = 90.0 if is_terrorist else -90.0
+                        spawn_angle_diff = (target_spawn_yaw - cur_yaw + 180.0) % 360.0 - 180.0
+                        if cur_time_in_round < 1.8 and abs(spawn_angle_diff) > 25.0:
+                            steer_spawn = int(np.clip(-spawn_angle_diff * counts_per_deg * 0.55, -240, 240))
+                            send_mouse_move(steer_spawn, 0)
+
                         # Clamp waypoint index
                         if current_wp_idx >= len(active_waypoints):
                             current_wp_idx = len(active_waypoints) - 1
@@ -1920,7 +1934,7 @@ def main():
                         # Advance to next waypoint when close enough
                         if dist < 85.0 and current_wp_idx < len(active_waypoints) - 1:
                             current_wp_idx += 1
-                            if not in_spawn_grace and not in_own_spawn:
+                            if not spawn_peace_active:
                                 accumulated_reward += 0.5  # Reward advancing tactical route outside spawn
                             wp_x, wp_y = active_waypoints[current_wp_idx]
                             dx = wp_x - cur_x
