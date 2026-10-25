@@ -11,6 +11,6 @@ echo   Walk along green corridors, inspect red barriers and target dots!
 echo   Weapon racks: AK47, M4A1, AWP, MP5, Shotgun, Armor, Grenades (HE, Flash, Smoke)
 echo.
 cd /d "D:\CS 1.6 GoldClient"
-start hl.exe -game cstrike -nomaster -novid +map aim_ai_sandbox +exec sandbox.cfg
+start hl.exe -game cstrike -nomaster -novid -steam -noforcemparms +maxplayers 16 +map aim_ai_sandbox +exec sandbox.cfg
 echo Launched! Check your CS 1.6 window.
 pause
