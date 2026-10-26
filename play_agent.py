@@ -422,6 +422,7 @@ VK_MAP = {
     "f6": 0x75,
     "f9": 0x78,
     "end": 0x23,
+    "enter": 0x0D,
 }
 
 # DirectInput Hardware Scan Codes (Recognized by GoldSrc engine input layer)
@@ -459,6 +460,7 @@ SCAN_CODES = {
     "f6": 0x40,
     "f9": 0x43,
     "end": 0xCF,
+    "enter": 0x1C,
 }
 
 VK_F6 = 0x75
@@ -815,13 +817,14 @@ def is_text_menu_open(frame_bgr):
     if frame_bgr is None or frame_bgr.shape[0] < 200:
         return False
     h, w = frame_bgr.shape[:2]
-    menu_crop = frame_bgr[int(h * 0.40):int(h * 0.65), int(w * 0.01):int(w * 0.18)]
+    # Broaden ROI to cover all resolutions (left 1%-25%, height 30%-75%)
+    menu_crop = frame_bgr[int(h * 0.30):int(h * 0.75), int(w * 0.01):int(w * 0.25)]
     hsv = cv2.cvtColor(menu_crop, cv2.COLOR_BGR2HSV)
-    yellow_text = cv2.inRange(hsv, np.array([20, 120, 120]), np.array([35, 255, 255]))
-    white_text = cv2.inRange(hsv, np.array([0, 0, 200]), np.array([180, 40, 255]))
+    yellow_text = cv2.inRange(hsv, np.array([18, 100, 100]), np.array([38, 255, 255]))
+    white_text = cv2.inRange(hsv, np.array([0, 0, 180]), np.array([180, 50, 255]))
     yt = np.sum(yellow_text > 0)
     wt = np.sum(white_text > 0)
-    return (yt > 40 and wt > 800)
+    return (yt > 30 and wt > 500)
 
 def is_any_menu_open(frame_bgr):
     """Returns (True, 'vgui'|'text') if graphical or text class/team menu is active"""
@@ -2333,7 +2336,11 @@ def main():
         pitch_drift = 0  # Reset pitch accumulation on new round spawn
         vgui_dismiss_attempts = 0
         tap_key("end", 0.04)  # Snap camera pitch to exact 0.0° horizontal via GoldSrc force_centerview
-        tap_key("5", 0.04)  # Automatically pick Option 5 (Random Class / Auto-Select) to spawn immediately
+        tap_key("5", 0.08)  # Option 5 (Random Class / Auto-Select)
+        time.sleep(0.04)
+        tap_key("1", 0.08)  # Option 1 (Seal Team 6)
+        time.sleep(0.04)
+        tap_key("enter", 0.08)
         last_wall_turn_time = 0.0
         spectator_streak = 0
         alive_screen_streak = 0
@@ -2375,7 +2382,14 @@ def main():
     )
     log_watcher.start()
 
-    # Initial Autobuy on agent launch
+    # Initial focus CS window and dismiss menu on agent launch
+    focus_cs_window()
+    time.sleep(0.08)
+    tap_key("5", 0.08)
+    time.sleep(0.04)
+    tap_key("1", 0.08)
+    time.sleep(0.04)
+    tap_key("enter", 0.08)
     execute_autobuy()
 
     # Navigation & Hunt State
@@ -2466,7 +2480,46 @@ def main():
                 # Optical Terrain & Barrier Perception (Green floor vs Red wall)
                 steer_bias, wall_ahead, floor_visible, red_ratio, green_ratio = optical_color_lidar(frame_bgr)
 
-                # 0. Check if player is dead or spectating (black bars or log confirmed)
+                # 0. Check if Menu is open (Choose Team / Choose Class "Выберите класс" / VGUI)
+                # MUST take absolute priority: if menu is open, player is NOT spawned!
+                is_menu, menu_type = is_any_menu_open(frame_bgr)
+                if is_menu:
+                    vgui_dismiss_attempts += 1
+                    log_watcher.is_alive = False
+                    alive_screen_streak = 0
+                    spectator_streak = 0
+                    action_status = f"MENU: DISMISSING [{menu_type.upper()}] (ATTEMPT {vgui_dismiss_attempts})"
+                    for k in list(current_keys):
+                        send_key_up(k)
+                    current_keys.clear()
+                    if firing:
+                        send_mouse_up()
+                        firing = False
+
+                    # Click button 5 on screen to dismiss graphical dialog
+                    if menu_type == "vgui" and IS_WINDOWS and user32:
+                        btn_x = box["left"] + int(box["width"] * 0.25)
+                        btn_y = box["top"] + int(box["height"] * 0.59)
+                        user32.SetCursorPos(btn_x, btn_y)
+                        time.sleep(0.02)
+                        user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+                        time.sleep(0.03)
+                        user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+
+                    # Send slot 5 (Random) and slot 1 (Seal Team 6) with GoldSrc-friendly duration
+                    tap_key("5", 0.08)
+                    time.sleep(0.04)
+                    tap_key("1", 0.08)
+                    time.sleep(0.04)
+                    tap_key("enter", 0.08)
+                    if step_count % 10 == 0:
+                        print(f"\r[{menu_type.upper()} MENU ACTIVE] Dismissing class menu -> Spawning player (att {vgui_dismiss_attempts})...", end="", flush=True)
+                    time.sleep(0.05)
+                    continue
+                else:
+                    vgui_dismiss_attempts = 0
+
+                # 0.1 Check if player is dead or spectating (black bars or log confirmed)
                 if is_spectator_view(frame_bgr):
                     spectator_streak += 1
                     alive_screen_streak = 0
@@ -2474,7 +2527,7 @@ def main():
                     spectator_streak = 0
                     alive_screen_streak += 1
 
-                # If first-person gameplay screen is visible, player is alive!
+                # If first-person gameplay screen is visible and NO menu, player is alive!
                 if alive_screen_streak >= 10 and not log_watcher.is_alive:
                     log_watcher.is_alive = True
 
@@ -2499,37 +2552,6 @@ def main():
                     if step_count % 30 == 0:
                         print(f"\r[AI AGENT ACTIVE] Step: {step_count:05d} | {action_status:36s} | Next round standby...", end="", flush=True)
                     time.sleep(0.03)
-                    continue
-
-                # 0. Check if Menu is open (Choose Team / Choose Class "Выберите класс" / VGUI)
-                is_menu, menu_type = is_any_menu_open(frame_bgr)
-                if is_menu and (pose is None or (now - round_start_time < 4.0)) and vgui_dismiss_attempts < 6:
-                    vgui_dismiss_attempts += 1
-                    action_status = f"MENU: DISMISSING [{menu_type.upper()}]"
-                    for k in list(current_keys):
-                        send_key_up(k)
-                    current_keys.clear()
-                    if firing:
-                        send_mouse_up()
-                        firing = False
-                    # Click button 5 on screen to dismiss graphical dialog
-                    if menu_type == "vgui" and IS_WINDOWS and user32:
-                        btn_x = box["left"] + int(box["width"] * 0.25)
-                        btn_y = box["top"] + int(box["height"] * 0.59)
-                        user32.SetCursorPos(btn_x, btn_y)
-                        time.sleep(0.02)
-                        user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-                        time.sleep(0.03)
-                        user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-                    tap_key("5", 0.04)
-                    tap_key("enter", 0.04)
-                    tap_key("space", 0.04)
-                    time.sleep(0.04)
-                    tap_key("1", 0.04)
-                    alive_screen_streak = 0
-                    if step_count % 15 == 0:
-                        print(f"\r[{menu_type.upper()} MENU DETECTED] Auto-selected class [5] -> Spawning player...", end="", flush=True)
-                    time.sleep(0.04)
                     continue
 
                 # 0.1 Update Spatial History & Policy Brain Evaluation (30-D)
@@ -2934,6 +2956,15 @@ def main():
                             desired_keys.add("space")
                         if p_keys[5] > 1.2:
                             desired_keys.add("ctrl")
+
+                    # Spawn Auto-Orient: Snap view toward arena (North / Yaw 90°) in first 2.5s
+                    if pose is not None and cur_time_in_round < 2.5:
+                        cur_yaw = pose[3]
+                        target_spawn_yaw = 90.0
+                        spawn_angle_diff = (target_spawn_yaw - cur_yaw + 180.0) % 360.0 - 180.0
+                        if abs(spawn_angle_diff) > 15.0:
+                            steer_spawn = int(np.clip(-spawn_angle_diff * counts_per_deg * 0.6, -260, 260))
+                            send_mouse_move(steer_spawn, 0)
 
                     # ==============================================================
                     # STATE C1: OPTICAL COLOR LIDAR OBSTACLE & BARRIER AVOIDANCE
