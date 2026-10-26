@@ -1339,8 +1339,8 @@ class BenchmarkTelemetryTracker:
                 target_dir = cd
                 break
         os.makedirs(target_dir, exist_ok=True)
-        self.filename = os.path.join(target_dir, "live_telemetry.json")
-        self.baseline_file = os.path.join(target_dir, "baseline_10_rounds.json")
+        self.filename = os.path.join(target_dir, os.path.basename(filename))
+        self.baseline_file = os.path.join(target_dir, os.path.basename(baseline_file))
         self.rounds = []
         self.current_round = 0
         self.round_data = None
