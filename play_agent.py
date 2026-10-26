@@ -663,7 +663,11 @@ class AIVisionVideoRecorder:
     - Codec: Motion JPEG (.avi) crash-proof format for universal playback
     """
     def __init__(self, output_dir="demos", fps=30):
-        self.output_dir = output_dir
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        if not os.path.isabs(output_dir):
+            self.output_dir = os.path.join(base_dir, output_dir)
+        else:
+            self.output_dir = output_dir
         self.fps = fps
         self.is_recording = False
         self.frame_queue = queue.Queue(maxsize=150)
