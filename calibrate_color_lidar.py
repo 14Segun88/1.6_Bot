@@ -189,158 +189,8 @@ def create_calibration_grid(frame_bgr, green_mask, red_mask, current_stats, targ
     return grid
 
 
-def main():
-    print("=" * 78)
-    print("   CS 1.6 - OPTICAL COLOR LIDAR: 10-ROUND HSV LIGHTING CALIBRATOR")
-    print("=" * 78)
-    print("Objective: Calibrate HSV thresholds for green floor and red barrier walls")
-    print("under realistic map lighting (direct sunlight, shaded corridors, dark corners).")
-    print("=" * 78)
-
-    # Initialize Screen Capture
-    sct = getattr(mss, "MSS", mss.mss)() if 'mss' in globals() else None
-    if not sct:
-        print("[!] mss library not found. Please run with Windows python environment.")
-        return
-
-    monitor = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
-    box = find_cs_window_rect(monitor)
-    print(f"[*] Attached to Game Window: {box['width']}x{box['height']} at ({box['left']}, {box['top']})")
-
-    # Initialize Samplers
-    samplers = {
-        "g_h": ReservoirSampler(),
-        "g_s": ReservoirSampler(),
-        "g_v": ReservoirSampler(),
-        "r_h": ReservoirSampler(),
-        "r_s": ReservoirSampler(),
-        "r_v": ReservoirSampler(),
-    }
-
-    # Watchdog for game log
-    log_file = find_latest_log()
-    last_log_size = os.path.getsize(log_file) if (log_file and os.path.exists(log_file)) else 0
-    print(f"[*] Monitoring Game Engine Log: {log_file if log_file else 'Polling screen timer'}")
-
-    current_round = 1
-    total_rounds = 10
-    round_start_time = time.time()
-    last_sample_time = 0.0
-    last_snap_time = 0.0
-    frames_processed = 0
-
-    print(f"\n>>> [STARTING 10-ROUND CALIBRATION SESSION] <<<")
-    print("Please ensure Counter-Strike 1.6 is running with bot on aim_ai_sandbox / $2000$!")
-    print("Press Ctrl+C at any time to finish and save report early.\n")
-
-    try:
-        while current_round <= total_rounds:
-            now = time.time()
-
-            # 1. Check for Round Transitions via Game Engine Logs
-            if log_file and os.path.exists(log_file):
-                try:
-                    curr_size = os.path.getsize(log_file)
-                    if curr_size > last_log_size:
-                        with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
-                            f.seek(last_log_size)
-                            new_lines = f.readlines()
-                        last_log_size = curr_size
-                        for line in new_lines:
-                            if 'World triggered "Round_Start"' in line:
-                                current_round += 1
-                                round_start_time = now
-                                print(f"\n[+] ROUND TRANSITION -> Round {current_round:02d} / {total_rounds:02d} Started!")
-                                if current_round > total_rounds:
-                                    break
-                except Exception:
-                    pass
-
-            # Fallback timeout if logs are stationary (e.g. 120s round limit)
-            if now - round_start_time > 130.0:
-                current_round += 1
-                round_start_time = now
-                print(f"\n[+] ROUND WATCHDOG -> Transition to Round {current_round:02d} / {total_rounds:02d}")
-                if current_round > total_rounds:
-                    break
-
-            # 2. Sample Frame at ~5 FPS (every 0.20s)
-            if now - last_sample_time >= 0.18:
-                last_sample_time = now
-                raw = np.array(sct.grab(box))
-                frame_bgr = raw[:, :, :3]
-                fh, fw = frame_bgr.shape[:2]
-
-                if fh < 100 or fw < 100:
-                    time.sleep(0.05)
-                    continue
-
-                frames_processed += 1
-
-                # ROIs
-                # Floor ROI: bottom 50% to 95%. Mask out bottom-right weapon area (to avoid weapon textures)
-                floor_roi = frame_bgr[int(fh * 0.50):int(fh * 0.95), :]
-                weapon_mask = np.ones(floor_roi.shape[:2], dtype=bool)
-                fl_h, fl_w = floor_roi.shape[:2]
-                weapon_mask[int(fl_h * 0.40):, int(fl_w * 0.65):] = False  # Mask weapon/hands
-
-                # Center ROI: middle 50%x50% rectangle directly ahead
-                center_roi = frame_bgr[int(fh * 0.25):int(fh * 0.75), int(fw * 0.25):int(fw * 0.75)]
-
-                hsv_f = cv2.cvtColor(floor_roi, cv2.COLOR_BGR2HSV)
-                hsv_c = cv2.cvtColor(center_roi, cv2.COLOR_BGR2HSV)
-
-                # Chromatic filters to extract true map colors under all lighting:
-                # 1. Green floor candidates: green is dominant color (G > R+12 and G > B+12)
-                b_f, g_f, r_f = cv2.split(floor_roi)
-                green_cand = (g_f > r_f + 12) & (g_f > b_f + 12) & weapon_mask
-                if np.sum(green_cand) > 10:
-                    samplers["g_h"].add_pixels(hsv_f[:, :, 0][green_cand])
-                    samplers["g_s"].add_pixels(hsv_f[:, :, 1][green_cand])
-                    samplers["g_v"].add_pixels(hsv_f[:, :, 2][green_cand])
-
-                # 2. Red barrier wall candidates: red is dominant color (R > G+16 and R > B+16)
-                b_c, g_c, r_c = cv2.split(center_roi)
-                red_cand = (r_c > g_c + 16) & (r_c > b_c + 16)
-                if np.sum(red_cand) > 10:
-                    samplers["r_h"].add_pixels(hsv_c[:, :, 0][red_cand])
-                    samplers["r_s"].add_pixels(hsv_c[:, :, 1][red_cand])
-                    samplers["r_v"].add_pixels(hsv_c[:, :, 2][red_cand])
-
-                # Mask creation for visual diagnostics
-                g_mask_full = np.zeros((fh, fw), dtype=np.uint8)
-                r_mask_full = np.zeros((fh, fw), dtype=np.uint8)
-
-                g_submask = ((g_f > r_f + 12) & (g_f > b_f + 12) & weapon_mask).astype(np.uint8) * 255
-                r_submask = ((r_c > g_c + 16) & (r_c > b_c + 16)).astype(np.uint8) * 255
-
-                g_mask_full[int(fh * 0.50):int(fh * 0.95), :] = g_submask
-                r_mask_full[int(fh * 0.25):int(fh * 0.75), int(fw * 0.25):int(fw * 0.75)] = r_submask
-
-                # Update Visual Grid every 1.2 seconds
-                if now - last_snap_time >= 1.2:
-                    last_snap_time = now
-                    grid_img = create_calibration_grid(frame_bgr, g_mask_full, r_mask_full, samplers, current_round, total_rounds)
-                    grid_path = os.path.join(DEBUG_DIR, "lidar_calibration_grid.jpg")
-                    cv2.imwrite(grid_path, grid_img)
-
-                    # Console Telemetry
-                    gh = samplers["g_h"].get_percentiles()
-                    gv = samplers["g_v"].get_percentiles()
-                    rh = samplers["r_h"].get_percentiles()
-                    rv = samplers["r_v"].get_percentiles()
-                    print(f"\r[CALIBRATING] Rnd {current_round:02d}/{total_rounds:02d} | Frames: {frames_processed:04d} | Green H:[{gh['p5']:02d}-{gh['p95']:02d}] V:[{gv['p5']:02d}-{gv['p95']:02d}] | Red H:[{rh['p5']:02d}-{rh['p95']:02d}] V:[{rv['p5']:02d}-{rv['p95']:02d}]", end="", flush=True)
-
-            time.sleep(0.015)
-
-    except KeyboardInterrupt:
-        print("\n\n[*] Early termination requested by user. Finalizing calibration with collected samples...")
-
-    print("\n\n" + "=" * 78)
-    print("             CALIBRATION ANALYSIS COMPLETE - COMPUTING OPTIMAL HSV")
-    print("=" * 78)
-
-    # Compute Statistical Boundaries
+def save_calibration(samplers, frames_processed, current_round, total_rounds):
+    """Computes statistical percentiles and flushes lidar_hsv_profile.json & LIDAR_CALIBRATION_REPORT.md"""
     gh = samplers["g_h"].get_percentiles()
     gs = samplers["g_s"].get_percentiles()
     gv = samplers["g_v"].get_percentiles()
@@ -350,19 +200,21 @@ def main():
     rv = samplers["r_v"].get_percentiles()
 
     # Optimal tuned boundaries with safety margins for shadows and ambient lighting
-    tuned_green_h_min = max(25, gh["p5"] - 5) if gh["count"] > 100 else 32
-    tuned_green_h_max = min(95, gh["p95"] + 8) if gh["count"] > 100 else 88
-    tuned_green_s_min = max(20, gs["p5"] - 15) if gs["count"] > 100 else 35
-    tuned_green_v_min = max(18, gv["min"] if gv["min"] > 15 else (gv["p5"] - 10)) if gv["count"] > 100 else 25
+    tuned_green_h_min = max(20, gh["p5"] - 5) if gh["count"] > 100 else 25
+    tuned_green_h_max = min(95, gh["p95"] + 8) if gh["count"] > 100 else 75
+    tuned_green_s_min = max(20, gs["p5"] - 15) if gs["count"] > 100 else 25
+    tuned_green_v_min = max(18, gv["min"] if gv["min"] > 15 else (gv["p5"] - 10)) if gv["count"] > 100 else 18
 
     # Red wraps around 0 and 180 in HSV
-    tuned_red_h_max1 = min(18, rh["p95"] + 4) if rh["count"] > 100 else 15
+    tuned_red_h_max1 = min(18, rh["p95"] + 4) if rh["count"] > 100 else 16
     tuned_red_h_min2 = 165
-    tuned_red_s_min = max(30, rs["p5"] - 15) if rs["count"] > 100 else 45
-    tuned_red_v_min = max(18, rv["min"] if rv["min"] > 15 else (rv["p5"] - 10)) if rv["count"] > 100 else 30
+    tuned_red_s_min = max(30, rs["p5"] - 15) if rs["count"] > 100 else 35
+    tuned_red_v_min = max(18, rv["min"] if rv["min"] > 15 else (rv["p5"] - 10)) if rv["count"] > 100 else 18
 
     hsv_profile = {
         "generated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "rounds_completed": current_round,
+        "total_rounds_target": total_rounds,
         "total_frames_analyzed": frames_processed,
         "green_floor": {
             "h_range": [tuned_green_h_min, tuned_green_h_max],
@@ -387,7 +239,6 @@ def main():
     profile_path = os.path.join(BENCH_DIR, "lidar_hsv_profile.json")
     with open(profile_path, "w", encoding="utf-8") as f:
         json.dump(hsv_profile, f, indent=2)
-    print(f"[✓] Tuned HSV Profile saved to: {profile_path}")
 
     # Sync to client folder if running in dual-mount
     for alt in ["/mnt/d/CS 1.6 GoldClient/benchmarks", "D:/CS 1.6 GoldClient/benchmarks"]:
@@ -395,7 +246,6 @@ def main():
             try:
                 with open(os.path.join(alt, "lidar_hsv_profile.json"), "w", encoding="utf-8") as f:
                     json.dump(hsv_profile, f, indent=2)
-                print(f"[✓] Synced profile to: {alt}/lidar_hsv_profile.json")
             except Exception:
                 pass
 
@@ -403,6 +253,7 @@ def main():
     report_md = [
         "# Optical Color Lidar - 10-Round HSV Lighting Calibration Report",
         f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"**Rounds Analyzed:** {current_round} / {total_rounds}",
         f"**Total Frames Analyzed:** {frames_processed:,}",
         f"**Map Tested:** `aim_ai_sandbox` / `$2000$` (Vibrant Green Floor + Red Barriers)",
         "",
@@ -443,22 +294,185 @@ def main():
     report_path = os.path.join(SCRIPT_DIR, "LIDAR_CALIBRATION_REPORT.md")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(report_md) + "\n")
-    print(f"[✓] Detailed Markdown Report generated: {report_path}")
 
     for alt in ["/mnt/d/CS 1.6 GoldClient", "D:/CS 1.6 GoldClient"]:
         if os.path.exists(alt):
             try:
                 with open(os.path.join(alt, "LIDAR_CALIBRATION_REPORT.md"), "w", encoding="utf-8") as f:
                     f.write("\n".join(report_md) + "\n")
-                print(f"[✓] Synced report to: {alt}/LIDAR_CALIBRATION_REPORT.md")
             except Exception:
                 pass
 
-    print("\n" + "=" * 78)
-    print("                     CALIBRATION READY & SAVED")
+    return hsv_profile
+
+
+def main():
+    import atexit
     print("=" * 78)
-    print(f"Recommended Green Floor HSV:  H:[{tuned_green_h_min}..{tuned_green_h_max}], S>{tuned_green_s_min}, V>{tuned_green_v_min}")
-    print(f"Recommended Red Wall HSV:     H:[0..{tuned_red_h_max1} & {tuned_red_h_min2}..180], S>{tuned_red_s_min}, V>{tuned_red_v_min}")
+    print("   CS 1.6 - OPTICAL COLOR LIDAR: 10-ROUND HSV LIGHTING CALIBRATOR")
+    print("=" * 78)
+    print("Objective: Calibrate HSV thresholds for green floor and red barrier walls")
+    print("under realistic map lighting (direct sunlight, shaded corridors, dark corners).")
+    print("=" * 78)
+
+    # Initialize Screen Capture
+    sct = getattr(mss, "MSS", mss.mss)() if 'mss' in globals() else None
+    if not sct:
+        print("[!] mss library not found. Please run with Windows python environment.")
+        return
+
+    monitor = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
+    box = find_cs_window_rect(monitor)
+    print(f"[*] Attached to Game Window: {box['width']}x{box['height']} at ({box['left']}, {box['top']})")
+
+    # Initialize Samplers
+    samplers = {
+        "g_h": ReservoirSampler(),
+        "g_s": ReservoirSampler(),
+        "g_v": ReservoirSampler(),
+        "r_h": ReservoirSampler(),
+        "r_s": ReservoirSampler(),
+        "r_v": ReservoirSampler(),
+    }
+
+    # Register emergency exit flusher
+    frames_processed = [0]
+    current_round_ref = [1]
+    atexit.register(lambda: save_calibration(samplers, frames_processed[0], current_round_ref[0], 10))
+
+    # Watchdog for game log
+    log_file = find_latest_log()
+    last_log_size = os.path.getsize(log_file) if (log_file and os.path.exists(log_file)) else 0
+    print(f"[*] Monitoring Game Engine Log: {log_file if log_file else 'Polling screen timer'}")
+
+    current_round = 1
+    total_rounds = 10
+    round_start_time = time.time()
+    last_sample_time = 0.0
+    last_snap_time = 0.0
+
+    print(f"\n>>> [STARTING 10-ROUND CALIBRATION SESSION] <<<")
+    print("Please ensure Counter-Strike 1.6 is running with bot on aim_ai_sandbox / $2000$!")
+    print("Press Ctrl+C at any time to finish and save report early.\n")
+
+    try:
+        while current_round <= total_rounds:
+            now = time.time()
+
+            # 1. Check for Round Transitions via Game Engine Logs
+            if log_file and os.path.exists(log_file):
+                try:
+                    curr_size = os.path.getsize(log_file)
+                    if curr_size > last_log_size:
+                        with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+                            f.seek(last_log_size)
+                            new_lines = f.readlines()
+                        last_log_size = curr_size
+                        for line in new_lines:
+                            if 'World triggered "Round_Start"' in line:
+                                current_round += 1
+                                current_round_ref[0] = current_round
+                                round_start_time = now
+                                save_calibration(samplers, frames_processed[0], current_round - 1, total_rounds)
+                                print(f"\n[+] ROUND TRANSITION -> Round {current_round:02d} / {total_rounds:02d} Started! (Incremental Profile Saved)")
+                                if current_round > total_rounds:
+                                    break
+                except Exception:
+                    pass
+
+            # Fallback timeout if logs are stationary (e.g. 120s round limit)
+            if now - round_start_time > 130.0:
+                current_round += 1
+                current_round_ref[0] = current_round
+                round_start_time = now
+                save_calibration(samplers, frames_processed[0], current_round - 1, total_rounds)
+                print(f"\n[+] ROUND WATCHDOG -> Transition to Round {current_round:02d} / {total_rounds:02d} (Incremental Profile Saved)")
+                if current_round > total_rounds:
+                    break
+
+            # 2. Sample Frame at ~5 FPS (every 0.20s)
+            if now - last_sample_time >= 0.18:
+                last_sample_time = now
+                raw = np.array(sct.grab(box))
+                frame_bgr = raw[:, :, :3]
+                fh, fw = frame_bgr.shape[:2]
+
+                if fh < 100 or fw < 100:
+                    time.sleep(0.05)
+                    continue
+
+                frames_processed[0] += 1
+
+                # ROIs
+                # Floor ROI: bottom 50% to 95%. Mask out bottom-right weapon area (to avoid weapon textures)
+                floor_roi = frame_bgr[int(fh * 0.50):int(fh * 0.95), :]
+                weapon_mask = np.ones(floor_roi.shape[:2], dtype=bool)
+                fl_h, fl_w = floor_roi.shape[:2]
+                weapon_mask[int(fl_h * 0.40):, int(fl_w * 0.65):] = False  # Mask weapon/hands
+
+                # Center ROI: middle 50%x50% rectangle directly ahead
+                center_roi = frame_bgr[int(fh * 0.25):int(fh * 0.75), int(fw * 0.25):int(fw * 0.75)]
+
+                hsv_f = cv2.cvtColor(floor_roi, cv2.COLOR_BGR2HSV)
+                hsv_c = cv2.cvtColor(center_roi, cv2.COLOR_BGR2HSV)
+
+                # Chromatic filters to extract true map colors under all lighting:
+                b_f, g_f, r_f = cv2.split(floor_roi)
+                green_cand = (g_f > r_f + 12) & (g_f > b_f + 12) & weapon_mask
+                if np.sum(green_cand) > 10:
+                    samplers["g_h"].add_pixels(hsv_f[:, :, 0][green_cand])
+                    samplers["g_s"].add_pixels(hsv_f[:, :, 1][green_cand])
+                    samplers["g_v"].add_pixels(hsv_f[:, :, 2][green_cand])
+
+                b_c, g_c, r_c = cv2.split(center_roi)
+                red_cand = (r_c > g_c + 16) & (r_c > b_c + 16)
+                if np.sum(red_cand) > 10:
+                    samplers["r_h"].add_pixels(hsv_c[:, :, 0][red_cand])
+                    samplers["r_s"].add_pixels(hsv_c[:, :, 1][red_cand])
+                    samplers["r_v"].add_pixels(hsv_c[:, :, 2][red_cand])
+
+                # Mask creation for visual diagnostics
+                g_mask_full = np.zeros((fh, fw), dtype=np.uint8)
+                r_mask_full = np.zeros((fh, fw), dtype=np.uint8)
+
+                g_submask = ((g_f > r_f + 12) & (g_f > b_f + 12) & weapon_mask).astype(np.uint8) * 255
+                r_submask = ((r_c > g_c + 16) & (r_c > b_c + 16)).astype(np.uint8) * 255
+
+                g_mask_full[int(fh * 0.50):int(fh * 0.95), :] = g_submask
+                r_mask_full[int(fh * 0.25):int(fh * 0.75), int(fw * 0.25):int(fw * 0.75)] = r_submask
+
+                # Update Visual Grid every 1.2 seconds
+                if now - last_snap_time >= 1.2:
+                    last_snap_time = now
+                    grid_img = create_calibration_grid(frame_bgr, g_mask_full, r_mask_full, samplers, current_round, total_rounds)
+                    grid_path = os.path.join(DEBUG_DIR, "lidar_calibration_grid.jpg")
+                    cv2.imwrite(grid_path, grid_img)
+
+                    # Console Telemetry
+                    gh = samplers["g_h"].get_percentiles()
+                    gv = samplers["g_v"].get_percentiles()
+                    rh = samplers["r_h"].get_percentiles()
+                    rv = samplers["r_v"].get_percentiles()
+                    print(f"\r[CALIBRATING] Rnd {current_round:02d}/{total_rounds:02d} | Frames: {frames_processed[0]:04d} | Green H:[{gh['p5']:02d}-{gh['p95']:02d}] V:[{gv['p5']:02d}-{gv['p95']:02d}] | Red H:[{rh['p5']:02d}-{rh['p95']:02d}] V:[{rv['p5']:02d}-{rv['p95']:02d}]", end="", flush=True)
+
+            time.sleep(0.015)
+
+    except KeyboardInterrupt:
+        print("\n\n[*] Early termination requested by user. Finalizing calibration with collected samples...")
+
+    print("\n\n" + "=" * 78)
+    print("             CALIBRATION ANALYSIS COMPLETE - COMPUTING OPTIMAL HSV")
+    print("=" * 78)
+
+    final_profile = save_calibration(samplers, frames_processed[0], current_round, total_rounds)
+    gf = final_profile["green_floor"]
+    rw = final_profile["red_wall"]
+
+    print(f"[✓] Tuned HSV Profile saved to: {os.path.join(BENCH_DIR, 'lidar_hsv_profile.json')}")
+    print(f"[✓] Detailed Markdown Report generated: {os.path.join(SCRIPT_DIR, 'LIDAR_CALIBRATION_REPORT.md')}")
+    print("=" * 78)
+    print(f"Recommended Green Floor HSV:  H:[{gf['h_range'][0]}..{gf['h_range'][1]}], S>{gf['s_min']}, V>{gf['v_min']}")
+    print(f"Recommended Red Wall HSV:     H:[0..{rw['h_range_1'][1]} & {rw['h_range_2'][0]}..180], S>{rw['s_min']}, V>{rw['v_min']}")
     print("=" * 78 + "\n")
 
 
