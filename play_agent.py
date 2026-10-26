@@ -693,14 +693,17 @@ def is_cs_window_foreground():
     buf = ctypes.create_string_buffer(256)
     user32.GetWindowTextA(cur_fg, buf, 256)
     val = buf.value.lower()
-    if any(k in val for k in [b"counter", b"strike", b"cstrike", b"cs", b"half-life", b"goldclient"]):
+    # Explicitly reject IDEs, terminals, Python, Task Manager
+    if any(k in val for k in [b"cmd.exe", b"powershell", b"terminal", b"python", b"code", b"antigravity", b"taskmgr", b"prompt"]):
+        return False
+    if any(k in val for k in [b"counter-strike", b"counter strike", b"cstrike"]):
         return True
 
-    # 2. Direct Window Class check on foreground window
+    # 2. Direct Window Class check on foreground window (GoldSrc SDL or Valve001)
     cls_buf = ctypes.create_string_buffer(256)
     user32.GetClassNameA(cur_fg, cls_buf, 256)
     cls_val = cls_buf.value.lower()
-    if cls_val in [b"sdl_app", b"valve001", b"halflife", b"half-life"]:
+    if cls_val in [b"sdl_app", b"valve001"]:
         return True
 
     # 3. Process check by PID (0x1000 works even across elevation boundaries)
@@ -1375,6 +1378,10 @@ class CSYOLODetector:
                 if real_w > real_h * 1.10:
                     continue
 
+                # Anti-Ceiling Filter: Reject any target whose center or feet are in the skybox/ceiling (top 25% of screen)
+                if real_cy < gh * 0.22 or (real_cy + real_h * 0.5) < gh * 0.35:
+                    continue
+
                 y1_c = max(0, int(real_cy - real_h / 2.0))
                 y2_c = min(gh, int(real_cy + real_h / 2.0))
                 x1_c = max(0, int(real_cx - real_w / 2.0))
@@ -1411,7 +1418,9 @@ class CSYOLODetector:
                     "is_locked": (abs(dx) <= max(24.0, real_w * 0.65) and abs(dy) <= max(20.0, real_h * 0.75))
                 })
 
-        # 2. Morphological Crash-Test Dummy Detector for aim_ai_sandbox targets
+        # 2. Crash-Test Dummy Multi-Modal Verification:
+        # Boost confidence of true YOLO player detections when wearing sandbox yellow suit,
+        # but NEVER create phantom targets from random yellow ceiling lamps or wall textures!
         hsv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HSV)
         yellow_mask = cv2.inRange(hsv, np.array([20, 85, 85]), np.array([38, 255, 255]))
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 25))
@@ -1423,39 +1432,19 @@ class CSYOLODetector:
             if area < 350:
                 continue
             bx, by, bw, bh = cv2.boundingRect(cnt)
-            aspect = bh / max(1.0, float(bw))
-            if aspect < 1.15 or aspect > 4.5:
-                continue
-            if bh < 30 or bw < 14:
+            # Rejection: Reject anything in the ceiling/sky (top 35% of screen)
+            if by < gh * 0.20 or (by + bh) < gh * 0.38:
                 continue
             if by + bh > gh * 0.94:
                 continue
 
             cx_d = bx + bw / 2.0
             cy_d = by + bh / 2.0
-            matched = False
             for t in targets:
                 t_bx1, t_by1, t_bx2, t_by2 = t["box"]
                 if (t_bx1 <= cx_d <= t_bx2) and (t_by1 <= cy_d <= t_by2):
-                    t["conf"] = max(t["conf"], 0.92)
-                    matched = True
+                    t["conf"] = max(t["conf"], 0.95)
                     break
-            if not matched:
-                head_x = bx + bw / 2.0
-                head_y = by + bh * 0.14
-                dx = head_x - cx_game
-                dy = head_y - cy_game
-                dist = math.hypot(dx, dy)
-                targets.append({
-                    "conf": 0.92,
-                    "dx": dx,
-                    "dy": dy,
-                    "dist": dist,
-                    "w": float(bw),
-                    "h": float(bh),
-                    "box": (bx, by, bx + bw, by + bh),
-                    "is_locked": (abs(dx) <= max(24.0, bw * 0.65) and abs(dy) <= max(20.0, bh * 0.75))
-                })
 
         targets.sort(key=lambda t: t["dist"])
         return targets
@@ -2407,7 +2396,7 @@ def main():
                 # 1. Vision Detection (YOLOv8)
                 raw_targets = detector.detect(frame_bgr)
                 cur_time_in_round = now - round_start_time
-                spawn_grace_period = 0.8  # Fast weapon equip on spawn
+                spawn_grace_period = 3.0  # 3.0s safe spawn breakout: weapon equip + leave spawn, zero shooting in spawn
                 in_spawn_grace = (cur_time_in_round < spawn_grace_period)
 
                 # Round-End Watchdog: If round exceeds 1:55 (115s), force round end via bot_kill / sv_restart
@@ -2587,8 +2576,11 @@ def main():
                         step_dx = int(np.clip(lead_x * k_aim_x * 0.80, -750, 750))
                         step_dy = int(np.clip(lead_y * k_aim_y * 0.80, -45, 45))
 
-                    # Anti-Floor Pitch Guard: Never aim into floor when pitch drift is positive
+                    # Anti-Floor & Anti-Ceiling Pitch Guard:
+                    # In CS 1.6, targets are on ground level. Never look straight into floor (>40) or ceiling (<-35)!
                     if pitch_drift > 40 and step_dy > 0:
+                        step_dy = 0
+                    if pitch_drift < -35 and step_dy < 0:
                         step_dy = 0
 
                     # Send clean, unified mouse movement
@@ -3063,8 +3055,8 @@ def main():
                                     send_mouse_move(sweep, 0)
 
                 # Engine-Native Pitch Stabilization (force_centerview via END):
-                # Keeps pitch dead-center horizontal (0.0°) during patrol with zero downward mouse drift.
-                if not enemy_spotted and not in_spawn_grace and step_count % 90 == 0:
+                # Keeps pitch dead-center horizontal (0.0°) during patrol; instantly corrects ceiling/floor drift.
+                if (not enemy_spotted and (step_count % 60 == 0 or pitch_drift < -25 or pitch_drift > 35)) or in_spawn_grace:
                     tap_key("end", 0.02)
                     pitch_drift = 0
 
