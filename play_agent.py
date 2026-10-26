@@ -356,6 +356,7 @@ VK_MAP = {
     "f5": 0x74,
     "f6": 0x75,
     "f9": 0x78,
+    "end": 0x23,
 }
 
 # DirectInput Hardware Scan Codes (Recognized by GoldSrc engine input layer)
@@ -392,6 +393,7 @@ SCAN_CODES = {
     "f5": 0x3F,
     "f6": 0x40,
     "f9": 0x43,
+    "end": 0xCF,
 }
 
 VK_F6 = 0x75
@@ -1246,7 +1248,7 @@ def nms_boxes(boxes, scores, iou_thresh=0.45):
     return keep
 
 class CSYOLODetector:
-    def __init__(self, model_path="models/yolov8n_crowdhuman.onnx", conf_thresh=0.28):
+    def __init__(self, model_path="models/yolov8n_crowdhuman.onnx", conf_thresh=0.18):
         self.conf_thresh = conf_thresh
         opts = ort.SessionOptions()
         opts.intra_op_num_threads = 4
@@ -1260,7 +1262,7 @@ class CSYOLODetector:
         cx_game = gw // 2
         cy_game = gh // 2
 
-        # Resize to 640x640
+        # 1. Neural YOLOv8 CrowdHuman Inference
         resized = cv2.resize(bgr_img, (self.input_size, self.input_size), interpolation=cv2.INTER_LINEAR)
         rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
         inp = np.transpose(rgb, (2, 0, 1))[None, ...]
@@ -1273,79 +1275,122 @@ class CSYOLODetector:
         boxes = preds[:, :4]
         scores = preds[:, 4]
 
-        mask = scores > self.conf_thresh
-        if not np.any(mask):
-            return []
-
-        b_filt = boxes[mask]
-        s_filt = scores[mask]
-        keep = nms_boxes(b_filt, s_filt, iou_thresh=0.40)
-
+        conf_limit = min(self.conf_thresh, 0.18)
+        mask = scores > conf_limit
         targets = []
         scale_x = gw / float(self.input_size)
         scale_y = gh / float(self.input_size)
 
-        for idx in keep:
-            bx, by, bw, bh = b_filt[idx]
-            conf = float(s_filt[idx])
+        if np.any(mask):
+            b_filt = boxes[mask]
+            s_filt = scores[mask]
+            keep = nms_boxes(b_filt, s_filt, iou_thresh=0.40)
 
-            real_w = bw * scale_x
-            real_h = bh * scale_y
-            real_cx = bx * scale_x
-            real_cy = by * scale_y
+            for idx in keep:
+                bx, by, bw, bh = b_filt[idx]
+                conf = float(s_filt[idx])
 
-            # Strict vertical aspect ratio (1.20 - 3.60) to reject flat corpses and wall decals
-            aspect = real_h / max(1.0, real_w)
-            if aspect < 1.20 or aspect > 3.60:
-                continue
-            if real_h < 28 or real_w < 16:
-                continue
+                real_w = bw * scale_x
+                real_h = bh * scale_y
+                real_cx = bx * scale_x
+                real_cy = by * scale_y
 
-            # Reject walls and oversized map geometry
-            if real_w > 380 or real_h > 720:
-                continue
-
-            # Reject dead bodies / corpses lying flat on the floor
-            if real_w > real_h * 1.10:
-                continue
-
-            y1_c = max(0, int(real_cy - real_h / 2.0))
-            y2_c = min(gh, int(real_cy + real_h / 2.0))
-            x1_c = max(0, int(real_cx - real_w / 2.0))
-            x2_c = min(gw, int(real_cx + real_w / 2.0))
-
-            # Anti-decal check: reject deep red blood decals on crates
-            # Use central crop (15-65% H, 20-80% W) to avoid wall background diluting blood color
-            _ch = y2_c - y1_c
-            _cw = x2_c - x1_c
-            crop = bgr_img[
-                y1_c + int(_ch * 0.15):y1_c + int(_ch * 0.65),
-                x1_c + int(_cw * 0.20):x1_c + int(_cw * 0.80)
-            ]
-            if crop.size > 30:
-                mb, mg, mr = crop.mean(axis=(0, 1))
-                if mr > 110 and mb < 80 and mg < 90:  # slightly relaxed thresholds for central crop
+                # Vertical aspect ratio (0.90 - 4.20) for standard players and mannequins
+                aspect = real_h / max(1.0, real_w)
+                if aspect < 0.90 or aspect > 4.20:
+                    continue
+                if real_h < 26 or real_w < 14:
                     continue
 
-            # Target point: Headshot Bullseye Center (top 16% of dummy box)
-            target_x = real_cx
-            target_y = (real_cy - real_h * 0.50) + (real_h * 0.16)
+                # Reject walls and oversized map geometry
+                if real_w > 380 or real_h > 720:
+                    continue
 
-            dx = target_x - cx_game
-            dy = target_y - cy_game
+                # Reject dead bodies / corpses lying flat on the floor
+                if real_w > real_h * 1.10:
+                    continue
 
-            dist = math.hypot(dx, dy)
+                y1_c = max(0, int(real_cy - real_h / 2.0))
+                y2_c = min(gh, int(real_cy + real_h / 2.0))
+                x1_c = max(0, int(real_cx - real_w / 2.0))
+                x2_c = min(gw, int(real_cx + real_w / 2.0))
 
-            targets.append({
-                "conf": conf,
-                "dx": dx,
-                "dy": dy,
-                "dist": dist,
-                "w": real_w,
-                "h": real_h,
-                "box": (x1_c, y1_c, x2_c, y2_c),
-                "is_locked": (abs(dx) <= max(24.0, real_w * 0.65) and abs(dy) <= max(20.0, real_h * 0.75))
-            })
+                # Anti-decal check: reject deep red blood decals on crates
+                _ch = y2_c - y1_c
+                _cw = x2_c - x1_c
+                crop = bgr_img[
+                    y1_c + int(_ch * 0.15):y1_c + int(_ch * 0.65),
+                    x1_c + int(_cw * 0.20):x1_c + int(_cw * 0.80)
+                ]
+                if crop.size > 30:
+                    mb, mg, mr = crop.mean(axis=(0, 1))
+                    if mr > 110 and mb < 80 and mg < 90:
+                        continue
+
+                # Target point: Headshot Center (top 16% of body box)
+                target_x = real_cx
+                target_y = (real_cy - real_h * 0.50) + (real_h * 0.16)
+
+                dx = target_x - cx_game
+                dy = target_y - cy_game
+                dist = math.hypot(dx, dy)
+
+                targets.append({
+                    "conf": conf,
+                    "dx": dx,
+                    "dy": dy,
+                    "dist": dist,
+                    "w": real_w,
+                    "h": real_h,
+                    "box": (x1_c, y1_c, x2_c, y2_c),
+                    "is_locked": (abs(dx) <= max(24.0, real_w * 0.65) and abs(dy) <= max(20.0, real_h * 0.75))
+                })
+
+        # 2. Morphological Crash-Test Dummy Detector for aim_ai_sandbox targets
+        hsv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HSV)
+        yellow_mask = cv2.inRange(hsv, np.array([20, 85, 85]), np.array([38, 255, 255]))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 25))
+        closed = cv2.morphologyEx(yellow_mask, cv2.MORPH_CLOSE, kernel)
+        contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < 350:
+                continue
+            bx, by, bw, bh = cv2.boundingRect(cnt)
+            aspect = bh / max(1.0, float(bw))
+            if aspect < 1.15 or aspect > 4.5:
+                continue
+            if bh < 30 or bw < 14:
+                continue
+            if by + bh > gh * 0.94:
+                continue
+
+            cx_d = bx + bw / 2.0
+            cy_d = by + bh / 2.0
+            matched = False
+            for t in targets:
+                t_bx1, t_by1, t_bx2, t_by2 = t["box"]
+                if (t_bx1 <= cx_d <= t_bx2) and (t_by1 <= cy_d <= t_by2):
+                    t["conf"] = max(t["conf"], 0.92)
+                    matched = True
+                    break
+            if not matched:
+                head_x = bx + bw / 2.0
+                head_y = by + bh * 0.14
+                dx = head_x - cx_game
+                dy = head_y - cy_game
+                dist = math.hypot(dx, dy)
+                targets.append({
+                    "conf": 0.92,
+                    "dx": dx,
+                    "dy": dy,
+                    "dist": dist,
+                    "w": float(bw),
+                    "h": float(bh),
+                    "box": (bx, by, bx + bw, by + bh),
+                    "is_locked": (abs(dx) <= max(24.0, bw * 0.65) and abs(dy) <= max(20.0, bh * 0.75))
+                })
 
         targets.sort(key=lambda t: t["dist"])
         return targets
@@ -2100,6 +2145,7 @@ def main():
 
         round_start_time = time.time()
         pitch_drift = 0  # Reset pitch accumulation on new round spawn
+        tap_key("end", 0.04)  # Snap camera pitch to exact 0.0° horizontal via GoldSrc force_centerview
         spectator_streak = 0
         alive_screen_streak = 0
         active_route_idx = (active_route_idx + 1) % len(ROUTE_NAMES)
@@ -2465,16 +2511,8 @@ def main():
                     step_dx = int(np.clip(lead_x * k_aim_x * 0.80, -750, 750))
                     step_dy = int(np.clip(lead_y * k_aim_y * 0.80, -45, 45))
 
-                    # Anti-Floor Pitch Guard: Never aim into the floor or push crosshair down when already below horizon
-                    if pose is not None and len(pose) >= 5:
-                        cur_pitch = pose[4]
-                        if cur_pitch > 5.0 and step_dy > 0:
-                            # Crosshair is already pitched down: forbid any downward aim
-                            step_dy = 0
-                        if cur_pitch > 10.0:
-                            # Significantly looking at floor: force upward corrective aim
-                            step_dy = int(np.clip(-(cur_pitch - (-0.5)) * counts_per_deg_y * 0.50, -45, -10))
-                    elif pitch_drift > 40 and step_dy > 0:
+                    # Anti-Floor Pitch Guard: Never aim into floor when pitch drift is positive
+                    if pitch_drift > 40 and step_dy > 0:
                         step_dy = 0
 
                     # Send clean, damped mouse movement without noise or jitter
@@ -2672,6 +2710,8 @@ def main():
                             tap_key("1", 0.04)
                             active_weapon_slot = 1
                         tap_key("r", 0.04)
+                        tap_key("end", 0.04)  # Instantly reset vertical recoil to 0.0° horizontal
+                        pitch_drift = 0
                         burst_count = 0
                         reload_attempts = 0
                         combat_firing_start = 0.0
@@ -2982,23 +3022,11 @@ def main():
                                     sweep = int(math.sin(step_count * 0.20) * 3.5)
                                     send_mouse_move(sweep, 0)
 
-                # Universal Head-Horizon Leveler & Anti-Floor Guard
-                # Keep crosshair firmly leveled at head horizon (-0.5 deg) across all non-firing phases
-                is_actively_recoiling = (firing and burst_start > 0.0 and (now - burst_start < 0.30))
-                if not is_actively_recoiling:
-                    if pose is not None and len(pose) >= 5:
-                        cur_pitch = pose[4]
-                        target_pitch = -0.5
-                        pitch_err = cur_pitch - target_pitch
-                        if abs(pitch_err) > 1.0:
-                            pull_limit = 50 if cur_pitch > 10.0 else 25
-                            pull = int(np.clip(-pitch_err * counts_per_deg_y * 0.70, -pull_limit, pull_limit))
-                            send_mouse_move(0, pull)
-                            pitch_drift = 0
-                    elif abs(pitch_drift) > 3:
-                        pull = int(np.clip(-pitch_drift * 0.35, -20, 20))
-                        send_mouse_move(0, pull)
-                        pitch_drift = int(np.clip(pitch_drift + pull, -1200, 1200))
+                # Engine-Native Pitch Stabilization (force_centerview via END):
+                # Keeps pitch dead-center horizontal (0.0°) during patrol with zero downward mouse drift.
+                if not enemy_spotted and not in_spawn_grace and step_count % 90 == 0:
+                    tap_key("end", 0.02)
+                    pitch_drift = 0
 
                 # Gemini 3.8 Spawn Grace Protection:
                 # In first 2.2 seconds:
