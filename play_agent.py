@@ -271,11 +271,74 @@ ROUTE_NAMES = [
     "RIGHT FLANK & TUNNEL PATROL"
 ]
 
+# Lidar Dynamic HSV Lighting Profile Cache
+_LIDAR_PROFILE_CACHE = {
+    "mtime": 0,
+    "last_check": 0.0,
+    "green_lower": np.array([32, 45, 35], dtype=np.uint8),
+    "green_upper": np.array([88, 255, 255], dtype=np.uint8),
+    "red_lower_1": np.array([0, 50, 40], dtype=np.uint8),
+    "red_upper_1": np.array([14, 255, 255], dtype=np.uint8),
+    "red_lower_2": np.array([165, 50, 40], dtype=np.uint8),
+    "red_upper_2": np.array([180, 255, 255], dtype=np.uint8),
+}
+
+def get_lidar_hsv_bounds():
+    """Dynamically loads benchmarks/lidar_hsv_profile.json if available, or falls back to defaults."""
+    global _LIDAR_PROFILE_CACHE
+    now = time.time()
+    # Check at most once every 3.0 seconds to minimize I/O overhead
+    if now - _LIDAR_PROFILE_CACHE["last_check"] < 3.0:
+        return _LIDAR_PROFILE_CACHE
+    _LIDAR_PROFILE_CACHE["last_check"] = now
+
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "benchmarks", "lidar_hsv_profile.json"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "lidar_hsv_profile.json"),
+        "benchmarks/lidar_hsv_profile.json",
+        "/mnt/d/CS 1.6 GoldClient/benchmarks/lidar_hsv_profile.json",
+        "D:/CS 1.6 GoldClient/benchmarks/lidar_hsv_profile.json",
+    ]
+    if "CS16_WORK_DIR" in os.environ:
+        candidates.insert(0, os.path.join(os.environ["CS16_WORK_DIR"], "benchmarks", "lidar_hsv_profile.json"))
+
+    for p in candidates:
+        if os.path.exists(p):
+            try:
+                mtime = os.path.getmtime(p)
+                if mtime != _LIDAR_PROFILE_CACHE["mtime"]:
+                    with open(p, "r", encoding="utf-8") as f:
+                        prof = json.load(f)
+                    gf = prof.get("green_floor", {})
+                    rw = prof.get("red_wall", {})
+                    
+                    gh_min, gh_max = gf.get("h_range", [32, 88])
+                    gs_min = gf.get("s_min", 45)
+                    gv_min = gf.get("v_min", 35)
+                    
+                    rh_1 = rw.get("h_range_1", [0, 14])
+                    rh_2 = rw.get("h_range_2", [165, 180])
+                    rs_min = rw.get("s_min", 50)
+                    rv_min = rw.get("v_min", 40)
+                    
+                    _LIDAR_PROFILE_CACHE["mtime"] = mtime
+                    _LIDAR_PROFILE_CACHE["green_lower"] = np.array([gh_min, gs_min, gv_min], dtype=np.uint8)
+                    _LIDAR_PROFILE_CACHE["green_upper"] = np.array([gh_max, 255, 255], dtype=np.uint8)
+                    _LIDAR_PROFILE_CACHE["red_lower_1"] = np.array([rh_1[0], rs_min, rv_min], dtype=np.uint8)
+                    _LIDAR_PROFILE_CACHE["red_upper_1"] = np.array([rh_1[1], 255, 255], dtype=np.uint8)
+                    _LIDAR_PROFILE_CACHE["red_lower_2"] = np.array([rh_2[0], rs_min, rv_min], dtype=np.uint8)
+                    _LIDAR_PROFILE_CACHE["red_upper_2"] = np.array([rh_2[1], 255, 255], dtype=np.uint8)
+                    print(f"[Color Lidar] Calibrated lighting HSV profile loaded from {p}: Floor H:[{gh_min}-{gh_max}] V>{gv_min}, Walls V>{rv_min}")
+                break
+            except Exception:
+                pass
+    return _LIDAR_PROFILE_CACHE
+
 def optical_color_lidar(frame_bgr):
     """
     Task 3: Real-time Optical Color Terrain & Barrier Scanner for aim_ai_sandbox:
-    - GREEN FLOOR (Walkable Zone / Сюда МОЖНО -> press W): HSV H in [32, 88], S > 45, V > 35
-    - RED WALL (Solid Barrier / Сюда НЕЛЬЗЯ -> 45° escape pivot): HSV H in [0, 14] or [165, 180], S > 50, V > 40
+    - GREEN FLOOR (Walkable Zone / Сюда МОЖНО -> press W): Calibrated or HSV H in [32, 88], S > 45, V > 35
+    - RED WALL (Solid Barrier / Сюда НЕЛЬЗЯ -> 45° escape pivot): Calibrated or HSV H in [0, 14] or [165, 180], S > 50, V > 40
     Returns:
       steer_bias: float in [-1.0, 1.0] (negative = steer left towards green, positive = steer right)
       wall_ahead: bool (True if red barrier wall is blocking forward path)
@@ -286,6 +349,8 @@ def optical_color_lidar(frame_bgr):
     if frame_bgr is None or frame_bgr.shape[0] < 100:
         return 0.0, False, False, 0.0, 0.0
 
+    bounds = get_lidar_hsv_bounds()
+
     h, w = frame_bgr.shape[:2]
     floor_roi = frame_bgr[int(h * 0.50):int(h * 0.95), :]
     center_roi = frame_bgr[int(h * 0.25):int(h * 0.75), int(w * 0.25):int(w * 0.75)]
@@ -293,18 +358,18 @@ def optical_color_lidar(frame_bgr):
     hsv_f = cv2.cvtColor(floor_roi, cv2.COLOR_BGR2HSV)
     hsv_c = cv2.cvtColor(center_roi, cv2.COLOR_BGR2HSV)
 
-    # Red masks (barrier walls: 0-14 and 165-180 in HSV)
+    # Red masks (barrier walls: dual red sectors in HSV, dynamically adjusted for lighting)
     red_f = cv2.bitwise_or(
-        cv2.inRange(hsv_f, np.array([0, 50, 40]), np.array([14, 255, 255])),
-        cv2.inRange(hsv_f, np.array([165, 50, 40]), np.array([180, 255, 255]))
+        cv2.inRange(hsv_f, bounds["red_lower_1"], bounds["red_upper_1"]),
+        cv2.inRange(hsv_f, bounds["red_lower_2"], bounds["red_upper_2"])
     )
     red_c = cv2.bitwise_or(
-        cv2.inRange(hsv_c, np.array([0, 50, 40]), np.array([14, 255, 255])),
-        cv2.inRange(hsv_c, np.array([165, 50, 40]), np.array([180, 255, 255]))
+        cv2.inRange(hsv_c, bounds["red_lower_1"], bounds["red_upper_1"]),
+        cv2.inRange(hsv_c, bounds["red_lower_2"], bounds["red_upper_2"])
     )
 
-    # Green masks (walkable corridor floor)
-    green_f = cv2.inRange(hsv_f, np.array([32, 45, 35]), np.array([88, 255, 255]))
+    # Green masks (walkable corridor floor, dynamically adjusted for shadows/lighting)
+    green_f = cv2.inRange(hsv_f, bounds["green_lower"], bounds["green_upper"])
 
     # Floor sector analysis (left, center, right)
     rw = floor_roi.shape[1] // 3
