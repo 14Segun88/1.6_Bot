@@ -327,6 +327,12 @@ VK_MAP = {
     "3": 0x33,
     "4": 0x34,
     "e": 0x45,
+    "f1": 0x70,
+    "f2": 0x71,
+    "f3": 0x72,
+    "f4": 0x73,
+    "f5": 0x74,
+    "f9": 0x78,
 }
 
 # DirectInput Hardware Scan Codes (Recognized by GoldSrc engine input layer)
@@ -344,6 +350,12 @@ SCAN_CODES = {
     "3": 0x04,
     "4": 0x05,
     "e": 0x12,
+    "f1": 0x3B,
+    "f2": 0x3C,
+    "f3": 0x3D,
+    "f4": 0x3E,
+    "f5": 0x3F,
+    "f9": 0x43,
 }
 
 VK_F9 = 0x78
@@ -1833,6 +1845,18 @@ def main():
                 cur_time_in_round = now - round_start_time
                 spawn_grace_period = 0.8  # Fast weapon equip on spawn
                 in_spawn_grace = (cur_time_in_round < spawn_grace_period)
+
+                # Round-End Watchdog: If round exceeds 1.55 minutes (93s), force round end via bot_kill / sv_restart
+                if cur_time_in_round > 95.0:
+                    print(f"\n[ROUND WATCHDOG] Round time limit (1.55 min) reached -> Resetting round...", flush=True)
+                    send_key_down("f3")
+                    time.sleep(0.015)
+                    send_key_up("f3")
+                    if cur_time_in_round > 98.0:
+                        send_key_down("f5")
+                        time.sleep(0.015)
+                        send_key_up("f5")
+                    round_start_time = now - 90.0  # Throttle watchdog trigger
 
                 # In aim_ai_sandbox, human AI Agent is always CT, hunting 11 T-dummies
                 is_terrorist = False
