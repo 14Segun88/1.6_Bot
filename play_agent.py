@@ -543,8 +543,6 @@ def execute_autobuy():
         time.sleep(0.08)
         # Dismiss any pending class selection menu (5 = auto-select random model)
         tap_key("5", 0.04)
-        time.sleep(0.03)
-        tap_key("space", 0.02)
         time.sleep(0.04)
 
         # Step 1: Buy Primary Rifle (b -> 4 -> 3 = M4A1 / AK-47)
@@ -817,21 +815,24 @@ def is_spectator_view(frame_bgr):
 def is_vgui_menu_open(frame_bgr):
     """
     Detects CS 1.6 VGUI Menu (Team Select, Class Select 'ВЫБЕРИТЕ КЛАСС', MOTD).
-    Features dark translucent overlay (dark_ratio > 0.40) and gold/yellow header (yellow_ratio > 0.015).
-    When open, soldier preview portraits must NEVER be treated as in-game enemies!
+    Must strictly require genuine menu overlay characteristics (very uniform dark panel std < 22,
+    and distinct golden title header) to completely avoid false triggers on shaded walls/corridors.
     """
     if frame_bgr is None or frame_bgr.shape[0] < 200:
         return False
     h, w = frame_bgr.shape[:2]
     panel = frame_bgr[int(h * 0.15):int(h * 0.85), int(w * 0.12):int(w * 0.88)]
     dark_ratio = float(np.mean(panel < 35))
-    if dark_ratio < 0.40:
+    if dark_ratio < 0.65:
+        return False
+    panel_std = float(np.std(panel))
+    if panel_std > 22.0:
         return False
     hdr = frame_bgr[int(h * 0.04):int(h * 0.14), int(w * 0.08):int(w * 0.35)]
     hsv_hdr = cv2.cvtColor(hdr, cv2.COLOR_BGR2HSV)
-    yellow_hdr = cv2.inRange(hsv_hdr, np.array([15, 120, 120]), np.array([35, 255, 255]))
+    yellow_hdr = cv2.inRange(hsv_hdr, np.array([20, 140, 140]), np.array([35, 255, 255]))
     yellow_ratio = float(np.mean(yellow_hdr > 0))
-    return yellow_ratio > 0.015
+    return yellow_ratio > 0.03
 
 
 class AIVisionVideoRecorder:
@@ -1352,9 +1353,6 @@ class CSYOLODetector:
         self.input_size = 640
 
     def detect(self, bgr_img):
-        # Never detect targets from portraits in VGUI menus (Choose Class / Team Select)
-        if is_vgui_menu_open(bgr_img):
-            return []
         gh, gw = bgr_img.shape[:2]
         cx_game = gw // 2
         cy_game = gh // 2
@@ -2234,6 +2232,7 @@ def main():
     spectator_streak = 0
     alive_screen_streak = 0
     red_wall_ticks = 0
+    last_wall_turn_time = 0.0
 
     # Ammo, Weapon Switching & Tactical Reload State
     combat_firing_start = 0.0
@@ -2245,7 +2244,7 @@ def main():
 
     def handle_round_start(evt_line):
         nonlocal active_route_idx, current_wp_idx, phys_stuck_ticks, last_phys_pos, round_start_time, forward_start, stuck_frames, turn_remaining, lane_turn_done, lane_turn_remaining, pitch_drift, spectator_streak, alive_screen_streak, red_wall_ticks, accumulated_reward
-        nonlocal combat_firing_start, burst_count, reloading_until, active_weapon_slot, reload_attempts, last_combat_had_fire
+        nonlocal combat_firing_start, burst_count, reloading_until, active_weapon_slot, reload_attempts, last_combat_had_fire, last_wall_turn_time
         if ai_recorder.is_recording:
             ai_recorder.stop_recording()
         if round_start_time > 0 and (time.time() - round_start_time) > 4.0:
@@ -2256,8 +2255,8 @@ def main():
         pitch_drift = 0  # Reset pitch accumulation on new round spawn
         tap_key("5", 0.04)  # Automatically dismiss any pending VGUI class selection
         time.sleep(0.02)
-        tap_key("space", 0.02)
         tap_key("end", 0.04)  # Snap camera pitch to exact 0.0° horizontal via GoldSrc force_centerview
+        last_wall_turn_time = 0.0
         spectator_streak = 0
         alive_screen_streak = 0
         active_route_idx = (active_route_idx + 1) % len(ROUTE_NAMES)
@@ -2425,7 +2424,8 @@ def main():
                     continue
 
                 # 0. Check if VGUI Menu is open (Choose Team / Choose Class "ВЫБЕРИТЕ КЛАСС" / MOTD)
-                if is_vgui_menu_open(frame_bgr):
+                # Only check before player has spawned alive into the game; never during combat/patrol
+                if not log_watcher.is_alive and alive_screen_streak < 3 and is_vgui_menu_open(frame_bgr):
                     action_status = "VGUI MENU: AUTO-DISMISSING [5]"
                     for k in list(current_keys):
                         send_key_up(k)
@@ -2435,7 +2435,6 @@ def main():
                         firing = False
                     tap_key("5", 0.04)  # Select random class / auto-select
                     time.sleep(0.04)
-                    tap_key("space", 0.03)
                     tap_key("1", 0.03)  # Draw rifle
                     if step_count % 15 == 0:
                         print(f"\r[VGUI MENU DETECTED] Auto-selected class [5] -> Closing menu...", end="", flush=True)
@@ -2472,7 +2471,7 @@ def main():
                 # 1. Vision Detection (YOLOv8)
                 raw_targets = detector.detect(frame_bgr)
                 cur_time_in_round = now - round_start_time
-                spawn_grace_period = 3.0  # 3.0s safe spawn breakout: weapon equip + leave spawn, zero shooting in spawn
+                spawn_grace_period = 1.0  # 1.0s brief spawn breakout for weapon equip
                 in_spawn_grace = (cur_time_in_round < spawn_grace_period)
 
                 # Round-End Watchdog: If round exceeds 1:55 (115s), force round end via bot_kill / sv_restart
@@ -2491,44 +2490,35 @@ def main():
                 is_terrorist = False
                 in_own_spawn = (cur_time_in_round < spawn_grace_period)
 
-                spawn_peace_active = in_spawn_grace
-
                 targets = []
-                if not spawn_peace_active:
-                    for t in raw_targets:
-                        # Anti-Decal Guard: Reject blood splatters on crates
-                        bx1, by1, bx2, by2 = t.get("box", (0, 0, 0, 0))
-                        if bx2 > bx1 and by2 > by1:
-                            th = by2 - by1
-                            tw = bx2 - bx1
-                            torso = frame_bgr[by1 + int(th * 0.15):by1 + int(th * 0.55), bx1 + int(tw * 0.20):bx1 + int(tw * 0.80)]
-                            if torso.size >= 16:
-                                hsv = cv2.cvtColor(torso, cv2.COLOR_BGR2HSV)
-                                mean_h, mean_s, mean_v = hsv.mean(axis=(0, 1))
-                                is_blood_red = (mean_h <= 10 or mean_h >= 80) and mean_s > 120 and mean_v > 80
-                                if is_blood_red:
+                for t in raw_targets:
+                    # Anti-Decal Guard: Reject blood splatters on crates
+                    bx1, by1, bx2, by2 = t.get("box", (0, 0, 0, 0))
+                    if bx2 > bx1 and by2 > by1:
+                        th = by2 - by1
+                        tw = bx2 - bx1
+                        torso = frame_bgr[by1 + int(th * 0.15):by1 + int(th * 0.55), bx1 + int(tw * 0.20):bx1 + int(tw * 0.80)]
+                        if torso.size >= 16:
+                            hsv = cv2.cvtColor(torso, cv2.COLOR_BGR2HSV)
+                            mean_h, mean_s, mean_v = hsv.mean(axis=(0, 1))
+                            is_blood_red = (mean_h <= 10 or mean_h >= 80) and mean_s > 120 and mean_v > 80
+                            if is_blood_red:
+                                continue
+
+                            # Teammate Discrimination (cl_minmodels 1: CT=GIGN Blue, T=LEET Tan/Yellow)
+                            tb, tg, tr = torso.mean(axis=(0, 1))
+                            is_ct_model = (tb > tr + 6) or (tb > tg and tb > 55) or (mean_h >= 95 and mean_h <= 135 and mean_s > 25)
+                            is_t_model = (tr > tb + 10 and tg > tb + 4) or (mean_h >= 15 and mean_h <= 55 and mean_s > 20)
+
+                            if is_terrorist:
+                                if is_t_model and not is_ct_model:
+                                    continue
+                            else:
+                                # Bot is CT: only reject if confirmed CT teammate (prominent GIGN blue helmet/uniform)
+                                if is_ct_model and not is_t_model:
                                     continue
 
-                                # Enhanced Teammate Discrimination (cl_minmodels 1: CT=GIGN Blue, T=LEET Tan/Yellow)
-                                tb, tg, tr = torso.mean(axis=(0, 1))
-                                
-                                # GIGN has prominent blue uniform and navy helmet
-                                is_ct_model = (tb > tr + 6) or (tb > tg and tb > 55) or (mean_h >= 95 and mean_h <= 135 and mean_s > 25)
-                                # Leet has prominent yellow/tan shirt, and sandbox dummies are bright yellow
-                                is_t_model = (tr > tb + 10 and tg > tb + 4) or (mean_h >= 15 and mean_h <= 55 and mean_s > 20)
-
-                                if is_terrorist:
-                                    # Bot is Terrorist: Target MUST be confirmed CT!
-                                    # If target has Terrorist colors or lacks clear CT blue -> TEAMMATE! Ignore!
-                                    if is_t_model or not is_ct_model:
-                                        continue
-                                else:
-                                    # Bot is CT: Target MUST be confirmed Terrorist!
-                                    # If target has CT blue or lacks Leet colors -> TEAMMATE! Ignore!
-                                    if is_ct_model or not is_t_model:
-                                        continue
-
-                        targets.append(t)
+                    targets.append(t)
 
                 enemy_spotted = len(targets) > 0
 
@@ -2556,7 +2546,7 @@ def main():
                     # Policy network can initiate or sustain bursts
                     dist_norm = float(primary["dist"]) / float(math.hypot(crop_w, crop_h))
                     policy_fire = (p_clicks[0] > 0.35 and dist_norm < 0.65 and abs(dx) < max(38.0, body_w * 0.95) and abs(dy) < max(40.0, body_h * 0.95))
-                    can_fire = (is_locked == 1.0 or is_actively_bursting or policy_fire) and (not spawn_peace_active)
+                    can_fire = (is_locked == 1.0 or is_actively_bursting or policy_fire) and (not in_spawn_grace)
                     
                     dx_norm = float(dx) / float(crop_w)
                     dy_norm = float(dy) / float(crop_h)
@@ -2789,22 +2779,17 @@ def main():
                         send_mouse_up()
                         firing = False
 
-                    # If pressed into a red barrier wall, NEVER press W! Reverse with S + hop to detach from brush!
+                    # If pressed into a red barrier wall, NEVER press W! Reverse with S + strafe to detach from brush!
                     if wall_ahead or red_ratio > 0.30:
                         desired_keys.add("s")
-                        desired_keys.add("space")
                         turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
                         desired_keys.add("d" if turn_dir > 0 else "a")
                     else:
                         desired_keys.add("w")
-                        desired_keys.add("space")  # Hop over low crate edges/steps
-                        if stuck_frames >= 4:
-                            desired_keys.add("ctrl")  # Duck-jump over higher obstacles
-                        desired_keys.add("d" if patrol_dir > 0 else "a")
 
-                    # Smooth pivot away from obstacle (up to 300 counts per frame)
+                    # Smooth pivot away from obstacle (gentle 35 counts per frame = ~1.5 deg/frame)
                     if turn_remaining != 0:
-                        step_t = int(np.clip(turn_remaining, -300, 300))
+                        step_t = int(np.clip(turn_remaining, -35, 35))
                         turn_remaining -= step_t
                         send_mouse_move(step_t, 0)
 
@@ -2869,50 +2854,54 @@ def main():
                     # STATE C1: OPTICAL COLOR LIDAR OBSTACLE & BARRIER AVOIDANCE
                     # ==============================================================
                     # Universal: active for both memory waypoint navigation AND optical arena patrol
-                    if wall_ahead or red_ratio > 0.20:
+                    if wall_ahead or red_ratio > 0.30:
                         red_wall_ticks += 1
                         telemetry_tracker.on_wall_avoid()
                         accumulated_reward -= 0.05
-                        desired_keys.discard("w")  # CRITICAL: Never push forward into red barrier!
 
                         turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
 
-                        if red_ratio > 0.40:
-                            # POINT BLANK IN WALL: Immediate reverse & 90° pivot
+                        if red_ratio > 0.45 or wall_ahead:
+                            # Flush into red wall: reverse with S, strafe, and queue a single 70° turn with cooldown
                             action_status = f"LIDAR: FLUSH WALL ({red_ratio*100:.0f}%) -> REVERSE & PIVOT"
+                            desired_keys.discard("w")
                             desired_keys.add("s")
-                            desired_keys.add("space")
                             desired_keys.add("d" if turn_dir > 0 else "a")
-                            turn_step = int(turn_dir * 90.0 * counts_per_deg)
-                            send_mouse_move(int(np.clip(turn_step, -320, 320)), 0)
+                            if turn_remaining == 0 and now > last_wall_turn_time:
+                                last_wall_turn_time = now + 1.2
+                                turn_remaining = int(turn_dir * 70.0 * counts_per_deg)
                         else:
-                            # WALL AHEAD: Steer and strafe away towards open floor corridor
+                            # Approaching wall: advance with W while smoothly steering towards open floor
                             action_status = f"LIDAR: WALL ({red_ratio*100:.0f}%) -> STEER {'RIGHT' if turn_dir > 0 else 'LEFT'}"
-                            lidar_turn = int(np.clip(turn_dir * 45.0 * counts_per_deg, -160, 160))
-                            send_mouse_move(lidar_turn, 0)
-                            desired_keys.add("d" if turn_dir > 0 else "a")
-                            if red_ratio > 0.28:
-                                desired_keys.add("space")
+                            desired_keys.add("w")
+                            if abs(steer_bias) > 0.35:
+                                desired_keys.add("d" if turn_dir > 0 else "a")
+                            if abs(steer_bias) > 0.15 and turn_remaining == 0:
+                                steer_step = int(np.clip(steer_bias * 1.5 * counts_per_deg, -20, 20))
+                                send_mouse_move(steer_step, 0)
 
-                        # If pressed against wall for > 15 frames (~0.5s), execute full 140° escape spin
-                        if red_wall_ticks >= 15:
+                        # If pressed against wall for > 20 frames (~0.7s), queue a 70° escape turn
+                        if red_wall_ticks >= 20:
+                            desired_keys.discard("w")
                             desired_keys.add("s")
-                            send_mouse_move(int(turn_dir * 140.0 * counts_per_deg), 0)
+                            if turn_remaining == 0 and now > last_wall_turn_time:
+                                last_wall_turn_time = now + 1.2
+                                turn_remaining = int(turn_dir * 70.0 * counts_per_deg)
                             if pose is not None and current_wp_idx < len(active_waypoints) - 1:
                                 current_wp_idx += 1
                             red_wall_ticks = 0
 
                     else:
                         red_wall_ticks = max(0, red_wall_ticks - 1)
-                        # Clear path ahead: advance with W if green floor visible
+                        # Open corridor: advance forward with W if green floor visible
                         if floor_visible and not enemy_spotted:
                             desired_keys.add("w")
 
-                        # Fine steering along open green floor corridor
-                        if abs(steer_bias) > 0.18:
-                            steer_turn = int(np.clip(steer_bias * 25.0 * counts_per_deg, -100, 100))
-                            send_mouse_move(steer_turn, 0)
-                            if abs(steer_bias) > 0.38:
+                        # Fine centering along green corridor
+                        if abs(steer_bias) > 0.25 and turn_remaining == 0:
+                            steer_step = int(np.clip(steer_bias * 1.2 * counts_per_deg, -15, 15))
+                            send_mouse_move(steer_step, 0)
+                            if abs(steer_bias) > 0.45:
                                 desired_keys.add("d" if steer_bias > 0 else "a")
 
                         # ==============================================================
@@ -2940,7 +2929,7 @@ def main():
 
                             if dist < 85.0 and current_wp_idx < len(active_waypoints) - 1:
                                 current_wp_idx += 1
-                                if not spawn_peace_active:
+                                if not in_spawn_grace:
                                     accumulated_reward += 0.5
                                 wp_x, wp_y = active_waypoints[current_wp_idx]
                                 dx = wp_x - cur_x
@@ -2950,7 +2939,7 @@ def main():
 
                             if now - last_phys_check > 0.30:
                                 last_phys_check = now
-                                if "w" in current_keys:
+                                if "w" in current_keys and not in_spawn_grace:
                                     move_delta = math.hypot(cur_x - last_phys_pos[0], cur_y - last_phys_pos[1])
                                     if move_delta < 18.0:
                                         phys_stuck_ticks += 1
@@ -2977,31 +2966,21 @@ def main():
 
                                 if phys_stuck_ticks >= 2:
                                     telemetry_tracker.on_unstuck()
-                                    action_status = f"NAV: DUCK-JUMP UNHOOK (Stuck {phys_stuck_ticks})"
-                                    desired_keys.add("w")
-                                    desired_keys.add("space")
-                                    desired_keys.add("ctrl")
-                                    if phys_stuck_ticks >= 4:
-                                        desired_keys.add("d" if angle_diff >= 0 else "a")
+                                    action_status = f"NAV: REVERSE UNHOOK (Stuck {phys_stuck_ticks})"
+                                    desired_keys.add("s")
+                                    desired_keys.add("d" if angle_diff >= 0 else "a")
                                     if phys_stuck_ticks >= 7:
                                         if current_wp_idx < len(active_waypoints) - 1:
                                             current_wp_idx += 1
                                         phys_stuck_ticks = 0
                                 else:
-                                    if abs(angle_diff) < 35.0:
+                                    if abs(angle_diff) < 70.0:
                                         desired_keys.add("w")
-                                    elif abs(angle_diff) < 65.0:
-                                        desired_keys.add("w")
-                                        if angle_diff > 15.0:
-                                            desired_keys.add("a")
-                                        elif angle_diff < -15.0:
-                                            desired_keys.add("d")
-                                    else:
-                                        if abs(angle_diff) < 85.0 and step_count % 3 == 0:
-                                            desired_keys.add("w")
+                                    if abs(angle_diff) > 25.0:
+                                        desired_keys.add("a" if angle_diff > 0 else "d")
 
-                                k_steer = counts_per_deg * 0.42
-                                turn_step = int(np.clip(-angle_diff * k_steer, -220, 220))
+                                k_steer = counts_per_deg * 0.30
+                                turn_step = int(np.clip(-angle_diff * k_steer, -40, 40))
                                 send_mouse_move(turn_step, 0)
 
                         else:
@@ -3054,15 +3033,19 @@ def main():
                 # 3. Block crouching (Ctrl) so bot never gets stuck sitting on spawn
                 # 4. Disable shooting completely
                 if in_spawn_grace:
-                    if not wall_ahead and red_ratio < 0.25:
+                    phys_stuck_ticks = 0
+                    if not wall_ahead and red_ratio < 0.30:
                         desired_keys.add("w")
                     else:
+                        desired_keys.add("s")
                         turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
-                        send_mouse_move(int(turn_dir * 60.0 * counts_per_deg), 0)
                         desired_keys.add("d" if turn_dir > 0 else "a")
                         desired_keys.discard("w")
-                    if "ctrl" in desired_keys:
-                        desired_keys.remove("ctrl")
+                        if turn_remaining == 0 and now > last_wall_turn_time:
+                            last_wall_turn_time = now + 1.2
+                            turn_remaining = int(turn_dir * 70.0 * counts_per_deg)
+                    desired_keys.discard("ctrl")
+                    desired_keys.discard("space")
                     if firing:
                         send_mouse_up()
                         firing = False
