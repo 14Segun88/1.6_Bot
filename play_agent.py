@@ -1479,9 +1479,10 @@ def main():
     lane_turn_remaining = 0
     spectator_streak = 0
     alive_screen_streak = 0
+    red_wall_ticks = 0
 
     def handle_round_start(evt_line):
-        nonlocal active_route_idx, current_wp_idx, phys_stuck_ticks, last_phys_pos, round_start_time, forward_start, stuck_frames, turn_remaining, lane_turn_done, lane_turn_remaining, pitch_drift, spectator_streak, alive_screen_streak
+        nonlocal active_route_idx, current_wp_idx, phys_stuck_ticks, last_phys_pos, round_start_time, forward_start, stuck_frames, turn_remaining, lane_turn_done, lane_turn_remaining, pitch_drift, spectator_streak, alive_screen_streak, red_wall_ticks
         round_start_time = time.time()
         pitch_drift = 0  # Reset pitch accumulation on new round spawn
         spectator_streak = 0
@@ -1489,6 +1490,7 @@ def main():
         active_route_idx = (active_route_idx + 1) % len(ROUTE_NAMES)
         current_wp_idx = 0
         phys_stuck_ticks = 0
+        red_wall_ticks = 0
         last_phys_pos = (0.0, 0.0)
         forward_start = round_start_time
         stuck_frames = 0
@@ -2023,16 +2025,29 @@ def main():
                         # Optical Color Lidar: Obstacle Avoidance via red wall / green floor detection
                         steer_bias, wall_ahead, floor_visible = optical_color_lidar(frame_bgr)
                         if wall_ahead:
-                            action_status = "LIDAR: RED WALL AHEAD -> DUCK-JUMP HOP"
+                            red_wall_ticks += 1
+                            action_status = f"LIDAR: RED WALL ({red_wall_ticks}) -> ESCAPE PIVOT"
                             desired_keys.add("space")
                             desired_keys.add("ctrl")
-                            if steer_bias > 0.05:
-                                desired_keys.add("d")
-                            elif steer_bias < -0.05:
-                                desired_keys.add("a")
+                            desired_keys.discard("w")
+                            
+                            # Rotate away from red wall towards open floor
+                            turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
+                            lidar_turn = int(np.clip(turn_dir * 45.0 * counts_per_deg, -160, 160))
+                            send_mouse_move(lidar_turn, 0)
+                            
+                            # If pressed against wall for > 1.55 seconds (approx 15 frames)
+                            if red_wall_ticks >= 15:
+                                desired_keys.add("s")
+                                send_mouse_move(int(140.0 * counts_per_deg), 0)
+                                if current_wp_idx < len(active_waypoints) - 1:
+                                    current_wp_idx += 1
+                                red_wall_ticks = 0
                             accumulated_reward -= 0.05
-                        elif abs(steer_bias) > 0.25:
-                            desired_keys.add("d" if steer_bias > 0 else "a")
+                        else:
+                            red_wall_ticks = max(0, red_wall_ticks - 1)
+                            if abs(steer_bias) > 0.25:
+                                desired_keys.add("d" if steer_bias > 0 else "a")
 
                         # Reached final waypoint in enemy spawn: Sweep and Hunt
                         if current_wp_idx >= len(active_waypoints) - 1 and dist < 120.0:
@@ -2066,19 +2081,20 @@ def main():
                                         current_wp_idx += 1
                                     phys_stuck_ticks = 0
                             else:
-                                # Normal forward waypoint steering
-                                if abs(angle_diff) < 35.0:
-                                    desired_keys.add("w")
-                                elif abs(angle_diff) < 65.0:
-                                    desired_keys.add("w")
-                                    if angle_diff > 15.0:
-                                        desired_keys.add("a")
-                                    elif angle_diff < -15.0:
-                                        desired_keys.add("d")
-                                else:
-                                    # Need sharp turn: pivot smoothly without sliding into walls
-                                    if abs(angle_diff) < 85.0 and step_count % 3 == 0:
+                                # Normal forward waypoint steering (suppressed when red wall ahead)
+                                if not wall_ahead:
+                                    if abs(angle_diff) < 35.0:
                                         desired_keys.add("w")
+                                    elif abs(angle_diff) < 65.0:
+                                        desired_keys.add("w")
+                                        if angle_diff > 15.0:
+                                            desired_keys.add("a")
+                                        elif angle_diff < -15.0:
+                                            desired_keys.add("d")
+                                    else:
+                                        # Need sharp turn: pivot smoothly without sliding into walls
+                                        if abs(angle_diff) < 85.0 and step_count % 3 == 0:
+                                            desired_keys.add("w")
 
                         # Proportional mouse steering towards target angle
                         k_steer = counts_per_deg * 0.42

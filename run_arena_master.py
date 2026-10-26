@@ -220,7 +220,7 @@ def launch_game_if_needed(work_dir):
     exe_path, run_dir = find_game_executable(work_dir)
     if exe_path and sys.platform.startswith("win"):
         print(f"    [*] Launching CS 1.6 on map aim_ai_sandbox with 11 dummies ({exe_path})...", flush=True)
-        cmd = f'start "" "{exe_path}" -game cstrike -nomaster -novid -steam -noforcemparms -condebug +maxplayers 24 +exec maps/aim_ai_sandbox.cfg +map aim_ai_sandbox'
+        cmd = f'start "" "{exe_path}" -game cstrike -nomaster -novid -steam -noforcemparms -condebug +maxplayers 24 +mp_roundtime 1.55 +mp_round_restart_delay 1.55 +exec maps/aim_ai_sandbox.cfg +map aim_ai_sandbox'
         subprocess.Popen(cmd, cwd=run_dir, shell=True)
         print("    [*] Waiting 5 seconds for CS 1.6 engine to initialize...", flush=True)
         time.sleep(5.0)
