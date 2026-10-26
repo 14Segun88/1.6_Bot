@@ -2417,15 +2417,16 @@ def main():
                     body_w = primary.get("w", 30)
                     body_h = primary.get("h", 60)
                     
-                    # Broadened lock threshold: crosshair inside target torso bounding box
-                    lock_tol_x = max(28.0, body_w * 0.65)
-                    lock_tol_y = max(24.0, body_h * 0.75)
+                    # Target acquisition and lock with burst hysteresis
+                    is_actively_bursting = (firing and burst_start > 0.0 and (now - burst_start < 0.35))
+                    lock_tol_x = max(45.0, body_w * 0.90) if is_actively_bursting else max(26.0, body_w * 0.60)
+                    lock_tol_y = max(55.0, body_h * 1.10) if is_actively_bursting else max(22.0, body_h * 0.65)
                     is_locked = 1.0 if (abs(dx) <= lock_tol_x and abs(dy) <= lock_tol_y) else 0.0
                     
                     # Policy network can initiate or sustain bursts
                     dist_norm = float(primary["dist"]) / float(math.hypot(crop_w, crop_h))
-                    policy_fire = (p_clicks[0] > 0.35 and dist_norm < 0.65 and abs(dx) < max(42.0, body_w * 1.1))
-                    can_fire = (is_locked == 1.0 or policy_fire) and (not spawn_peace_active)
+                    policy_fire = (p_clicks[0] > 0.35 and dist_norm < 0.65 and abs(dx) < max(38.0, body_w * 0.95) and abs(dy) < max(40.0, body_h * 0.95))
+                    can_fire = (is_locked == 1.0 or is_actively_bursting or policy_fire) and (not spawn_peace_active)
                     
                     dx_norm = float(dx) / float(crop_w)
                     dy_norm = float(dy) / float(crop_h)
@@ -2489,9 +2490,10 @@ def main():
                         # PUSH OUT OF SPAWN! Keep running forward
                         desired_keys.add("w")
 
-                    # Draw selected weapon if not already equipped
-                    if not last_enemy_spotted and active_weapon_slot == 1:
+                    # Always ensure primary rifle [1] is equipped in combat
+                    if not last_enemy_spotted:
                         tap_key("1", 0.03)
+                        active_weapon_slot = 1
 
                     # 2. Linear Lead Target Tracking & Damped P-Controller (Zero Overshoot, Zero Noise)
                     dt_target = max(0.005, min(0.20, now - last_combat_time)) if last_enemy_spotted else 0.033
@@ -2508,14 +2510,23 @@ def main():
                     lead_x = dx + vx_target * 0.04
                     lead_y = dy + vy_target * 0.03
 
-                    step_dx = int(np.clip(lead_x * k_aim_x * 0.80, -750, 750))
-                    step_dy = int(np.clip(lead_y * k_aim_y * 0.80, -45, 45))
+                    # Unified Aiming & Recoil Control (Smooth vertical tracking, ZERO jitter)
+                    is_actively_bursting = (firing and burst_start > 0.0 and (now - burst_start < 0.30))
+                    if is_actively_bursting:
+                        burst_elapsed = now - burst_start
+                        # CS 1.6 AK47/M4: first 2 bullets flat, bullets 3-4 rise moderately
+                        rec_step = 1 if burst_elapsed < 0.09 else 4
+                        step_dx = int(np.clip(lead_x * k_aim_x * 0.65, -550, 550))
+                        step_dy = int(np.clip(lead_y * k_aim_y * 0.25 + rec_step, -20, 20))
+                    else:
+                        step_dx = int(np.clip(lead_x * k_aim_x * 0.80, -750, 750))
+                        step_dy = int(np.clip(lead_y * k_aim_y * 0.80, -45, 45))
 
                     # Anti-Floor Pitch Guard: Never aim into floor when pitch drift is positive
                     if pitch_drift > 40 and step_dy > 0:
                         step_dy = 0
 
-                    # Send clean, damped mouse movement without noise or jitter
+                    # Send clean, unified mouse movement
                     send_mouse_move(step_dx, step_dy)
                     pitch_drift = int(np.clip(pitch_drift + step_dy, -1200, 1200))
                     last_combat_time = now
@@ -2532,14 +2543,16 @@ def main():
                             strafe_k = "a" if int((reloading_until - now) * 4) % 2 == 0 else "d"
                             desired_keys.add(strafe_k)
                         else:
-                            # Standard counter-strafing / duck spray
-                            desired_keys.discard("w")
-                            should_crouch = (can_fire and burst_start > 0.0) or (primary["dist"] > 240) or (p_keys[5] > 0.35)
-                            if should_crouch:
-                                desired_keys.add("ctrl")
+                            # While actively firing: CROUCH and STOP all movement for maximum CS 1.6 rifle accuracy!
+                            if firing:
+                                desired_keys.discard("w")
+                                desired_keys.discard("s")
                                 desired_keys.discard("a")
                                 desired_keys.discard("d")
+                                desired_keys.add("ctrl")  # Duck-spray eliminates bullet spread!
                             else:
+                                # Between bursts: tactical ADAD counter-strafe
+                                desired_keys.discard("w")
                                 strafe_phase = int((now - combat_strafe_start) / 0.32) % 2
                                 if strafe_phase == 0:
                                     desired_keys.add("a")
@@ -2550,7 +2563,7 @@ def main():
                     else:
                         desired_keys.add("w")
 
-                    # 4. Ammo Management, Tactical Reload [R] & Dynamic Weapon Switching
+                    # 4. Ammo Management, Tactical Reload [R] & Lethal Burst Execution
                     if now < reloading_until:
                         # Actively reloading: take evasive cover and do NOT click empty gun!
                         if firing:
@@ -2563,63 +2576,26 @@ def main():
                             combat_firing_start = now
                             burst_count = 0
 
-                        # Check if magazine or reserve ammo is depleted:
-                        # Standard rifle magazine has 30 rounds (~2.8s firing or 7-8 bursts)
-                        if burst_count >= 7 or (now - combat_firing_start > 2.8):
-                            if active_weapon_slot == 1 and reload_attempts == 0:
-                                # Primary Magazine Empty -> TACTICAL RELOAD [R]
-                                if firing:
-                                    send_mouse_up()
-                                    firing = False
-                                tap_key("r", 0.04)
-                                reloading_until = now + 2.2
-                                burst_count = 0
-                                reload_attempts = 1
-                                combat_firing_start = 0.0
-                                action_status = "TACTICAL RELOAD [R] (Magazine Empty)"
-                                play_beep(900, 45)
-                                if now - round_start_time < 35.0:
-                                    tap_key(",", 0.03)
-                                    tap_key(".", 0.03)
-                            elif active_weapon_slot == 1 and reload_attempts >= 1:
-                                # Primary has 0 reserve ammo! Switch to Sidearm (Pistol [2])
-                                if firing:
-                                    send_mouse_up()
-                                    firing = False
-                                tap_key("2", 0.04)
-                                active_weapon_slot = 2
-                                burst_count = 0
-                                reload_attempts = 0
-                                combat_firing_start = now
-                                action_status = "PRIMARY EMPTY -> DRAW PISTOL [2]"
-                                play_beep(1400, 40)
-                                if now - round_start_time < 35.0:
-                                    tap_key(",", 0.03)
-                                    tap_key(".", 0.03)
-                            elif active_weapon_slot == 2 and burst_count >= 5:
-                                # Sidearm also empty! Switch to Knife [3] and melee charge
-                                if firing:
-                                    send_mouse_up()
-                                    firing = False
-                                tap_key("3", 0.04)
-                                active_weapon_slot = 3
-                                burst_count = 0
-                                reload_attempts = 0
-                                action_status = "ALL AMMO EMPTY -> DRAW KNIFE [3]"
-                                play_beep(1800, 50)
-                            elif active_weapon_slot == 3:
-                                # Knife attack
-                                desired_keys.add("w")
-                                desired_keys.add("space")
-                                send_mouse_down()
-                                firing = True
-                                action_status = "KNIFE MELEE RUSH [3]"
+                        # Check if magazine needs tactical reload (6 bursts = full 30-round mag)
+                        if burst_count >= 6 or (now - combat_firing_start > 2.6):
+                            if firing:
+                                send_mouse_up()
+                                firing = False
+                            tap_key("r", 0.04)
+                            if now - round_start_time < 35.0:
+                                tap_key(",", 0.02)
+                                tap_key(".", 0.02)
+                            tap_key("1", 0.03)  # Always keep primary rifle equipped
+                            active_weapon_slot = 1
+                            reloading_until = now + 2.2
+                            burst_count = 0
+                            combat_firing_start = 0.0
+                            action_status = "TACTICAL RELOAD [R] (Primary Rifle)"
+                            play_beep(900, 45)
                         else:
-                            # Normal lethal firing burst with recoil compensation
-                            recoil_pull = max(4, min(10, int(round(t_aim[1])) + 4)) if t_aim[1] > 0.5 else 5
-                            stance_label = "DUCK" if "ctrl" in desired_keys else "ADAD"
-                            slot_tag = "RIFLE" if active_weapon_slot == 1 else ("PISTOL" if active_weapon_slot == 2 else "KNIFE")
-                            action_status = f"COMBAT: {slot_tag} B#{burst_count+1} (dx={dx:+.0f}, dy={dy:+.0f}, rec={recoil_pull}, {stance_label})"
+                            # Normal lethal firing burst (3-4 rounds, 0.28s hold, 0.10s pause)
+                            stance_label = "DUCK" if "ctrl" in desired_keys else "STAND"
+                            action_status = f"COMBAT: RIFLE B#{burst_count+1} (dx={dx:+.0f}, dy={dy:+.0f}, {stance_label})"
 
                             if burst_start == 0.0:
                                 burst_start = now
@@ -2630,14 +2606,13 @@ def main():
                                 play_beep(1600, 25)
 
                             burst_time = now - burst_start
-                            if burst_time < 0.30:  # 3-4 lethal rounds
-                                send_mouse_move(0, recoil_pull)
-                                pitch_drift = int(np.clip(pitch_drift + recoil_pull, -1200, 1200))
-                            elif burst_time < 0.40:
+                            if burst_time < 0.28:  # 3-4 lethal rounds: mouse move already applied smoothly
+                                pass
+                            elif burst_time < 0.38:  # 100ms pause for crosshair recoil reset
                                 if firing:
                                     send_mouse_up()
                                     firing = False
-                            else:
+                            else:  # Cycle into next burst
                                 burst_start = now
                                 burst_count += 1
                                 send_mouse_down()
