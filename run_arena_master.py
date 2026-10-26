@@ -285,10 +285,11 @@ def launch_arena_engines(work_dir):
     print("                ALL 3 AI ARENA ENGINES ARE RUNNING!")
     print("="*78)
     print("  1. Switch to Counter-Strike 1.6 window.")
-    print("  2. Join Terrorist or CT team (10 bots are already playing on $2000$).")
+    print("  2. Join Counter-Terrorist team on aim_ai_sandbox (hunting 11 dummies).")
     print("  3. Press [F9] in game anytime to UNPAUSE / PAUSE the bot.")
-    print("  4. Check the Daemon window: it prints fine-tuning loss every 15 seconds.")
-    print("  5. Check the Arbitrator window: it records round wins towards the 10 streak.")
+    print("  4. Press [F6] in game anytime to RECORD 1 ROUND through AI Eyes (Neural Vision Video)!")
+    print("  5. Check benchmarks/live_telemetry.json for real-time round metrics.")
+    print("  6. Check the Daemon window: prints fine-tuning loss every 15 seconds.")
     print("="*78 + "\n", flush=True)
     
     return [p1, p2, p3]

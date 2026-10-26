@@ -332,6 +332,7 @@ VK_MAP = {
     "f3": 0x72,
     "f4": 0x73,
     "f5": 0x74,
+    "f6": 0x75,
     "f9": 0x78,
 }
 
@@ -355,9 +356,11 @@ SCAN_CODES = {
     "f3": 0x3D,
     "f4": 0x3E,
     "f5": 0x3F,
+    "f6": 0x40,
     "f9": 0x43,
 }
 
+VK_F6 = 0x75
 VK_F9 = 0x78
 MOUSEEVENTF_MOVE = 0x0001
 MOUSEEVENTF_LEFTDOWN = 0x0002
@@ -645,6 +648,277 @@ def is_spectator_view(frame_bgr):
     bot_std = float(np.std(bot_strip))
     # Genuine spectator letterbox bars are pure solid black (mean < 8.0, uniform std < 4.0)
     return (top_mean < 8.0 and bot_mean < 8.0 and top_std < 4.0 and bot_std < 4.0)
+
+
+class AIVisionVideoRecorder:
+    """
+    Zero-Lag Cybernetic AI Vision Video Recorder:
+    Captures real-time POV gameplay through the eyes of the Neural Agent:
+    - Bounding boxes, Bullseye head targets, distance/confidence badges
+    - Center dynamic crosshair & laser target tracing
+    - Optical Red Wall Lidar avoidance indicators
+    - Real-time Tactical Brain, active key inputs, mouse aim deltas
+    - Animated 'REC' indicator, round timer & score
+    - Asynchronous threaded writer with frame queue to guarantee zero game stutter
+    - Codec: Motion JPEG (.avi) crash-proof format for universal playback
+    """
+    def __init__(self, output_dir="demos", fps=30):
+        self.output_dir = output_dir
+        self.fps = fps
+        self.is_recording = False
+        self.frame_queue = queue.Queue(maxsize=150)
+        self.writer_thread = None
+        self.current_filename = None
+        self.round_num = 1
+        self.frames_written = 0
+        self.start_time = 0.0
+        self.kill_banner_text = ""
+        self.kill_banner_until = 0.0
+        self.kill_banner_color = (0, 255, 255)
+        try:
+            os.makedirs(self.output_dir, exist_ok=True)
+        except Exception:
+            pass
+
+    def trigger_banner(self, text, duration=1.8, is_headshot=False):
+        self.kill_banner_text = text
+        self.kill_banner_until = time.time() + duration
+        self.kill_banner_color = (50, 50, 255) if is_headshot else (0, 220, 255)
+
+    def start_recording(self, round_num=1):
+        if self.is_recording:
+            return
+        self.round_num = round_num
+        self.frames_written = 0
+        self.start_time = time.time()
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        self.current_filename = os.path.join(self.output_dir, f"round_{round_num:02d}_ai_vision_{timestamp}.avi")
+        self.is_recording = True
+
+        # Audio cue: Ascending high-pitch dual chirp (1600Hz -> 2200Hz)
+        play_beep(1600, 80)
+        def _second_beep():
+            time.sleep(0.09)
+            play_beep(2200, 100)
+        threading.Thread(target=_second_beep, daemon=True).start()
+
+        self.writer_thread = threading.Thread(target=self._writer_loop, daemon=True)
+        self.writer_thread.start()
+
+        print("\n" + "="*76)
+        print(f" >>> [AI VISION RECORDER: RECORDING] 🎬 ROUND {round_num:02d} THROUGH AI EYES! <<<")
+        print(f" >>> Target File: {self.current_filename}")
+        print(f" >>> Neural HUD: BBoxes + Head Bullseyes + Laser Tracking + Lidar + Brain Telemetry")
+        print(f" >>> Press [F6] anytime to stop early, or let the round finish automatically.")
+        print("="*76 + "\n", flush=True)
+
+    def stop_recording(self):
+        if not self.is_recording:
+            return
+        self.is_recording = False
+        try:
+            self.frame_queue.put_nowait(None)  # Sentinel to terminate writer loop
+        except Exception:
+            pass
+
+        if self.writer_thread and self.writer_thread.is_alive():
+            self.writer_thread.join(timeout=3.0)
+        self.writer_thread = None
+
+        # Audio cue: Descending low-pitch dual chirp (1800Hz -> 1200Hz)
+        play_beep(1800, 80)
+        def _second_beep():
+            time.sleep(0.09)
+            play_beep(1200, 100)
+        threading.Thread(target=_second_beep, daemon=True).start()
+
+        duration = time.time() - self.start_time
+        size_mb = 0.0
+        if self.current_filename and os.path.exists(self.current_filename):
+            try:
+                size_mb = os.path.getsize(self.current_filename) / (1024 * 1024)
+            except Exception:
+                pass
+
+        print("\n" + "="*76)
+        print(f" >>> [AI VISION RECORDER: SAVED] 💾 Video ready to watch!")
+        print(f" >>> Saved to: {self.current_filename}")
+        print(f" >>> Duration: {duration:.1f}s | Recorded Frames: {self.frames_written} | File Size: {size_mb:.2f} MB")
+        print("="*76 + "\n", flush=True)
+
+    def put_frame(self, frame):
+        if not self.is_recording or frame is None:
+            return
+        try:
+            self.frame_queue.put_nowait(frame)
+        except queue.Full:
+            pass  # Drop frame under extreme I/O load to prevent game hitching
+
+    def _writer_loop(self):
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        writer = None
+        while True:
+            try:
+                frame = self.frame_queue.get(timeout=0.4)
+            except queue.Empty:
+                if not self.is_recording:
+                    break
+                continue
+
+            if frame is None:
+                break
+
+            if writer is None:
+                h, w = frame.shape[:2]
+                writer = cv2.VideoWriter(self.current_filename, fourcc, self.fps, (w, h))
+
+            writer.write(frame)
+            self.frames_written += 1
+            self.frame_queue.task_done()
+
+        if writer:
+            writer.release()
+
+    def render_hud(
+        self,
+        frame_bgr,
+        targets,
+        primary_target,
+        is_locked,
+        firing_state,
+        status_text,
+        keys_set,
+        step_dx,
+        step_dy,
+        brain_str,
+        round_num,
+        round_elapsed,
+        round_kills,
+        round_hs_pct,
+        accumulated_reward,
+        route_name="A_LANE",
+        wp_idx=0,
+        total_wps=0,
+        wall_ahead=False,
+        steer_bias=0.0
+    ):
+        vis = frame_bgr.copy()
+        h, w = vis.shape[:2]
+        cx, cy = w // 2, h // 2
+
+        # 1. Target Bounding Boxes & Head Bullseyes
+        for t in targets:
+            dx = t["dx"]
+            dy = t["dy"]
+            tx = int(cx + dx)
+            ty = int(cy + dy)
+            tw = int(t.get("w", 28))
+            th = int(t.get("h", 55))
+            conf = float(t.get("conf", 0.0))
+
+            x1 = max(0, tx - tw // 2)
+            y1 = max(0, ty - int(th * 0.18))
+            x2 = min(w - 1, tx + tw // 2)
+            y2 = min(h - 1, y1 + th)
+
+            is_primary = (t is primary_target)
+            if is_primary:
+                box_color = (0, 0, 255) if is_locked else (0, 165, 255)
+                # Bounding box
+                cv2.rectangle(vis, (x1, y1), (x2, y2), box_color, 2)
+
+                # Corner Bracket Accents
+                corn_len = max(6, int(tw * 0.25))
+                cv2.line(vis, (x1, y1), (x1 + corn_len, y1), (255, 255, 255), 2)
+                cv2.line(vis, (x1, y1), (x1, y1 + corn_len), (255, 255, 255), 2)
+                cv2.line(vis, (x2, y1), (x2 - corn_len, y1), (255, 255, 255), 2)
+                cv2.line(vis, (x2, y1), (x2, y1 + corn_len), (255, 255, 255), 2)
+                cv2.line(vis, (x1, y2), (x1 + corn_len, y2), (255, 255, 255), 2)
+                cv2.line(vis, (x1, y2), (x1, y2 - corn_len), (255, 255, 255), 2)
+                cv2.line(vis, (x2, y2), (x2 - corn_len, y2), (255, 255, 255), 2)
+                cv2.line(vis, (x2, y2), (x2, y2 - corn_len), (255, 255, 255), 2)
+
+                # Laser Tracer from Center Crosshair to Target
+                cv2.line(vis, (cx, cy), (tx, ty), box_color, 1, cv2.LINE_AA)
+
+                # Head Bullseye Target
+                head_y = y1 + int(th * 0.14)
+                cv2.circle(vis, (tx, head_y), 7, (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.circle(vis, (tx, head_y), 2, (0, 0, 255), -1)
+
+                # Pill Tag above Target
+                tag_label = f"DUMMY {conf:.2f} | dx:{dx:+.0f} dy:{dy:+.0f} | {'LOCKED [FIRE]' if is_locked else 'AIM'}"
+                (tw_txt, th_txt), _ = cv2.getTextSize(tag_label, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+                tag_y1 = max(18, y1 - 6)
+                cv2.rectangle(vis, (x1, tag_y1 - th_txt - 4), (x1 + tw_txt + 6, tag_y1 + 2), (20, 20, 20), -1)
+                cv2.putText(vis, tag_label, (x1 + 3, tag_y1 - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 255, 255) if is_locked else (255, 255, 255), 1)
+            else:
+                # Secondary Target
+                cv2.rectangle(vis, (x1, y1), (x2, y2), (0, 220, 220), 1)
+                cv2.putText(vis, f"DUMMY {conf:.2f}", (x1, max(15, y1 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 220, 220), 1)
+
+        # 2. Dynamic Center Reticle
+        ret_color = (0, 0, 255) if (is_locked or firing_state) else ((0, 220, 255) if targets else (0, 255, 0))
+        cv2.line(vis, (cx - 14, cy), (cx - 4, cy), ret_color, 2)
+        cv2.line(vis, (cx + 4, cy), (cx + 14, cy), ret_color, 2)
+        cv2.line(vis, (cx, cy - 14), (cx, cy - 4), ret_color, 2)
+        cv2.line(vis, (cx, cy + 4), (cx, cy + 14), ret_color, 2)
+        cv2.circle(vis, (cx, cy), 2, ret_color, -1)
+        if is_locked or firing_state:
+            cv2.circle(vis, (cx, cy), 18, (0, 0, 255), 1, cv2.LINE_AA)
+
+        # 3. Optical Red Wall Warning
+        if wall_ahead:
+            arrow = "<<< STEER LEFT" if steer_bias < 0 else "STEER RIGHT >>>"
+            wall_tag = f"[!] RED WALL DETECTED - {arrow} ({steer_bias:+.2f})"
+            (w_w, w_h), _ = cv2.getTextSize(wall_tag, cv2.FONT_HERSHEY_SIMPLEX, 0.48, 1)
+            wx1 = cx - w_w // 2 - 10
+            cv2.rectangle(vis, (wx1, 40), (wx1 + w_w + 20, 68), (0, 0, 180), -1)
+            cv2.putText(vis, wall_tag, (wx1 + 10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (255, 255, 255), 1)
+
+        # 4. Top Status Header (Dark Translucent Bar)
+        overlay = vis.copy()
+        cv2.rectangle(overlay, (0, 0), (w, 34), (15, 15, 15), -1)
+        cv2.addWeighted(overlay, 0.72, vis, 0.28, 0, vis)
+
+        # Blinking REC dot
+        if int(time.time() * 2) % 2 == 0:
+            cv2.circle(vis, (16, 17), 6, (0, 0, 255), -1)
+        rec_str = f"REC  RND {round_num:02d} [{int(round_elapsed // 60):02d}:{int(round_elapsed % 60):02d} / 01:55]"
+        cv2.putText(vis, rec_str, (28, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.46, (255, 255, 255), 1)
+
+        route_str = f"ROUTE: {route_name[:18]} (WP {wp_idx}/{total_wps})"
+        cv2.putText(vis, route_str, (cx - 100, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 240, 240), 1)
+
+        score_str = f"KILLS: {round_kills}/11 (HS: {round_hs_pct:.0f}%) | REWARD: {accumulated_reward:+.1f}"
+        (sw, _), _ = cv2.getTextSize(score_str, cv2.FONT_HERSHEY_SIMPLEX, 0.44, 1)
+        cv2.putText(vis, score_str, (w - sw - 12, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (0, 255, 150), 1)
+
+        # 5. Bottom Tactical Footer (Dark Translucent Bar)
+        overlay_bot = vis.copy()
+        cv2.rectangle(overlay_bot, (0, h - 30), (w, h), (15, 15, 15), -1)
+        cv2.addWeighted(overlay_bot, 0.72, vis, 0.28, 0, vis)
+
+        keys_str = "+".join(sorted(keys_set)) if keys_set else "NONE"
+        fire_badge = " [FIRING]" if firing_state else ""
+        action_desc = f"KEYS: [{keys_str}]{fire_badge} | AIM: ({step_dx:+d}, {step_dy:+d}) | {status_text[:28]}"
+        cv2.putText(vis, action_desc, (10, h - 9), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (255, 255, 255), 1)
+
+        if brain_str:
+            b_tag = f"BRAIN: {brain_str}"
+            (bw, _), _ = cv2.getTextSize(b_tag, cv2.FONT_HERSHEY_SIMPLEX, 0.38, 1)
+            cv2.putText(vis, b_tag, (w - bw - 10, h - 9), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 220, 255), 1)
+
+        # 6. Event Notification Banner (Kill, Headshot, Victory)
+        if time.time() < self.kill_banner_until and self.kill_banner_text:
+            (bw_txt, bh_txt), _ = cv2.getTextSize(self.kill_banner_text, cv2.FONT_HERSHEY_SIMPLEX, 0.58, 2)
+            bx1 = cx - bw_txt // 2 - 16
+            by1 = 80
+            cv2.rectangle(vis, (bx1, by1), (bx1 + bw_txt + 32, by1 + bh_txt + 16), (20, 20, 20), -1)
+            cv2.rectangle(vis, (bx1, by1), (bx1 + bw_txt + 32, by1 + bh_txt + 16), self.kill_banner_color, 2)
+            cv2.putText(vis, self.kill_banner_text, (bx1 + 16, by1 + bh_txt + 7), cv2.FONT_HERSHEY_SIMPLEX, 0.58, self.kill_banner_color, 2)
+
+        return vis
 
 
 class GameLogWatcher(threading.Thread):
@@ -1505,7 +1779,7 @@ def main():
     print(f"Macro Policy    : 30-D Spatial Brain ({'Active Hot-Reload' if policy_brain.available else 'Disabled'})")
     print(f"Hearing Engine  : {'Stereo Audio Active (Loopback)' if HAVE_SOUNDDEVICE else 'Disabled'}")
     print("Navigation      : 3D Waypoint Engine (Live GoldSrc hw.dll Memory Reader)")
-    print("Hotkeys         : [F9] Toggle Active/Pause | [Ctrl+C] Exit")
+    print("Hotkeys         : [F9] Toggle Active/Pause | [F6] Record Round (AI Eyes Video) | [Ctrl+C] Exit")
     print("=" * 65)
 
     mem_reader = CS16MemoryReader()
@@ -1582,12 +1856,14 @@ def main():
         print(f"    [{sec}...] ", end="", flush=True)
         play_beep(800 + sec * 200, 100)
         time.sleep(1.0)
-    print("\n\n>>> [AI BOT ACTIVATED - SPRINTING ON $2000$] <<<")
-    print(">>> Press [F9] anytime in game to PAUSE / RESUME <<<\n", flush=True)
+    print("\n\n>>> [AI BOT ACTIVATED - SPRINTING ON aim_ai_sandbox] <<<")
+    print(">>> Hotkeys: [F9] PAUSE/RESUME | [F6] RECORD ROUND THROUGH AI EYES <<<\n", flush=True)
     play_beep(1500, 200)
 
+    ai_recorder = AIVisionVideoRecorder(output_dir="demos", fps=30)
     bot_active = True
     last_f9_down = False
+    last_f6_down = False
     step_count = 0
     current_keys = set()
     firing = False
@@ -1605,6 +1881,13 @@ def main():
         nonlocal accumulated_reward, pitch_drift
         accumulated_reward -= 1.5
         pitch_drift = 0  # Reset pitch accumulation on death
+        if ai_recorder.is_recording:
+            ai_recorder.trigger_banner("☠ BOT ELIMINATED ☠", duration=1.5, is_headshot=True)
+            def _delayed_stop_death():
+                time.sleep(1.2)
+                if ai_recorder.is_recording:
+                    ai_recorder.stop_recording()
+            threading.Thread(target=_delayed_stop_death, daemon=True).start()
         frame, tgts = latest_frame_holder[0], latest_frame_holder[1]
         if frame is not None:
             ann = annotate_frame(frame, tgts, "DEATH MOMENT", "DEAD", False)
@@ -1625,6 +1908,9 @@ def main():
         play_beep(1900 if is_hs else 1500, 60)
         telemetry_tracker.on_kill(is_hs)
         tag = "HEADSHOT +15.0" if is_hs else "KILL +10.0"
+        if ai_recorder.is_recording:
+            ai_banner_tag = f"☠ HEADSHOT KILL! (+15.0) ☠" if is_hs else f"★ DUMMY ELIMINATED! (+10.0) ★"
+            ai_recorder.trigger_banner(ai_banner_tag, duration=1.8, is_headshot=is_hs)
         print(f"\n>>> [{tag}] Dummy Eliminated! (Round Kills: {telemetry_tracker.round_data['kills_total'] if telemetry_tracker.round_data else 1}) <<<", flush=True)
         frame, tgts = latest_frame_holder[0], latest_frame_holder[1]
         if frame is not None:
@@ -1639,6 +1925,13 @@ def main():
         print(f"\n===========================================================")
         print(f" >>> [VICTORY] ALL 11 DUMMIES CLEARED! (+50.0 REWARD) <<<")
         print(f"===========================================================\n", flush=True)
+        if ai_recorder.is_recording:
+            ai_recorder.trigger_banner("★ VICTORY! ALL 11 DUMMIES CLEARED! (+50.0) ★", duration=2.5, is_headshot=False)
+            def _delayed_stop_win():
+                time.sleep(1.8)
+                if ai_recorder.is_recording:
+                    ai_recorder.stop_recording()
+            threading.Thread(target=_delayed_stop_win, daemon=True).start()
         telemetry_tracker.finish_round(accumulated_reward, total_rl_samples=exp_recorder.total_recorded)
         accumulated_reward = 0.0
 
@@ -1671,6 +1964,8 @@ def main():
 
     def handle_round_start(evt_line):
         nonlocal active_route_idx, current_wp_idx, phys_stuck_ticks, last_phys_pos, round_start_time, forward_start, stuck_frames, turn_remaining, lane_turn_done, lane_turn_remaining, pitch_drift, spectator_streak, alive_screen_streak, red_wall_ticks, accumulated_reward
+        if ai_recorder.is_recording:
+            ai_recorder.stop_recording()
         if round_start_time > 0 and (time.time() - round_start_time) > 4.0:
             telemetry_tracker.finish_round(accumulated_reward, total_rl_samples=exp_recorder.total_recorded)
             accumulated_reward = 0.0
@@ -1738,7 +2033,7 @@ def main():
             if f9_down and not last_f9_down:
                 bot_active = not bot_active
                 if bot_active:
-                    print("\n\n>>> [AI BOT RESUMED - ATTACKING ON $2000$] <<<", flush=True)
+                    print("\n\n>>> [AI BOT RESUMED - ATTACKING ON aim_ai_sandbox] <<<", flush=True)
                     play_beep(1500, 150)
                     forward_start = now
                     stuck_frames = 0
@@ -1752,6 +2047,15 @@ def main():
                     print("\n\n>>> [AI BOT PAUSED] Press [F9] to resume.", flush=True)
                     play_beep(600, 150)
             last_f9_down = f9_down
+
+            # Hardware Polling for F6 Key (Record Round Video - AI Vision)
+            f6_down = is_key_pressed(VK_F6)
+            if f6_down and not last_f6_down:
+                if not ai_recorder.is_recording:
+                    ai_recorder.start_recording(round_num=telemetry_tracker.current_round)
+                else:
+                    ai_recorder.stop_recording()
+            last_f6_down = f6_down
 
             # Safety Gate: if CS 1.6 lost focus, pause inputs so we never type into Desktop/Windows Search!
             if not is_cs_window_foreground():
@@ -1778,6 +2082,8 @@ def main():
                 pose = mem_reader.get_pose()
                 step_dx = 0
                 step_dy = 0
+                steer_bias = 0.0
+                wall_ahead = False
 
                 # Capture screen frame
                 shot = sct.grab(box)
@@ -2538,6 +2844,33 @@ def main():
                     ann_live = annotate_frame(frame_bgr, targets, action_status, k_str, firing, brain_str)
                     cv2.imwrite(os.path.join(DEBUG_DIR, "live_view.jpg"), ann_live)
 
+                # AI Vision Video Recording Stream (Eyes of the Neural Network)
+                if ai_recorder.is_recording:
+                    current_wps = MAP_ROUTES_SANDBOX[active_route_idx % len(MAP_ROUTES_SANDBOX)]
+                    hud_frame = ai_recorder.render_hud(
+                        frame_bgr=frame_bgr,
+                        targets=targets,
+                        primary_target=primary,
+                        is_locked=bool(is_locked > 0.5),
+                        firing_state=firing,
+                        status_text=action_status,
+                        keys_set=current_keys,
+                        step_dx=step_dx,
+                        step_dy=step_dy,
+                        brain_str=brain_str,
+                        round_num=telemetry_tracker.current_round,
+                        round_elapsed=cur_time_in_round,
+                        round_kills=telemetry_tracker.round_data.get("kills_total", 0) if telemetry_tracker.round_data else 0,
+                        round_hs_pct=telemetry_tracker.round_data.get("hs_percent", 0.0) if telemetry_tracker.round_data else 0.0,
+                        accumulated_reward=accumulated_reward,
+                        route_name=ROUTE_NAMES[active_route_idx] if active_route_idx < len(ROUTE_NAMES) else "PATROL",
+                        wp_idx=current_wp_idx + 1,
+                        total_wps=len(current_wps),
+                        wall_ahead=wall_ahead,
+                        steer_bias=steer_bias
+                    )
+                    ai_recorder.put_frame(hud_frame)
+
             else:
                 time.sleep(0.02)
 
@@ -2549,6 +2882,8 @@ def main():
     except KeyboardInterrupt:
         print("\nStopping agent...")
     finally:
+        if ai_recorder.is_recording:
+            ai_recorder.stop_recording()
         audio_listener.close()
         exp_recorder.stop()
         for k in list(current_keys):
