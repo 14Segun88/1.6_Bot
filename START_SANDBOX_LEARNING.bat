@@ -12,6 +12,11 @@ echo.
 
 cd /d "%~dp0"
 
+echo [*] Closing any lingering CS 1.6 instances to apply fresh config...
+taskkill /F /IM hl.exe >nul 2>&1
+taskkill /F /IM cstrike.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+
 set "PY="
 if exist "%~dp0venv\Scripts\python.exe" set "PY=%~dp0venv\Scripts\python.exe"
 if not defined PY if exist "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" set "PY=%LOCALAPPDATA%\Programs\Python\Python313\python.exe"

@@ -211,16 +211,22 @@ def find_game_executable(work_dir):
             return exe, d
     return None, work_dir
 
-def launch_game_if_needed(work_dir):
+def launch_game_if_needed(work_dir, force_restart=True):
     print("\n[*] Step 3/4: Checking Counter-Strike 1.6 status...", flush=True)
-    if is_hl_running():
+    if is_hl_running() and force_restart:
+        print("    [*] Restarting CS 1.6 to apply fresh 1.55 min round settings...", flush=True)
+        if sys.platform.startswith("win"):
+            subprocess.run('taskkill /F /IM hl.exe >nul 2>&1', shell=True)
+            subprocess.run('taskkill /F /IM cstrike.exe >nul 2>&1', shell=True)
+            time.sleep(1.0)
+    elif is_hl_running():
         print("    [+] CS 1.6 (hl.exe) is ALREADY RUNNING!", flush=True)
         return
     
     exe_path, run_dir = find_game_executable(work_dir)
     if exe_path and sys.platform.startswith("win"):
         print(f"    [*] Launching CS 1.6 on map aim_ai_sandbox with 11 dummies ({exe_path})...", flush=True)
-        cmd = f'start "" "{exe_path}" -game cstrike -nomaster -novid -steam -noforcemparms -condebug +maxplayers 24 +mp_roundtime 1.55 +mp_round_restart_delay 1.55 +exec maps/aim_ai_sandbox.cfg +map aim_ai_sandbox'
+        cmd = f'start "" "{exe_path}" -game cstrike -nomaster -novid -steam -noforcemparms -condebug +maxplayers 24 +map aim_ai_sandbox +exec listenserver.cfg +exec maps/aim_ai_sandbox.cfg +mp_roundtime 1.55 +mp_round_restart_delay 1.55'
         subprocess.Popen(cmd, cwd=run_dir, shell=True)
         print("    [*] Waiting 5 seconds for CS 1.6 engine to initialize...", flush=True)
         time.sleep(5.0)
