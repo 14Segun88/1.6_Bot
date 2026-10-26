@@ -1435,6 +1435,7 @@ class CSYOLODetector:
                 dist = math.hypot(dx, dy)
 
                 targets.append({
+                    "source": "yolo",
                     "conf": conf,
                     "dx": dx,
                     "dy": dy,
@@ -1480,6 +1481,7 @@ class CSYOLODetector:
                 t_bx1, t_by1, t_bx2, t_by2 = t["box"]
                 if (t_bx1 <= cx_d <= t_bx2) and (t_by1 <= cy_d <= t_by2):
                     t["conf"] = max(t["conf"], 0.95)
+                    t["source"] = "yolo+dummy"
                     matched = True
                     break
             if not matched:
@@ -1489,6 +1491,7 @@ class CSYOLODetector:
                 dy = head_y - cy_game
                 dist = math.hypot(dx, dy)
                 targets.append({
+                    "source": "dummy_color",
                     "conf": 0.92,
                     "dx": dx,
                     "dy": dy,
@@ -1886,6 +1889,18 @@ class BenchmarkTelemetryTracker:
         os.makedirs(target_dir, exist_ok=True)
         self.filename = os.path.join(target_dir, os.path.basename(filename))
         self.baseline_file = os.path.join(target_dir, os.path.basename(baseline_file))
+        self.vision_log_file = os.path.join(target_dir, "vision_log.jsonl")
+        self._last_vision_log_time = 0.0
+        self._last_event_type = ""
+        self._last_spotted_state = False
+        if os.path.exists(self.vision_log_file):
+            try:
+                if os.path.getsize(self.vision_log_file) > 10 * 1024 * 1024:
+                    prev_f = self.vision_log_file.replace(".jsonl", "_prev.jsonl")
+                    if os.path.exists(prev_f): os.remove(prev_f)
+                    os.rename(self.vision_log_file, prev_f)
+            except Exception:
+                pass
         self.rounds = []
         self.current_round = 0
         self.round_data = None
@@ -1897,6 +1912,58 @@ class BenchmarkTelemetryTracker:
             except Exception:
                 self.rounds = []
         print(f"[*] Benchmark Telemetry Tracker: Logging to '{self.filename}' (Active session round: {self.current_round})")
+        print(f"[*] Vision Perception Logger: Real-time recognition stream to '{self.vision_log_file}'")
+
+    def log_vision_event(self, event_type, targets, lidar_data=None, action_status="", extra=None):
+        now = time.time()
+        has_targets = len(targets) > 0
+        state_changed = (has_targets != self._last_spotted_state) or (event_type != self._last_event_type)
+        time_elapsed = now - self._last_vision_log_time
+
+        # Throttle: state transitions, locks and kills log immediately; steady states throttle to ~3 Hz (0.33s)
+        if not state_changed and time_elapsed < 0.33 and event_type not in ["KILL_CONFIRMED", "AIM_LOCKED", "ROUND_START", "ROUND_FINISH"]:
+            return
+
+        self._last_vision_log_time = now
+        self._last_event_type = event_type
+        self._last_spotted_state = has_targets
+
+        primary = targets[0] if targets else None
+        record = {
+            "time": time.strftime("%H:%M:%S", time.localtime(now)) + f".{int((now % 1)*1000):03d}",
+            "round": self.current_round,
+            "round_sec": round(now - self.round_data["start_time"], 2) if self.round_data else 0.0,
+            "event": event_type,
+            "action": action_status,
+            "targets_count": len(targets),
+        }
+        if primary:
+            record["target"] = {
+                "source": primary.get("source", "unknown"),
+                "conf": round(float(primary.get("conf", 0.0)), 3),
+                "dist_px": round(float(primary.get("dist", 0.0)), 1),
+                "dx": round(float(primary.get("dx", 0.0)), 1),
+                "dy": round(float(primary.get("dy", 0.0)), 1),
+                "box": [int(v) for v in primary.get("box", (0, 0, 0, 0))],
+                "is_locked": bool(primary.get("is_locked", False)),
+                "w": round(float(primary.get("w", 0.0)), 1),
+                "h": round(float(primary.get("h", 0.0)), 1)
+            }
+        if lidar_data:
+            record["lidar"] = {
+                "wall_ahead": bool(lidar_data.get("wall_ahead", False)),
+                "red_pct": round(float(lidar_data.get("red_ratio", 0.0)) * 100.0, 1),
+                "green_pct": round(float(lidar_data.get("green_ratio", 0.0)) * 100.0, 1),
+                "steer_bias": round(float(lidar_data.get("steer_bias", 0.0)), 2)
+            }
+        if extra:
+            record["extra"] = extra
+
+        try:
+            with open(self.vision_log_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
 
     def start_round(self, route_name):
         self.current_round += 1
@@ -1919,6 +1986,7 @@ class BenchmarkTelemetryTracker:
             "round_reward": 0.0,
             "total_rl_samples": 0
         }
+        self.log_vision_event("ROUND_START", [], action_status=f"ROUTE: {route_name}")
 
     def on_kill(self, is_hs):
         if self.round_data:
@@ -1967,6 +2035,7 @@ class BenchmarkTelemetryTracker:
             pass
 
         d = self.round_data
+        self.log_vision_event("ROUND_FINISH", [], action_status=f"KILLS: {d['kills_total']}/11 (HS: {d['kills_headshot']})", extra={"duration": d["duration"], "wall_bounces": d["wall_avoidances"], "unstucks": d["unstuck_events"]})
         print(f"\n" + "="*76)
         print(f" [ROUND {d['round']:02d} TELEMETRY] Route: {d['route']} | Duration: {d['duration']:.1f}s")
         print(f"  * 1. Movement:    Waypoints: {d['max_wp_reached']}/{d['total_waypoints']} | Wall Bounces: {d['wall_avoidances']} | Unstucks: {d['unstuck_events']}")
@@ -2184,6 +2253,12 @@ def main():
             ai_recorder.trigger_banner(ai_banner_tag, duration=1.8, is_headshot=is_hs)
         print(f"\n>>> [{tag}] Dummy Eliminated! (Round Kills: {telemetry_tracker.round_data['kills_total'] if telemetry_tracker.round_data else 1}) <<<", flush=True)
         frame, tgts = latest_frame_holder[0], latest_frame_holder[1]
+        telemetry_tracker.log_vision_event(
+            event_type="KILL_CONFIRMED",
+            targets=tgts if tgts else [],
+            action_status=f"KILL CONFIRMED [{tag}]",
+            extra={"is_headshot": is_hs, "round_kills": telemetry_tracker.round_data['kills_total'] if telemetry_tracker.round_data else 1}
+        )
         if frame is not None:
             ann = annotate_frame(frame, tgts, f"KILL CONFIRMED! [{tag}]", "+".join(sorted(current_keys)), True)
             cv2.imwrite(os.path.join(DEBUG_DIR, "KILL_latest.jpg"), ann)
@@ -3108,6 +3183,16 @@ def main():
                 last_enemy_spotted = enemy_spotted
                 latest_frame_holder[0] = frame_bgr
                 latest_frame_holder[1] = targets
+
+                # Real-Time Perception Logging for Agent Diagnostic Telemetry
+                v_type = "AIM_LOCKED" if is_locked > 0.5 else ("TARGET_SPOTTED" if enemy_spotted else ("LIDAR_WALL" if (wall_ahead or red_ratio > 0.30) else "PATROL_SCAN"))
+                telemetry_tracker.log_vision_event(
+                    event_type=v_type,
+                    targets=targets,
+                    lidar_data={"wall_ahead": bool(wall_ahead), "red_ratio": float(red_ratio), "green_ratio": float(green_ratio), "steer_bias": float(steer_bias)},
+                    action_status=action_status,
+                    extra={"firing": bool(firing), "keys": "+".join(sorted(current_keys)) if current_keys else "none"}
+                )
 
                 # Real-Time Console Telemetry every 6 steps (~5 times per second)
                 if step_count % 6 == 0:
