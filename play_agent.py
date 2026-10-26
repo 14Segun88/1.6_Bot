@@ -261,7 +261,7 @@ class MemoryReader:
     def __init__(self):
         self.hProc = None
         self.ptr_addr = None
-        self.candidate_offsets = [0x1150000, 0x1200000, 0x1134000, 0x1140000, 0x1160000, 0x1120000]
+        self.candidate_offsets = [0x7A834, 0x1222E8, 0x113CDC, 0x113CD0, 0x10B740, 0x150F40, 0x79834, 0x7B834]
         self.last_connect = 0.0
 
     def connect(self):
@@ -314,6 +314,7 @@ class MemoryReader:
                             if not (math.isnan(tx) or math.isnan(ty) or math.isnan(tz)):
                                 if abs(tx) < 8000 and abs(ty) < 8000 and (abs(tx) > 1.0 or abs(ty) > 1.0):
                                     self.ptr_addr = test_ptr
+                                    print(f"[*] Memory Engine: Connected to hw.dll (POS: {tx:.0f}, {ty:.0f}, {tz:.0f}) at offset 0x{off:X}")
                                     return True
         return False
 
@@ -417,14 +418,14 @@ class TargetDetector:
 # 6. WAYPOINT MAP ROUTES (aim_ai_sandbox)
 # =============================================================================
 ROUTES = [
-    # Route 0: LEFT FLANK & TUNNEL
-    [(-772, 160), (-1250, 250), (-1380, 500), (-1380, 800), (-1380, 1050), (-1100, 1300), (-772, 1350)],
-    # Route 1: CENTER CROSSING & ARCH
-    [(-772, 160), (-772, 300), (-1000, 620), (-772, 750), (-550, 620), (-772, 900), (-772, 1350)],
-    # Route 2: RIGHT FLANK & TUNNEL
-    [(-772, 160), (-300, 250), (-200, 500), (-200, 800), (-200, 1050), (-450, 1300), (-772, 1350)],
+    # Route 0: MASTER CENTER ARENA CLEAR (Doorway -> Center corridor -> Courtyard sweep)
+    [(-772, 160), (-772, 360), (-772, 580), (-772, 750), (-772, 950), (-772, 1200), (-950, 1300), (-550, 1300), (-772, 1350)],
+    # Route 1: LEFT FLANK & TUNNEL CLEAR (Doorway -> Left arch -> Left tunnel -> Enemy Base)
+    [(-772, 160), (-772, 360), (-1000, 420), (-1200, 450), (-1380, 550), (-1380, 800), (-1380, 1050), (-1100, 1300), (-772, 1350)],
+    # Route 2: RIGHT FLANK & TUNNEL CLEAR (Doorway -> Right arch -> Right tunnel -> Enemy Base)
+    [(-772, 160), (-772, 360), (-550, 420), (-360, 450), (-200, 550), (-200, 800), (-200, 1050), (-450, 1300), (-772, 1350)],
 ]
-ROUTE_NAMES = ["LEFT FLANK", "CENTER ARCH", "RIGHT FLANK"]
+ROUTE_NAMES = ["CENTER ARENA", "LEFT FLANK", "RIGHT FLANK"]
 
 # =============================================================================
 # 7. LOG WATCHER (Round Transitions & Kills)
@@ -650,7 +651,7 @@ def main():
                     wp_x, wp_y = active_wps[current_wp_idx]
                     dist = math.hypot(wp_x - cur_x, wp_y - cur_y)
 
-                    if dist < 85.0 and current_wp_idx < len(active_wps) - 1:
+                    if dist < 110.0 and current_wp_idx < len(active_wps) - 1:
                         current_wp_idx += 1
                         wp_x, wp_y = active_wps[current_wp_idx]
                         dist = math.hypot(wp_x - cur_x, wp_y - cur_y)
@@ -683,11 +684,11 @@ def main():
 
                     action_str = f"NAV: {ROUTE_NAMES[active_route_idx]} [WP {current_wp_idx+1}/{len(active_wps)}]"
                 else:
-                    # Fallback forward search
-                    if "w" not in current_keys:
-                        send_key_down("w")
-                        current_keys.add("w")
-                    action_str = "SEARCH FORWARD"
+                    # Waiting for memory hook to read coordinates (do not blind-walk into walls)
+                    if "w" in current_keys:
+                        send_key_up("w")
+                        current_keys.remove("w")
+                    action_str = "STANDBY (HOOKING POSE)"
 
             if step % 20 == 0:
                 print(f"\r[HUNTER] Kills: {round_kills:02d}/11 | {action_str:32s} | Target: {'YES' if targets else 'NO '}", end="", flush=True)
