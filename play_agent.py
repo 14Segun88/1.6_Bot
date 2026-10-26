@@ -529,50 +529,24 @@ def tap_key(name, hold_sec=0.035):
 
 def execute_autobuy():
     """
-    Robust Buy Sequence for CS 1.6:
-    1. Buy Rifle: 'b' -> '4' -> '3' (M4A1 for CT / AK-47 for T).
-    2. Buy Armor+Helmet: 'b' -> '8' -> '2'.
-    3. Top off Ammo: ',' (buyammo1) and '.' (buyammo2).
-    4. Draw Primary Rifle: '1'.
-    NOTE: In CS 1.6 purchasing a weapon automatically closes the buy menu.
-    We NEVER send 'escape' because Escape opens the main game menu and can minimize the game.
+    Native CS 1.6 AutoBuy (F1) and Rebuy (F2):
+    Instantly buys Primary Rifle (M4A1/AK-47) + Kevlar + Helmet + Full Ammo in 1 frame.
+    Never opens menus, never presses slot numbers 1-5, avoids any weapon switching.
     """
     if not (IS_WINDOWS and user32):
         return
     def _buy_worker():
-        time.sleep(0.08)
-        # Dismiss any pending class selection menu (5 = auto-select random model)
-        tap_key("5", 0.04)
+        time.sleep(0.10)
+        # F1 triggers CS 1.6 native autobuy command (bound in userconfig.cfg)
+        tap_key("f1", 0.04)
         time.sleep(0.04)
-
-        # Step 1: Buy Primary Rifle (b -> 4 -> 3 = M4A1 / AK-47)
-        tap_key("b", 0.03)
+        # F2 rebuy / top off
+        tap_key("f2", 0.04)
         time.sleep(0.04)
-        tap_key("4", 0.03)
-        time.sleep(0.04)
-        tap_key("3", 0.03)
-        time.sleep(0.05)
-
-        # Step 2: Buy Kevlar + Helmet (b -> 8 -> 2)
-        tap_key("b", 0.03)
-        time.sleep(0.04)
-        tap_key("8", 0.03)
-        time.sleep(0.04)
-        tap_key("2", 0.03)
-        time.sleep(0.05)
-
-        # Step 3: Top off primary & secondary ammo (',' and '.')
-        for _ in range(2):
-            tap_key(",", 0.03)
-            time.sleep(0.03)
-            tap_key(".", 0.03)
-            time.sleep(0.03)
-
-        # Step 4: Draw Primary weapon ('1')
+        # Draw primary weapon
         tap_key("1", 0.04)
-
         play_beep(1300, 50)
-        print("[★ AUTOBUY] Clean equipment purchase (Rifle + Kevlar + Ammo)!", flush=True)
+        print("[★ AUTOBUY] Clean equipment purchase (F1 Native Autobuy)!", flush=True)
 
     t = threading.Thread(target=_buy_worker, daemon=True)
     t.start()
@@ -2311,6 +2285,7 @@ def main():
     alive_screen_streak = 0
     red_wall_ticks = 0
     last_wall_turn_time = 0.0
+    vgui_dismiss_attempts = 0
 
     # Ammo, Weapon Switching & Tactical Reload State
     combat_firing_start = 0.0
@@ -2322,7 +2297,7 @@ def main():
 
     def handle_round_start(evt_line):
         nonlocal active_route_idx, current_wp_idx, phys_stuck_ticks, last_phys_pos, round_start_time, forward_start, stuck_frames, turn_remaining, lane_turn_done, lane_turn_remaining, pitch_drift, spectator_streak, alive_screen_streak, red_wall_ticks, accumulated_reward
-        nonlocal combat_firing_start, burst_count, reloading_until, active_weapon_slot, reload_attempts, last_combat_had_fire, last_wall_turn_time
+        nonlocal combat_firing_start, burst_count, reloading_until, active_weapon_slot, reload_attempts, last_combat_had_fire, last_wall_turn_time, vgui_dismiss_attempts
         if ai_recorder.is_recording:
             ai_recorder.stop_recording()
         if round_start_time > 0 and (time.time() - round_start_time) > 4.0:
@@ -2331,8 +2306,7 @@ def main():
 
         round_start_time = time.time()
         pitch_drift = 0  # Reset pitch accumulation on new round spawn
-        tap_key("5", 0.04)  # Automatically dismiss any pending VGUI class selection
-        time.sleep(0.02)
+        vgui_dismiss_attempts = 0
         tap_key("end", 0.04)  # Snap camera pitch to exact 0.0° horizontal via GoldSrc force_centerview
         last_wall_turn_time = 0.0
         spectator_streak = 0
@@ -2502,28 +2476,35 @@ def main():
                     continue
 
                 # 0. Check if VGUI Menu is open (Choose Team / Choose Class "ВЫБЕРИТЕ КЛАСС" / MOTD)
-                if is_vgui_menu_open(frame_bgr):
-                    action_status = "VGUI MENU: AUTO-DISMISSING [5]"
+                # MUST only run if player is not yet spawned on map (pose is None) and during early round start
+                if pose is None and (now - round_start_time < 3.5) and vgui_dismiss_attempts < 4 and is_vgui_menu_open(frame_bgr):
+                    vgui_dismiss_attempts += 1
+                    action_status = "VGUI MENU: AUTO-DISMISSING"
                     for k in list(current_keys):
                         send_key_up(k)
                     current_keys.clear()
                     if firing:
                         send_mouse_up()
                         firing = False
-                    tap_key("5", 0.04)  # Select random class / auto-select
+                    # Click button 5 (Random Choice) on screen to dismiss graphical dialog
+                    if IS_WINDOWS and user32:
+                        btn_x = box["left"] + int(box["width"] * 0.25)
+                        btn_y = box["top"] + int(box["height"] * 0.59)
+                        user32.SetCursorPos(btn_x, btn_y)
+                        time.sleep(0.02)
+                        user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+                        time.sleep(0.03)
+                        user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+                    tap_key("5", 0.04)
+                    tap_key("enter", 0.04)
+                    tap_key("space", 0.04)
                     time.sleep(0.04)
-                    tap_key("1", 0.03)  # Draw rifle
+                    tap_key("1", 0.04)
                     alive_screen_streak = 0
                     if step_count % 15 == 0:
                         print(f"\r[VGUI MENU DETECTED] Auto-selected class [5] -> Closing menu...", end="", flush=True)
                     time.sleep(0.04)
                     continue
-
-                # Freeze-time / early round ammo top-off
-                if (now - round_start_time < 3.5) and (step_count % 30 == 15):
-                    tap_key(",", 0.03)
-                    tap_key(".", 0.03)
-                    tap_key("1", 0.03)
 
                 # 0.1 Update Spatial History & Policy Brain Evaluation (30-D)
                 if pose is not None:
