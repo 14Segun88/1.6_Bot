@@ -1240,34 +1240,6 @@ class CSYOLODetector:
                 "is_locked": (abs(dx) <= max(24.0, real_w * 0.65) and abs(dy) <= max(20.0, real_h * 0.75))
             })
 
-        # Dual Detection: High-contrast Crash-Test Dummy Yellow HSV detection fallback
-        if len(targets) == 0:
-            hsv_full = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HSV)
-            # Yellow Dummy body mask: Hue in [20, 36], Sat in [80, 255], Val in [70, 255]
-            yellow_mask = cv2.inRange(hsv_full, np.array([20, 80, 70]), np.array([36, 255, 255]))
-            contours, _ = cv2.findContours(yellow_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            for cnt in contours:
-                ca = cv2.contourArea(cnt)
-                if ca > 120:  # Minimum dummy blob size
-                    c_bx, c_by, c_bw, c_bh = cv2.boundingRect(cnt)
-                    aspect = c_bh / max(1.0, float(c_bw))
-                    if 1.1 <= aspect <= 4.0 and c_bh >= 22:
-                        head_x = c_bx + c_bw / 2.0
-                        head_y = c_by + c_bh * 0.18
-                        c_dx = head_x - cx_game
-                        c_dy = head_y - cy_game
-                        c_dist = math.hypot(c_dx, c_dy)
-                        targets.append({
-                            "conf": 0.88,
-                            "dx": c_dx,
-                            "dy": c_dy,
-                            "dist": c_dist,
-                            "w": float(c_bw),
-                            "h": float(c_bh),
-                            "box": (c_bx, c_by, c_bx + c_bw, c_by + c_bh),
-                            "is_locked": (abs(c_dx) <= max(24.0, c_bw * 0.65) and abs(c_dy) <= max(20.0, c_bh * 0.75))
-                        })
-
         targets.sort(key=lambda t: t["dist"])
         return targets
 
@@ -2378,7 +2350,19 @@ def main():
                     lead_y = dy + vy_target * 0.03
 
                     step_dx = int(np.clip(lead_x * k_aim_x * 0.80, -750, 750))
-                    step_dy = int(np.clip(lead_y * k_aim_y * 0.80, -400, 400))
+                    step_dy = int(np.clip(lead_y * k_aim_y * 0.80, -45, 45))
+
+                    # Anti-Floor Pitch Guard: Never aim into the floor or push crosshair down when already below horizon
+                    if pose is not None and len(pose) >= 5:
+                        cur_pitch = pose[4]
+                        if cur_pitch > 5.0 and step_dy > 0:
+                            # Crosshair is already pitched down: forbid any downward aim
+                            step_dy = 0
+                        if cur_pitch > 10.0:
+                            # Significantly looking at floor: force upward corrective aim
+                            step_dy = int(np.clip(-(cur_pitch - (-0.5)) * counts_per_deg_y * 0.50, -45, -10))
+                    elif pitch_drift > 40 and step_dy > 0:
+                        step_dy = 0
 
                     # Send clean, damped mouse movement without noise or jitter
                     send_mouse_move(step_dx, step_dy)
@@ -2579,19 +2563,7 @@ def main():
                         reload_attempts = 0
                         combat_firing_start = 0.0
 
-                    # 1. Hard Horizon Lock: Keep crosshair locked at head horizon (-0.5 deg)
-                    if pose is not None and len(pose) >= 5:
-                        cur_pitch = pose[4]
-                        target_pitch = -0.5  # Ideal head level across $2000$ courtyard
-                        pitch_err = cur_pitch - target_pitch
-                        if abs(pitch_err) > 1.0:
-                            pull = int(np.clip(-pitch_err * counts_per_deg_y * 0.65, -35, 35))
-                            send_mouse_move(0, pull)
-                            pitch_drift = 0
-                    elif abs(pitch_drift) > 3:
-                        pull = int(np.clip(-pitch_drift * 0.25, -12, 12))
-                        send_mouse_move(0, pull)
-                        pitch_drift = int(np.clip(pitch_drift + pull, -1200, 1200))
+                    # 1. State C Horizon level handled universally by main loop horizon stabilizer
 
                     # 2. Periodic Primary Weapon Check (Equip slot1 rifle if picked up from floor)
                     if step_count % 90 == 25:
@@ -2894,6 +2866,24 @@ def main():
                                     desired_keys.add("w")
                                     sweep = int(math.sin(step_count * 0.20) * 3.5)
                                     send_mouse_move(sweep, 0)
+
+                # Universal Head-Horizon Leveler & Anti-Floor Guard
+                # Keep crosshair firmly leveled at head horizon (-0.5 deg) across all non-firing phases
+                is_actively_recoiling = (firing and burst_start > 0.0 and (now - burst_start < 0.30))
+                if not is_actively_recoiling:
+                    if pose is not None and len(pose) >= 5:
+                        cur_pitch = pose[4]
+                        target_pitch = -0.5
+                        pitch_err = cur_pitch - target_pitch
+                        if abs(pitch_err) > 1.0:
+                            pull_limit = 50 if cur_pitch > 10.0 else 25
+                            pull = int(np.clip(-pitch_err * counts_per_deg_y * 0.70, -pull_limit, pull_limit))
+                            send_mouse_move(0, pull)
+                            pitch_drift = 0
+                    elif abs(pitch_drift) > 3:
+                        pull = int(np.clip(-pitch_drift * 0.35, -20, 20))
+                        send_mouse_move(0, pull)
+                        pitch_drift = int(np.clip(pitch_drift + pull, -1200, 1200))
 
                 # Gemini 3.8 Spawn Grace Protection:
                 # In first 2.2 seconds:
