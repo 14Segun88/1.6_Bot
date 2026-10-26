@@ -815,24 +815,23 @@ def is_spectator_view(frame_bgr):
 def is_vgui_menu_open(frame_bgr):
     """
     Detects CS 1.6 VGUI Menu (Team Select, Class Select 'ВЫБЕРИТЕ КЛАСС', MOTD).
-    Must strictly require genuine menu overlay characteristics (very uniform dark panel std < 22,
-    and distinct golden title header) to completely avoid false triggers on shaded walls/corridors.
+    Matches distinct golden header icon/title and dark background panel.
     """
     if frame_bgr is None or frame_bgr.shape[0] < 200:
         return False
     h, w = frame_bgr.shape[:2]
-    panel = frame_bgr[int(h * 0.15):int(h * 0.85), int(w * 0.12):int(w * 0.88)]
-    dark_ratio = float(np.mean(panel < 35))
-    if dark_ratio < 0.65:
-        return False
-    panel_std = float(np.std(panel))
-    if panel_std > 22.0:
-        return False
+    # Header area check for golden CS title / icon ('ВЫБЕРИТЕ КЛАСС')
     hdr = frame_bgr[int(h * 0.04):int(h * 0.14), int(w * 0.08):int(w * 0.35)]
     hsv_hdr = cv2.cvtColor(hdr, cv2.COLOR_BGR2HSV)
     yellow_hdr = cv2.inRange(hsv_hdr, np.array([20, 140, 140]), np.array([35, 255, 255]))
     yellow_ratio = float(np.mean(yellow_hdr > 0))
-    return yellow_ratio > 0.03
+    if yellow_ratio > 0.035:
+        # Confirm with dark background panel
+        panel = frame_bgr[int(h * 0.15):int(h * 0.85), int(w * 0.12):int(w * 0.88)]
+        dark_ratio = float(np.mean(panel < 35))
+        if dark_ratio > 0.45:
+            return True
+    return False
 
 
 class AIVisionVideoRecorder:
@@ -1353,6 +1352,10 @@ class CSYOLODetector:
         self.input_size = 640
 
     def detect(self, bgr_img):
+        # If VGUI class/team selection menu is open on screen, suppress detections (prevents shooting menu art)
+        if is_vgui_menu_open(bgr_img):
+            return []
+
         gh, gw = bgr_img.shape[:2]
         cx_game = gw // 2
         cy_game = gh // 2
@@ -2499,8 +2502,7 @@ def main():
                     continue
 
                 # 0. Check if VGUI Menu is open (Choose Team / Choose Class "ВЫБЕРИТЕ КЛАСС" / MOTD)
-                # Only check before player has spawned alive into the game; never during combat/patrol
-                if not log_watcher.is_alive and alive_screen_streak < 3 and is_vgui_menu_open(frame_bgr):
+                if is_vgui_menu_open(frame_bgr):
                     action_status = "VGUI MENU: AUTO-DISMISSING [5]"
                     for k in list(current_keys):
                         send_key_up(k)
@@ -2511,6 +2513,7 @@ def main():
                     tap_key("5", 0.04)  # Select random class / auto-select
                     time.sleep(0.04)
                     tap_key("1", 0.03)  # Draw rifle
+                    alive_screen_streak = 0
                     if step_count % 15 == 0:
                         print(f"\r[VGUI MENU DETECTED] Auto-selected class [5] -> Closing menu...", end="", flush=True)
                     time.sleep(0.04)
