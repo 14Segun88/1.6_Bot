@@ -294,6 +294,11 @@ VK_MAP = {
     "3": 0x33,
     "4": 0x34,
     "e": 0x45,
+    "b": 0x42,
+    ",": 0xBC,
+    ".": 0xBE,
+    "q": 0x51,
+    "g": 0x47,
     "f1": 0x70,
     "f2": 0x71,
     "f3": 0x72,
@@ -318,6 +323,11 @@ SCAN_CODES = {
     "3": 0x04,
     "4": 0x05,
     "e": 0x12,
+    "b": 0x30,
+    ",": 0x33,
+    ".": 0x34,
+    "q": 0x10,
+    "g": 0x22,
     "f1": 0x3B,
     "f2": 0x3C,
     "f3": 0x3D,
@@ -384,6 +394,44 @@ def send_key_up(name):
 
     # Method 2: Standard keybd_event keyup
     user32.keybd_event(vk, sc, KEYEVENTF_KEYUP, 0)
+
+def tap_key(name, hold_sec=0.035):
+    """Sends a clean keypress and release with GoldSrc-friendly duration"""
+    if not (IS_WINDOWS and user32):
+        return
+    send_key_down(name)
+    time.sleep(hold_sec)
+    send_key_up(name)
+
+def execute_autobuy():
+    """
+    Automatic buy routine (F1 Autobuy + F2 Rebuy + Primary/Secondary Ammo).
+    CS 1.6 executes 'autobuy' on F1 (Primary weapon, Kevlar+Helmet, Ammo, Defuser)
+    and 'rebuy' on F2, plus ',' and '.' for maximum reserve ammo.
+    Executed in a background thread to prevent any game loop stutter.
+    """
+    if not (IS_WINDOWS and user32):
+        return
+    def _buy_worker():
+        time.sleep(0.12)
+        # 1. Tap F1 (autobuy) twice to guarantee registration through freeze-time
+        for _ in range(2):
+            tap_key("f1", 0.04)
+            time.sleep(0.06)
+        # 2. Tap F2 (rebuy previous loadout if available)
+        tap_key("f2", 0.04)
+        time.sleep(0.05)
+        # 3. Top off primary & secondary ammo (',' and '.')
+        for k in [",", ".", ",", "."]:
+            tap_key(k, 0.03)
+            time.sleep(0.03)
+        # 4. Ensure Primary Weapon ('1') is selected and ready
+        tap_key("1", 0.04)
+        play_beep(1300, 50)
+        print("[★ AUTOBUY] Executed F1 Autobuy + Ammo top-off + Draw Primary ('1')!", flush=True)
+
+    t = threading.Thread(target=_buy_worker, daemon=True)
+    t.start()
 
 
 def execute_counter_strafe(active_keys):
@@ -1924,8 +1972,17 @@ def main():
     alive_screen_streak = 0
     red_wall_ticks = 0
 
+    # Ammo, Weapon Switching & Tactical Reload State
+    combat_firing_start = 0.0
+    burst_count = 0
+    reloading_until = 0.0
+    active_weapon_slot = 1
+    reload_attempts = 0
+    last_combat_had_fire = False
+
     def handle_round_start(evt_line):
         nonlocal active_route_idx, current_wp_idx, phys_stuck_ticks, last_phys_pos, round_start_time, forward_start, stuck_frames, turn_remaining, lane_turn_done, lane_turn_remaining, pitch_drift, spectator_streak, alive_screen_streak, red_wall_ticks, accumulated_reward
+        nonlocal combat_firing_start, burst_count, reloading_until, active_weapon_slot, reload_attempts, last_combat_had_fire
         if ai_recorder.is_recording:
             ai_recorder.stop_recording()
         if round_start_time > 0 and (time.time() - round_start_time) > 4.0:
@@ -1946,18 +2003,23 @@ def main():
         turn_remaining = 0
         lane_turn_remaining = 0
         lane_turn_done = [False, False]
+
+        # Reset Ammo & Weapon State
+        combat_firing_start = 0.0
+        burst_count = 0
+        reloading_until = 0.0
+        active_weapon_slot = 1
+        reload_attempts = 0
+        last_combat_had_fire = False
+
         telemetry_tracker.start_round(ROUTE_NAMES[active_route_idx])
         print(f"\n\n===========================================================")
         print(f" >>> [ROUND {telemetry_tracker.current_round:02d} START] TACTICAL ROUTE: {ROUTE_NAMES[active_route_idx]} <<<")
         print(f"===========================================================\n", flush=True)
         play_beep(1100, 80)
 
-
-        # Quick Auto-Buy Kevlar+Helmet + Primary Ammo + Rifles (if server buyzone is enabled)
-        for key_code in ["b", "8", "2", "b", "4", "2", "b", "4", "3", ".", ",", "1"]:
-            send_key_down(key_code)
-            time.sleep(0.005)
-            send_key_up(key_code)
+        # Execute Auto-Buy via F1 (autobuy), F2 (rebuy) and ammo top-off
+        execute_autobuy()
 
     log_watcher = GameLogWatcher(
         on_death=handle_death,
@@ -1968,6 +2030,9 @@ def main():
         on_round_win=handle_round_win
     )
     log_watcher.start()
+
+    # Initial Autobuy on agent launch
+    execute_autobuy()
 
     # Navigation & Hunt State
     forward_start = time.time()
@@ -2086,6 +2151,12 @@ def main():
                     time.sleep(0.03)
                     continue
 
+                # Freeze-time / early round auto-buy pulse (reinforce F1 buy in first 3.5s)
+                if (now - round_start_time < 3.5) and (step_count % 25 == 12):
+                    tap_key("f1", 0.04)
+                    tap_key(",", 0.03)
+                    tap_key(".", 0.03)
+                    tap_key("1", 0.03)
 
                 # 0.1 Update Spatial History & Policy Brain Evaluation (30-D)
                 if pose is not None:
@@ -2258,11 +2329,9 @@ def main():
                         # PUSH OUT OF SPAWN! Keep running forward
                         desired_keys.add("w")
 
-                    # Fast-switch to primary rifle if drawn secondary
-                    if not last_enemy_spotted:
-                        send_key_down("1")
-                        time.sleep(0.005)
-                        send_key_up("1")
+                    # Draw selected weapon if not already equipped
+                    if not last_enemy_spotted and active_weapon_slot == 1:
+                        tap_key("1", 0.03)
 
                     # 2. Linear Lead Target Tracking & Damped P-Controller (Zero Overshoot, Zero Noise)
                     dt_target = max(0.005, min(0.20, now - last_combat_time)) if last_enemy_spotted else 0.033
@@ -2292,57 +2361,123 @@ def main():
                         if not last_enemy_spotted:
                             combat_strafe_start = now
 
-                        # НАВЫК 1: Остановка перед выстрелом (Counter-Strafing)
-                        # Запрещаем бежать вперед (W) во время прицеливания и стрельбы,
-                        # чтобы разброс первого выстрела был 0%
-                        desired_keys.discard("w")
-
-                        # НАВЫК 2: Приседание при стрельбе (Duck-Spray)
-                        # Если бот уже стреляет (burst_start > 0) или цель на дистанции,
-                        # садимся (Ctrl) для снижения отдачи и разброса на 50%
-                        should_crouch = (can_fire and burst_start > 0.0) or (primary["dist"] > 240) or (p_keys[5] > 0.35)
-                        if should_crouch:
+                        # Check if tactical reload is currently underway
+                        if now < reloading_until:
+                            desired_keys.discard("w")
                             desired_keys.add("ctrl")
-                            desired_keys.discard("a")
-                            desired_keys.discard("d")
+                            strafe_k = "a" if int((reloading_until - now) * 4) % 2 == 0 else "d"
+                            desired_keys.add(strafe_k)
                         else:
-                            # НАВЫК 3: Ритмичный боковой стрейф (A-D-A-D Evasion)
-                            # Пока стоим на ногах — ритмично двигаемся влево-вправо каждые 320мс,
-                            # сбивая прицел снайперам и ботам
-                            strafe_phase = int((now - combat_strafe_start) / 0.32) % 2
-                            if strafe_phase == 0:
-                                desired_keys.add("a")
+                            # Standard counter-strafing / duck spray
+                            desired_keys.discard("w")
+                            should_crouch = (can_fire and burst_start > 0.0) or (primary["dist"] > 240) or (p_keys[5] > 0.35)
+                            if should_crouch:
+                                desired_keys.add("ctrl")
+                                desired_keys.discard("a")
                                 desired_keys.discard("d")
                             else:
-                                desired_keys.add("d")
-                                desired_keys.discard("a")
+                                strafe_phase = int((now - combat_strafe_start) / 0.32) % 2
+                                if strafe_phase == 0:
+                                    desired_keys.add("a")
+                                    desired_keys.discard("d")
+                                else:
+                                    desired_keys.add("d")
+                                    desired_keys.discard("a")
                     else:
                         desired_keys.add("w")
 
-                    # 4. Neural-Assisted Precision Shooting & Recoil Compensation
-                    if can_fire:
-                        recoil_pull = max(4, min(10, int(round(t_aim[1])) + 4)) if t_aim[1] > 0.5 else 5
-                        stance_label = "DUCK" if "ctrl" in desired_keys else "ADAD"
-                        action_status = f"COMBAT: FIRING (dx={dx:+.0f}, dy={dy:+.0f}, rec={recoil_pull}, {stance_label})"
+                    # 4. Ammo Management, Tactical Reload [R] & Dynamic Weapon Switching
+                    if now < reloading_until:
+                        # Actively reloading: take evasive cover and do NOT click empty gun!
+                        if firing:
+                            send_mouse_up()
+                            firing = False
+                        burst_start = 0.0
+                        action_status = f"COMBAT: RELOAD [R] ({max(0.1, reloading_until - now):.1f}s) - EVASION"
+                    elif can_fire:
+                        if combat_firing_start == 0.0:
+                            combat_firing_start = now
+                            burst_count = 0
 
-                        if burst_start == 0.0:
-                            burst_start = now
-                            send_mouse_down()
-                            firing = True
-                            play_beep(1600, 25)
-
-                        burst_time = now - burst_start
-                        if burst_time < 0.30:  # 3-4 lethal rifle rounds
-                            send_mouse_move(0, recoil_pull)  # Neural recoil pull-down
-                            pitch_drift = int(np.clip(pitch_drift + recoil_pull, -1200, 1200))
-                        elif burst_time < 0.40:
-                            if firing:
-                                send_mouse_up()
-                                firing = False
+                        # Check if magazine or reserve ammo is depleted:
+                        # Standard rifle magazine has 30 rounds (~2.8s firing or 7-8 bursts)
+                        if burst_count >= 7 or (now - combat_firing_start > 2.8):
+                            if active_weapon_slot == 1 and reload_attempts == 0:
+                                # Primary Magazine Empty -> TACTICAL RELOAD [R]
+                                if firing:
+                                    send_mouse_up()
+                                    firing = False
+                                tap_key("r", 0.04)
+                                reloading_until = now + 2.2
+                                burst_count = 0
+                                reload_attempts = 1
+                                combat_firing_start = 0.0
+                                action_status = "TACTICAL RELOAD [R] (Magazine Empty)"
+                                play_beep(900, 45)
+                                if now - round_start_time < 35.0:
+                                    tap_key("f1", 0.03)
+                                    tap_key(",", 0.03)
+                            elif active_weapon_slot == 1 and reload_attempts >= 1:
+                                # Primary has 0 reserve ammo! Switch to Sidearm (Pistol [2])
+                                if firing:
+                                    send_mouse_up()
+                                    firing = False
+                                tap_key("2", 0.04)
+                                active_weapon_slot = 2
+                                burst_count = 0
+                                reload_attempts = 0
+                                combat_firing_start = now
+                                action_status = "PRIMARY EMPTY -> DRAW PISTOL [2]"
+                                play_beep(1400, 40)
+                                if now - round_start_time < 35.0:
+                                    tap_key("f1", 0.03)
+                                    tap_key(",", 0.03)
+                            elif active_weapon_slot == 2 and burst_count >= 5:
+                                # Sidearm also empty! Switch to Knife [3] and melee charge
+                                if firing:
+                                    send_mouse_up()
+                                    firing = False
+                                tap_key("3", 0.04)
+                                active_weapon_slot = 3
+                                burst_count = 0
+                                reload_attempts = 0
+                                action_status = "ALL AMMO EMPTY -> DRAW KNIFE [3]"
+                                play_beep(1800, 50)
+                            elif active_weapon_slot == 3:
+                                # Knife attack
+                                desired_keys.add("w")
+                                desired_keys.add("space")
+                                send_mouse_down()
+                                firing = True
+                                action_status = "KNIFE MELEE RUSH [3]"
                         else:
-                            burst_start = now
-                            send_mouse_down()
-                            firing = True
+                            # Normal lethal firing burst with recoil compensation
+                            recoil_pull = max(4, min(10, int(round(t_aim[1])) + 4)) if t_aim[1] > 0.5 else 5
+                            stance_label = "DUCK" if "ctrl" in desired_keys else "ADAD"
+                            slot_tag = "RIFLE" if active_weapon_slot == 1 else ("PISTOL" if active_weapon_slot == 2 else "KNIFE")
+                            action_status = f"COMBAT: {slot_tag} B#{burst_count+1} (dx={dx:+.0f}, dy={dy:+.0f}, rec={recoil_pull}, {stance_label})"
+
+                            if burst_start == 0.0:
+                                burst_start = now
+                                burst_count += 1
+                                last_combat_had_fire = True
+                                send_mouse_down()
+                                firing = True
+                                play_beep(1600, 25)
+
+                            burst_time = now - burst_start
+                            if burst_time < 0.30:  # 3-4 lethal rounds
+                                send_mouse_move(0, recoil_pull)
+                                pitch_drift = int(np.clip(pitch_drift + recoil_pull, -1200, 1200))
+                            elif burst_time < 0.40:
+                                if firing:
+                                    send_mouse_up()
+                                    firing = False
+                            else:
+                                burst_start = now
+                                burst_count += 1
+                                send_mouse_down()
+                                firing = True
 
                         if now - last_combat_snap > 1.5:
                             last_combat_snap = now
@@ -2403,6 +2538,17 @@ def main():
                         send_mouse_up()
                         firing = False
                     burst_start = 0.0
+
+                    # Post-combat weapon management: reload rifle and reselect primary
+                    if last_combat_had_fire and (now - last_combat_time > 1.2):
+                        last_combat_had_fire = False
+                        if active_weapon_slot != 1:
+                            tap_key("1", 0.04)
+                            active_weapon_slot = 1
+                        tap_key("r", 0.04)
+                        burst_count = 0
+                        reload_attempts = 0
+                        combat_firing_start = 0.0
 
                     # 1. Hard Horizon Lock: Keep crosshair locked at head horizon (-0.5 deg)
                     if pose is not None and len(pose) >= 5:
