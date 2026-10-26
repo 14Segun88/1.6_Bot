@@ -1846,17 +1846,17 @@ def main():
                 spawn_grace_period = 0.8  # Fast weapon equip on spawn
                 in_spawn_grace = (cur_time_in_round < spawn_grace_period)
 
-                # Round-End Watchdog: If round exceeds 1.55 minutes (93s), force round end via bot_kill / sv_restart
-                if cur_time_in_round > 95.0:
-                    print(f"\n[ROUND WATCHDOG] Round time limit (1.55 min) reached -> Resetting round...", flush=True)
+                # Round-End Watchdog: If round exceeds 1:55 (115s), force round end via bot_kill / sv_restart
+                if cur_time_in_round > 117.0:
+                    print(f"\n[ROUND WATCHDOG] Round time limit (1:55) reached -> Resetting round...", flush=True)
                     send_key_down("f3")
                     time.sleep(0.015)
                     send_key_up("f3")
-                    if cur_time_in_round > 98.0:
+                    if cur_time_in_round > 120.0:
                         send_key_down("f5")
                         time.sleep(0.015)
                         send_key_up("f5")
-                    round_start_time = now - 90.0  # Throttle watchdog trigger
+                    round_start_time = now - 110.0  # Throttle watchdog trigger
 
                 # In aim_ai_sandbox, human AI Agent is always CT, hunting 11 T-dummies
                 is_terrorist = False

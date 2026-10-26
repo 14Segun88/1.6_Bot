@@ -16,6 +16,6 @@ echo   Loading aim_ai_sandbox...
 echo   Weapon racks: AK47, M4A1, AWP, MP5, Shotgun, Armor, Grenades (HE, Flash, Smoke)
 echo.
 cd /d "D:\CS 1.6 GoldClient"
-start hl.exe -game cstrike -nomaster -novid -steam -noforcemparms -condebug +maxplayers 24 +mp_autoteambalance 0 +mp_limitteams 0 +mp_round_infinite 0 +humans_join_team CT +bot_join_team T +bot_quota_mode normal +bot_quota 11 +bot_stop 1 +bot_freeze 1 +bot_zombie 1 +bot_difficulty 0 +bot_knives_only 1 +cl_minmodels 1 +map aim_ai_sandbox +exec listenserver.cfg +exec maps/aim_ai_sandbox.cfg +mp_roundtime 1.55 +mp_round_restart_delay 1.55 +mp_freezetime 0
+start hl.exe -game cstrike -nomaster -novid -steam -noforcemparms -condebug +maxplayers 24 +mp_autoteambalance 0 +mp_limitteams 0 +mp_round_infinite 0 +humans_join_team CT +bot_join_team T +bot_quota_mode normal +bot_quota 11 +bot_stop 1 +bot_freeze 1 +bot_zombie 1 +bot_difficulty 0 +bot_knives_only 1 +cl_minmodels 1 +map aim_ai_sandbox +exec listenserver.cfg +exec maps/aim_ai_sandbox.cfg +mp_roundtime 1.92 +mp_round_restart_delay 1.55 +mp_freezetime 0
 echo Launched! Check your CS 1.6 window.
 pause
