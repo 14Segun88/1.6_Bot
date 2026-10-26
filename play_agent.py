@@ -807,6 +807,30 @@ def is_vgui_menu_open(frame_bgr):
             return True
     return False
 
+def is_text_menu_open(frame_bgr):
+    """
+    Detects classic CS 1.6 GoldSrc Text Menu ('Выберите класс:' / 'Choose Class:').
+    Rendered with yellow title and white numbered options on left side of screen.
+    """
+    if frame_bgr is None or frame_bgr.shape[0] < 200:
+        return False
+    h, w = frame_bgr.shape[:2]
+    menu_crop = frame_bgr[int(h * 0.40):int(h * 0.65), int(w * 0.01):int(w * 0.18)]
+    hsv = cv2.cvtColor(menu_crop, cv2.COLOR_BGR2HSV)
+    yellow_text = cv2.inRange(hsv, np.array([20, 120, 120]), np.array([35, 255, 255]))
+    white_text = cv2.inRange(hsv, np.array([0, 0, 200]), np.array([180, 40, 255]))
+    yt = np.sum(yellow_text > 0)
+    wt = np.sum(white_text > 0)
+    return (yt > 40 and wt > 800)
+
+def is_any_menu_open(frame_bgr):
+    """Returns (True, 'vgui'|'text') if graphical or text class/team menu is active"""
+    if is_vgui_menu_open(frame_bgr):
+        return True, "vgui"
+    if is_text_menu_open(frame_bgr):
+        return True, "text"
+    return False, ""
+
 
 class AIVisionVideoRecorder:
     """
@@ -1326,8 +1350,9 @@ class CSYOLODetector:
         self.input_size = 640
 
     def detect(self, bgr_img):
-        # If VGUI class/team selection menu is open on screen, suppress detections (prevents shooting menu art)
-        if is_vgui_menu_open(bgr_img):
+        # If class/team selection menu is open on screen, suppress detections (prevents shooting menu art)
+        is_menu, _ = is_any_menu_open(bgr_img)
+        if is_menu:
             return []
 
         gh, gw = bgr_img.shape[:2]
@@ -2308,6 +2333,7 @@ def main():
         pitch_drift = 0  # Reset pitch accumulation on new round spawn
         vgui_dismiss_attempts = 0
         tap_key("end", 0.04)  # Snap camera pitch to exact 0.0° horizontal via GoldSrc force_centerview
+        tap_key("5", 0.04)  # Automatically pick Option 5 (Random Class / Auto-Select) to spawn immediately
         last_wall_turn_time = 0.0
         spectator_streak = 0
         alive_screen_streak = 0
@@ -2475,19 +2501,19 @@ def main():
                     time.sleep(0.03)
                     continue
 
-                # 0. Check if VGUI Menu is open (Choose Team / Choose Class "ВЫБЕРИТЕ КЛАСС" / MOTD)
-                # MUST only run if player is not yet spawned on map (pose is None) and during early round start
-                if pose is None and (now - round_start_time < 3.5) and vgui_dismiss_attempts < 4 and is_vgui_menu_open(frame_bgr):
+                # 0. Check if Menu is open (Choose Team / Choose Class "Выберите класс" / VGUI)
+                is_menu, menu_type = is_any_menu_open(frame_bgr)
+                if is_menu and (pose is None or (now - round_start_time < 4.0)) and vgui_dismiss_attempts < 6:
                     vgui_dismiss_attempts += 1
-                    action_status = "VGUI MENU: AUTO-DISMISSING"
+                    action_status = f"MENU: DISMISSING [{menu_type.upper()}]"
                     for k in list(current_keys):
                         send_key_up(k)
                     current_keys.clear()
                     if firing:
                         send_mouse_up()
                         firing = False
-                    # Click button 5 (Random Choice) on screen to dismiss graphical dialog
-                    if IS_WINDOWS and user32:
+                    # Click button 5 on screen to dismiss graphical dialog
+                    if menu_type == "vgui" and IS_WINDOWS and user32:
                         btn_x = box["left"] + int(box["width"] * 0.25)
                         btn_y = box["top"] + int(box["height"] * 0.59)
                         user32.SetCursorPos(btn_x, btn_y)
@@ -2502,7 +2528,7 @@ def main():
                     tap_key("1", 0.04)
                     alive_screen_streak = 0
                     if step_count % 15 == 0:
-                        print(f"\r[VGUI MENU DETECTED] Auto-selected class [5] -> Closing menu...", end="", flush=True)
+                        print(f"\r[{menu_type.upper()} MENU DETECTED] Auto-selected class [5] -> Spawning player...", end="", flush=True)
                     time.sleep(0.04)
                     continue
 
@@ -2841,14 +2867,14 @@ def main():
                     # If pressed into a red barrier wall, NEVER press W! Reverse with S + strafe to detach from brush!
                     if wall_ahead or red_ratio > 0.30:
                         desired_keys.add("s")
-                        turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
+                        turn_dir = 1.0 if steer_bias > 0.10 else (-1.0 if steer_bias < -0.10 else float(patrol_dir))
                         desired_keys.add("d" if turn_dir > 0 else "a")
                     else:
                         desired_keys.add("w")
 
-                    # Smooth pivot away from obstacle (gentle 35 counts per frame = ~1.5 deg/frame)
+                    # Snappy pivot away from obstacle (~5-6 deg/frame)
                     if turn_remaining != 0:
-                        step_t = int(np.clip(turn_remaining, -35, 35))
+                        step_t = int(np.clip(turn_remaining, -85, 85))
                         turn_remaining -= step_t
                         send_mouse_move(step_t, 0)
 
