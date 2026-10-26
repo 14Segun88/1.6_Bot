@@ -273,54 +273,11 @@ ROUTE_NAMES = [
 
 def optical_color_lidar(frame_bgr):
     """
-    Real-time Optical Color Terrain & Barrier Scanner for aim_ai_sandbox:
-    - GREEN FLOOR (Walkable Zone / Сюда МОЖНО): HSV H in [32, 88], S > 45, V > 35
-    - RED WALL (Solid Barrier / Сюда НЕЛЬЗЯ): HSV H in [0, 14] or [165, 180], S > 50, V > 40
-    Returns:
-      steer_bias: float in [-1.0, 1.0] (negative = steer left towards green, positive = steer right)
-      wall_ahead: bool (True if red barrier wall is blocking forward path)
-      floor_visible: bool (True if green walkable arena floor is tracked)
-      red_ratio: float (0.0 to 1.0, peak red barrier ratio)
-      green_ratio: float (0.0 to 1.0, green walkable floor ratio)
+    Optical Color Lidar (Red wall / Green floor detection) is disabled:
+    The AI relies on neural enemy detection, optical flow motion sensing,
+    tactical waypoints, and the self-learning RL policy without artificial color barrier assumptions.
     """
-    if frame_bgr is None or frame_bgr.shape[0] < 100:
-        return 0.0, False, False, 0.0, 0.0
-
-    h, w = frame_bgr.shape[:2]
-    floor_roi = frame_bgr[int(h * 0.50):int(h * 0.95), :]
-    center_roi = frame_bgr[int(h * 0.25):int(h * 0.75), int(w * 0.25):int(w * 0.75)]
-
-    hsv_f = cv2.cvtColor(floor_roi, cv2.COLOR_BGR2HSV)
-    hsv_c = cv2.cvtColor(center_roi, cv2.COLOR_BGR2HSV)
-
-    # Red masks (barrier walls)
-    red_f = cv2.bitwise_or(
-        cv2.inRange(hsv_f, np.array([0, 50, 40]), np.array([14, 255, 255])),
-        cv2.inRange(hsv_f, np.array([165, 50, 40]), np.array([180, 255, 255]))
-    )
-    red_c = cv2.bitwise_or(
-        cv2.inRange(hsv_c, np.array([0, 50, 40]), np.array([14, 255, 255])),
-        cv2.inRange(hsv_c, np.array([165, 50, 40]), np.array([180, 255, 255]))
-    )
-
-    # Green masks (walkable arena floor)
-    green_f = cv2.inRange(hsv_f, np.array([32, 45, 35]), np.array([88, 255, 255]))
-
-    # Floor sector analysis (left, center, right)
-    rw = floor_roi.shape[1] // 3
-    left_red = float(np.mean(red_f[:, :rw])) / 255.0
-    center_red = float(np.mean(red_f[:, rw:2*rw])) / 255.0
-    right_red = float(np.mean(red_f[:, 2*rw:])) / 255.0
-
-    c_red_ratio = float(np.mean(red_c)) / 255.0
-    f_green_ratio = float(np.mean(green_f)) / 255.0
-
-    wall_ahead = (center_red > 0.22) or (c_red_ratio > 0.25)
-    floor_visible = (f_green_ratio > 0.12)
-    steer_bias = float(np.clip((left_red - right_red) * 2.5, -1.0, 1.0))
-    red_ratio = float(max(center_red, c_red_ratio))
-
-    return steer_bias, wall_ahead, floor_visible, red_ratio, f_green_ratio
+    return 0.0, False, False
 
 # Virtual Key Codes (Win32 / SDL2 WM_KEYDOWN compatibility)
 VK_MAP = {
@@ -814,10 +771,7 @@ class AIVisionVideoRecorder:
         wp_idx=0,
         total_wps=0,
         wall_ahead=False,
-        steer_bias=0.0,
-        floor_visible=True,
-        red_ratio=0.0,
-        green_ratio=0.0
+        steer_bias=0.0
     ):
         vis = frame_bgr.copy()
         h, w = vis.shape[:2]
@@ -883,67 +837,6 @@ class AIVisionVideoRecorder:
         cv2.circle(vis, (cx, cy), 2, ret_color, -1)
         if is_locked or firing_state:
             cv2.circle(vis, (cx, cy), 18, (0, 0, 255), 1, cv2.LINE_AA)
-
-        # 3. Optical Terrain & Barrier Recognition (Red Wall vs Green Floor)
-        # Widget Box on Top-Left: (14, 40) to (440, 96)
-        overlay_lidar = vis.copy()
-        cv2.rectangle(overlay_lidar, (14, 40), (440, 96), (15, 15, 15), -1)
-        cv2.addWeighted(overlay_lidar, 0.75, vis, 0.25, 0, vis)
-
-        box_border_color = (0, 0, 255) if (wall_ahead or red_ratio > 0.25) else (0, 220, 100)
-        cv2.rectangle(vis, (14, 40), (440, 96), box_border_color, 2)
-        cv2.putText(vis, "OPTICAL COLOR LIDAR: TERRAIN RECOGNITION", (24, 53), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (0, 240, 240), 1)
-
-        # Line 1: Green floor (Walkable / Open)
-        if floor_visible or green_ratio > 0.12:
-            g_txt = f"GREEN FLOOR: [WALKABLE / PATH OPEN] ({green_ratio*100:.0f}%)"
-            cv2.putText(vis, g_txt, (24, 69), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 120), 1)
-        else:
-            g_txt = f"GREEN FLOOR: [LOST / OBSTRUCTED] ({green_ratio*100:.0f}%)"
-            cv2.putText(vis, g_txt, (24, 69), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (140, 140, 140), 1)
-
-        # Line 2: Red barrier wall (Obstacle / No-go)
-        if wall_ahead or red_ratio > 0.20:
-            r_txt = f"RED WALL: [DANGER BARRIER / NO-GO ZONE!] ({red_ratio*100:.0f}%)"
-            cv2.putText(vis, r_txt, (24, 87), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 0, 255), 1)
-        else:
-            r_txt = f"RED WALL: [CLEAR / NO BARRIER] ({red_ratio*100:.0f}%)"
-            cv2.putText(vis, r_txt, (24, 87), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 220, 100), 1)
-
-        # Big Central Warning Shield when facing Red Wall
-        if wall_ahead or red_ratio > 0.25:
-            cv2.rectangle(vis, (2, 2), (w - 2, h - 2), (0, 0, 255), 4)
-
-            arrow = "<<< STEER LEFT TO GREEN" if steer_bias < 0 else "STEER RIGHT TO GREEN >>>"
-            w_tag1 = "[!] [RED WALL: BARRIER DETECTED - NO-GO ZONE!] [!]"
-            w_tag2 = f">>> AVOIDANCE: {arrow} (Bias: {steer_bias:+.2f}) >>>"
-            (tw1, th1), _ = cv2.getTextSize(w_tag1, cv2.FONT_HERSHEY_SIMPLEX, 0.52, 2)
-            (tw2, th2), _ = cv2.getTextSize(w_tag2, cv2.FONT_HERSHEY_SIMPLEX, 0.46, 1)
-            bw = max(tw1, tw2) + 40
-            bx = cx - bw // 2
-            by = cy - 120
-            cv2.rectangle(vis, (bx, by), (bx + bw, by + 65), (15, 15, 15), -1)
-            cv2.rectangle(vis, (bx, by), (bx + bw, by + 65), (0, 0, 255), 2)
-            cv2.putText(vis, w_tag1, (bx + 20, by + 26), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (0, 0, 255), 2)
-            cv2.putText(vis, w_tag2, (bx + 20, by + 50), cv2.FONT_HERSHEY_SIMPLEX, 0.46, (0, 255, 255), 1)
-
-        # 3-Channel Optical Lidar Balance Strip above Footer (cx - 240 to cx + 240, h - 58 to h - 34)
-        c_left_col = (0, 0, 255) if steer_bias > 0.3 else (0, 220, 100)
-        c_center_col = (0, 0, 255) if wall_ahead else (0, 220, 100)
-        c_right_col = (0, 0, 255) if steer_bias < -0.3 else (0, 220, 100)
-
-        overlay_strip = vis.copy()
-        cv2.rectangle(overlay_strip, (cx - 240, h - 58), (cx + 240, h - 34), (15, 15, 15), -1)
-        cv2.addWeighted(overlay_strip, 0.70, vis, 0.30, 0, vis)
-        cv2.rectangle(vis, (cx - 240, h - 58), (cx + 240, h - 34), (60, 60, 60), 1)
-
-        l_lbl = "[L: NO-GO]" if steer_bias > 0.3 else "[L: WALK]"
-        c_lbl = "[C: NO-GO]" if wall_ahead else "[C: WALK]"
-        r_lbl = "[R: NO-GO]" if steer_bias < -0.3 else "[R: WALK]"
-
-        cv2.putText(vis, l_lbl, (cx - 220, h - 41), cv2.FONT_HERSHEY_SIMPLEX, 0.40, c_left_col, 1)
-        cv2.putText(vis, c_lbl, (cx - 65, h - 41), cv2.FONT_HERSHEY_SIMPLEX, 0.40, c_center_col, 1)
-        cv2.putText(vis, r_lbl, (cx + 85, h - 41), cv2.FONT_HERSHEY_SIMPLEX, 0.40, c_right_col, 1)
 
         # 4. Top Status Header (Dark Translucent Bar)
         overlay = vis.copy()
@@ -2153,16 +2046,10 @@ def main():
                 step_dy = 0
                 steer_bias = 0.0
                 wall_ahead = False
-                floor_visible = True
-                red_ratio = 0.0
-                green_ratio = 0.0
 
                 # Capture screen frame
                 shot = sct.grab(box)
                 frame_bgr = np.array(shot)[:, :, :3]
-
-                # Optical Terrain & Barrier Perception (Green floor vs Red wall)
-                steer_bias, wall_ahead, floor_visible, red_ratio, green_ratio = optical_color_lidar(frame_bgr)
 
                 # 0. Check if player is dead or spectating (black bars or log confirmed)
                 if is_spectator_view(frame_bgr):
@@ -2610,6 +2497,7 @@ def main():
                             last_phys_pos = (cur_x, cur_y)
 
                         # Optical Color Lidar: Obstacle Avoidance via red wall / green floor detection
+                        steer_bias, wall_ahead, floor_visible = optical_color_lidar(frame_bgr)
                         if wall_ahead:
                             red_wall_ticks += 1
                             telemetry_tracker.on_wall_avoid()
@@ -2692,23 +2580,6 @@ def main():
                         send_mouse_move(turn_step, 0)
 
                     else:
-                        # Fallback Navigation (Memory pointer unhooked or calibrating):
-                        # Optical Lidar Barrier Guard: If facing red wall, avoid walking into it!
-                        if wall_ahead:
-                            red_wall_ticks += 1
-                            telemetry_tracker.on_wall_avoid()
-                            action_status = f"LIDAR: RED WALL ({red_ratio*100:.0f}%) -> AVOID / TURN TO GREEN"
-                            desired_keys.clear()
-                            desired_keys.add("s")  # Step back from red wall!
-                            desired_keys.add("space")
-                            desired_keys.add("ctrl")
-                            turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
-                            lidar_turn = int(np.clip(turn_dir * 55.0 * counts_per_deg, -200, 200))
-                            send_mouse_move(lidar_turn, 0)
-                            if red_wall_ticks >= 12:
-                                send_mouse_move(int(150.0 * counts_per_deg), 0)
-                                red_wall_ticks = 0
-
                         # High-Performance Structured Tactical Lane Hunter ($2000$ Map)
                         # 3. Optical Motion & Wall Proximity Sensing
                         center_crop = frame_bgr[crop_h//3:crop_h*2//3:4, crop_w//3:crop_w*2//3:4, 0]
@@ -2958,10 +2829,7 @@ def main():
                         wp_idx=current_wp_idx + 1,
                         total_wps=len(current_wps),
                         wall_ahead=wall_ahead,
-                        steer_bias=steer_bias,
-                        floor_visible=floor_visible,
-                        red_ratio=red_ratio,
-                        green_ratio=green_ratio
+                        steer_bias=steer_bias
                     )
                     ai_recorder.put_frame(hud_frame)
 
