@@ -540,7 +540,13 @@ def execute_autobuy():
     if not (IS_WINDOWS and user32):
         return
     def _buy_worker():
-        time.sleep(0.12)
+        time.sleep(0.08)
+        # Dismiss any pending class selection menu (5 = auto-select random model)
+        tap_key("5", 0.04)
+        time.sleep(0.03)
+        tap_key("space", 0.02)
+        time.sleep(0.04)
+
         # Step 1: Buy Primary Rifle (b -> 4 -> 3 = M4A1 / AK-47)
         tap_key("b", 0.03)
         time.sleep(0.04)
@@ -806,6 +812,26 @@ def is_spectator_view(frame_bgr):
     bot_std = float(np.std(bot_strip))
     # Genuine spectator letterbox bars are pure solid black (mean < 8.0, uniform std < 4.0)
     return (top_mean < 8.0 and bot_mean < 8.0 and top_std < 4.0 and bot_std < 4.0)
+
+
+def is_vgui_menu_open(frame_bgr):
+    """
+    Detects CS 1.6 VGUI Menu (Team Select, Class Select 'ВЫБЕРИТЕ КЛАСС', MOTD).
+    Features dark translucent overlay (dark_ratio > 0.40) and gold/yellow header (yellow_ratio > 0.015).
+    When open, soldier preview portraits must NEVER be treated as in-game enemies!
+    """
+    if frame_bgr is None or frame_bgr.shape[0] < 200:
+        return False
+    h, w = frame_bgr.shape[:2]
+    panel = frame_bgr[int(h * 0.15):int(h * 0.85), int(w * 0.12):int(w * 0.88)]
+    dark_ratio = float(np.mean(panel < 35))
+    if dark_ratio < 0.40:
+        return False
+    hdr = frame_bgr[int(h * 0.04):int(h * 0.14), int(w * 0.08):int(w * 0.35)]
+    hsv_hdr = cv2.cvtColor(hdr, cv2.COLOR_BGR2HSV)
+    yellow_hdr = cv2.inRange(hsv_hdr, np.array([15, 120, 120]), np.array([35, 255, 255]))
+    yellow_ratio = float(np.mean(yellow_hdr > 0))
+    return yellow_ratio > 0.015
 
 
 class AIVisionVideoRecorder:
@@ -1326,6 +1352,9 @@ class CSYOLODetector:
         self.input_size = 640
 
     def detect(self, bgr_img):
+        # Never detect targets from portraits in VGUI menus (Choose Class / Team Select)
+        if is_vgui_menu_open(bgr_img):
+            return []
         gh, gw = bgr_img.shape[:2]
         cx_game = gw // 2
         cy_game = gh // 2
@@ -2199,6 +2228,9 @@ def main():
 
         round_start_time = time.time()
         pitch_drift = 0  # Reset pitch accumulation on new round spawn
+        tap_key("5", 0.04)  # Automatically dismiss any pending VGUI class selection
+        time.sleep(0.02)
+        tap_key("space", 0.02)
         tap_key("end", 0.04)  # Snap camera pitch to exact 0.0° horizontal via GoldSrc force_centerview
         spectator_streak = 0
         alive_screen_streak = 0
@@ -2364,6 +2396,24 @@ def main():
                     if step_count % 30 == 0:
                         print(f"\r[AI AGENT ACTIVE] Step: {step_count:05d} | {action_status:36s} | Next round standby...", end="", flush=True)
                     time.sleep(0.03)
+                    continue
+
+                # 0. Check if VGUI Menu is open (Choose Team / Choose Class "ВЫБЕРИТЕ КЛАСС" / MOTD)
+                if is_vgui_menu_open(frame_bgr):
+                    action_status = "VGUI MENU: AUTO-DISMISSING [5]"
+                    for k in list(current_keys):
+                        send_key_up(k)
+                    current_keys.clear()
+                    if firing:
+                        send_mouse_up()
+                        firing = False
+                    tap_key("5", 0.04)  # Select random class / auto-select
+                    time.sleep(0.04)
+                    tap_key("space", 0.03)
+                    tap_key("1", 0.03)  # Draw rifle
+                    if step_count % 15 == 0:
+                        print(f"\r[VGUI MENU DETECTED] Auto-selected class [5] -> Closing menu...", end="", flush=True)
+                    time.sleep(0.04)
                     continue
 
                 # Freeze-time / early round ammo top-off
