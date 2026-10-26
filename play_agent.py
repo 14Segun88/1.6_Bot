@@ -261,8 +261,32 @@ class MemoryReader:
     def __init__(self):
         self.hProc = None
         self.ptr_addr = None
+        self.hw_base = None
         self.candidate_offsets = [0x7A834, 0x1222E8, 0x113CDC, 0x113CD0, 0x10B740, 0x150F40, 0x79834, 0x7B834]
         self.last_connect = 0.0
+        self.frozen_yaw_ticks = 0
+        self.last_yaw = None
+
+    def _read_candidate_pose(self, int_base, off):
+        if not self.hProc: return None
+        test_ptr = int_base + off
+        buf = (ctypes.c_char * 4)()
+        if not kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(test_ptr), buf, 4, None):
+            return None
+        b_ptr = struct.unpack_from("<I", buf, 0)[0]
+        if not b_ptr or b_ptr < 0x10000: return None
+        buf_mem = (ctypes.c_char * 28)()
+        if not kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(b_ptr + 0x3D4), buf_mem, 28, None):
+            return None
+        x, y, z, _, fwd_x, fwd_y, fwd_z = struct.unpack_from("<7f", buf_mem, 0)
+        if math.isnan(x) or math.isnan(y) or abs(fwd_x) < 0.0001 and abs(fwd_y) < 0.0001:
+            return None
+        if abs(x) > 8000 or abs(y) > 8000 or (abs(x) < 1.0 and abs(y) < 1.0):
+            return None
+        yaw_deg = math.degrees(math.atan2(fwd_y, fwd_x))
+        fwd_z_clamped = max(-1.0, min(1.0, float(fwd_z)))
+        pitch_deg = -math.degrees(math.asin(fwd_z_clamped))
+        return test_ptr, float(x), float(y), float(z), float(yaw_deg), float(pitch_deg)
 
     def connect(self):
         if not (IS_WINDOWS and kernel32): return False
@@ -302,20 +326,22 @@ class MemoryReader:
         if hw_base:
             int_base = int(hw_base) if isinstance(hw_base, int) else hw_base.value
             self.hw_base = int_base
-            buf = (ctypes.c_char * 4)()
-            buf_mem = (ctypes.c_char * 28)()
+            candidates = []
             for off in self.candidate_offsets:
-                test_ptr = int_base + off
-                if kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(test_ptr), buf, 4, None):
-                    b_ptr = struct.unpack_from("<I", buf, 0)[0]
-                    if b_ptr and b_ptr > 0x10000:
-                        if kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(b_ptr + 0x3D4), buf_mem, 28, None):
-                            tx, ty, tz = struct.unpack_from("<3f", buf_mem, 0)
-                            if not (math.isnan(tx) or math.isnan(ty) or math.isnan(tz)):
-                                if abs(tx) < 8000 and abs(ty) < 8000 and (abs(tx) > 1.0 or abs(ty) > 1.0):
-                                    self.ptr_addr = test_ptr
-                                    print(f"[*] Memory Engine: Connected to hw.dll (POS: {tx:.0f}, {ty:.0f}, {tz:.0f}) at offset 0x{off:X}")
-                                    return True
+                res = self._read_candidate_pose(int_base, off)
+                if res:
+                    t_ptr, tx, ty, tz, tyaw, tpitch = res
+                    # Calculate proximity to CT spawn (-772, 160)
+                    spawn_dist = math.hypot(tx - (-772.0), ty - 160.0)
+                    candidates.append((spawn_dist, off, t_ptr, tx, ty, tz, tyaw, tpitch))
+
+            if candidates:
+                # Sort by proximity to CT spawn so local player entity is always chosen over dummies
+                candidates.sort(key=lambda c: c[0])
+                best = candidates[0]
+                self.ptr_addr = best[2]
+                print(f"[*] Memory Engine: Connected to hw.dll (POS: {best[3]:.0f}, {best[4]:.0f}, {best[5]:.0f} | Yaw: {best[6]:.0f}°) at offset 0x{best[1]:X} [SpawnDist: {best[0]:.0f}]")
+                return True
         return False
 
     def get_pose(self):
@@ -370,13 +396,15 @@ class TargetDetector:
             if out.shape[0] < out.shape[1]: out = out.T
             boxes = out[:, :4]
             scores = out[:, 4]
-            mask = scores > 0.18
+            mask = scores > 0.28
             for (bx, by, bw, bh), conf in zip(boxes[mask], scores[mask]):
                 real_w = float(bw * gw / 640.0)
                 real_h = float(bh * gh / 640.0)
                 real_cx = float(bx * gw / 640.0)
                 real_cy = float(by * gh / 640.0)
-                if real_h < 26 or real_w < 14 or real_cy < gh * 0.20: continue
+                if real_h < 26 or real_w < 14 or real_cy < gh * 0.15: continue
+                # Reject first-person gun model / hands in bottom-right corner
+                if real_cx > gw * 0.68 and real_cy > gh * 0.60: continue
                 # Head position: top 16% of box
                 head_x = real_cx
                 head_y = (real_cy - real_h * 0.50) + (real_h * 0.16)
@@ -401,6 +429,8 @@ class TargetDetector:
             if by < gh * 0.15 or (by + bh) > gh * 0.95: continue
             head_x = bx + bw / 2.0
             head_y = by + bh * 0.14
+            # Reject first-person gun model / hands in bottom-right corner
+            if head_x > gw * 0.68 and head_y > gh * 0.60: continue
             dx = head_x - cx_game
             dy = head_y - cy_game
             dist = math.hypot(dx, dy)
@@ -529,14 +559,16 @@ def main():
     firing = False
     burst_cooldown = 0.0
     last_stuck_check = time.time()
+    round_start_time = time.time()
     last_pos = (0.0, 0.0)
     current_keys = set()
 
     def on_round_start():
-        nonlocal current_wp_idx, round_kills, active_route_idx, burst_cooldown
+        nonlocal current_wp_idx, round_kills, active_route_idx, burst_cooldown, round_start_time
         current_wp_idx = 0
         round_kills = 0
         burst_cooldown = 0.0
+        round_start_time = time.time()
         active_route_idx = (active_route_idx + 1) % len(ROUTES)
         print(f"\n>>> [ROUND START] New Route: {ROUTE_NAMES[active_route_idx]} <<<", flush=True)
         # Snap camera horizontal, pick class, autobuy M4A1
@@ -603,9 +635,16 @@ def main():
             # 3. Perception: Target Acquisition
             targets = detector.detect(frame)
             pose = mem.get_pose()
+            cur_x, cur_y, cur_z, cur_yaw = 0.0, 0.0, 0.0, 0.0
+            target_yaw, angle_diff = 0.0, 0.0
+            if pose is not None:
+                cur_x, cur_y, cur_z, cur_yaw, _ = pose
+
+            # Spawn Peace: inside CT spawn room (Y < 340) or in first 1.8s, run straight through doorway into arena
+            in_spawn = (pose is not None and cur_y < 340.0) or (now - round_start_time < 1.8)
 
             # 4. State Machine: Combat vs Navigation
-            if targets:
+            if targets and not in_spawn:
                 # -------------------------------------------------------------
                 # COMBAT MODE: Stop, Snap, Burst-Headshot
                 # -------------------------------------------------------------
@@ -660,22 +699,30 @@ def main():
                     target_yaw = math.degrees(math.atan2(wp_y - cur_y, wp_x - cur_x))
                     angle_diff = (target_yaw - cur_yaw + 180.0) % 360.0 - 180.0
 
-                    # Steer toward waypoint
-                    steer = int(np.clip(-angle_diff * counts_per_deg * 0.45, -220, 220))
-                    send_mouse_move(steer, 0)
+                    # Proportional steering with deadband and bounded turn rate (zero overshoot)
+                    if abs(angle_diff) < 3.5:
+                        steer = 0
+                    else:
+                        # Smooth proportional steering clamped to [-35, 35] counts (~42 deg/sec)
+                        k_steer = counts_per_deg * 0.25
+                        steer = int(np.clip(-angle_diff * k_steer, -35, 35))
 
-                    # Walk forward if facing general direction
-                    if abs(angle_diff) < 55.0:
+                    if steer != 0:
+                        send_mouse_move(steer, 0)
+
+                    # Walk forward with W: keep moving forward even while adjusting heading
+                    if abs(angle_diff) < 70.0:
                         if "w" not in current_keys:
                             send_key_down("w")
                             current_keys.add("w")
                     else:
+                        # Large angle deviation (> 70 deg): momentarily release W to snap heading
                         if "w" in current_keys:
                             send_key_up("w")
                             current_keys.remove("w")
 
-                    # Anti-stuck: if stuck in place for 1.5s, jump
-                    if now - last_stuck_check > 1.5:
+                    # Anti-stuck: if stuck in place for 1.8s, jump and alternate strafe
+                    if now - last_stuck_check > 1.8:
                         if math.hypot(cur_x - last_pos[0], cur_y - last_pos[1]) < 8.0:
                             tap_key("space", 0.05)
                             tap_key("d" if (step % 2 == 0) else "a", 0.12)
@@ -690,8 +737,11 @@ def main():
                         current_keys.remove("w")
                     action_str = "STANDBY (HOOKING POSE)"
 
-            if step % 20 == 0:
-                print(f"\r[HUNTER] Kills: {round_kills:02d}/11 | {action_str:32s} | Target: {'YES' if targets else 'NO '}", end="", flush=True)
+            if step % 10 == 0:
+                if pose is not None:
+                    print(f"\r[HUNTER] Kills: {round_kills:02d}/11 | POS:({cur_x:4.0f},{cur_y:4.0f}) | YAW:{cur_yaw:4.0f}°->{target_yaw:4.0f}° (Δ{angle_diff:+3.0f}°) | {action_str:22s}", end="", flush=True)
+                else:
+                    print(f"\r[HUNTER] Kills: {round_kills:02d}/11 | {action_str:32s} | Target: {'YES' if targets else 'NO '}", end="", flush=True)
 
             time.sleep(0.02)
 
