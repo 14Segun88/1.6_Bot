@@ -219,8 +219,8 @@ def launch_game_if_needed(work_dir):
     
     exe_path, run_dir = find_game_executable(work_dir)
     if exe_path and sys.platform.startswith("win"):
-        print(f"    [*] Launching CS 1.6 on map $2000$ with 10 bots ({exe_path})...", flush=True)
-        cmd = f'start "" "{exe_path}" -game cstrike -steam -noforcemparms +map $2000$ +maxplayers 16 +exec ai_arena.cfg'
+        print(f"    [*] Launching CS 1.6 on map aim_ai_sandbox with 11 dummies ({exe_path})...", flush=True)
+        cmd = f'start "" "{exe_path}" -game cstrike -nomaster -novid -steam -noforcemparms -condebug +maxplayers 24 +exec maps/aim_ai_sandbox.cfg +map aim_ai_sandbox'
         subprocess.Popen(cmd, cwd=run_dir, shell=True)
         print("    [*] Waiting 5 seconds for CS 1.6 engine to initialize...", flush=True)
         time.sleep(5.0)
@@ -290,7 +290,7 @@ def launch_arena_engines(work_dir):
 def main():
     print("="*78)
     print("   COUNTER-STRIKE 1.6 - MASTER AI ARENA & CONTINUOUS SELF-LEARNING")
-    print("   Map: $2000$ | Objective: Top-1 Fragger 10 Rounds Streak")
+    print("   Map: aim_ai_sandbox | Objective: Search, Detect & Eliminate 11 Dummies")
     print("="*78)
     
     work_dir = setup_working_directory()

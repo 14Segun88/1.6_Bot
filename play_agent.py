@@ -249,37 +249,68 @@ class CS16MemoryReader:
             pitch_deg = 0.0
         return float(x), float(y), float(z), float(yaw_deg), float(pitch_deg)
 
-# Tactical Routes for map $2000$ (Calibrated directly from $2000$.bsp entity geometry)
-# Center line: Y=762 | T Spawn: Y in [124, 252] (Exit at Y=360) | CT Spawn: Y in [1272, 1400] (Exit at Y=1164)
-MAP_ROUTES_T = [
-    # Route 0: CENTER COURTYARD RUSH (Straight through center lane past weapons into CT spawn)
-    [(-772, 360), (-772, 550), (-772, 762), (-772, 1050), (-772, 1300)],
+# Tactical Search & Clear Routes for aim_ai_sandbox (Calibrated from aim_ai_sandbox.bsp)
+# CT Spawn is at (-772, 160) | 11 Dummies distributed across Tunnels, Center Crossing, and Enemy Courtyard
+MAP_ROUTES_SANDBOX = [
+    # Route 0: LEFT FLANK & TUNNEL PATROL (Exit CT yard -> Left Tunnel -> Enemy Base)
+    [(-772, 160), (-1250, 250), (-1380, 500), (-1380, 800), (-1380, 1050), (-1100, 1300), (-772, 1350)],
 
-    # Route 1: LEFT FLANK ALLEY (Exit spawn to Y=360, move to left corridor X=-1185, push CT flank)
-    [(-772, 360), (-1185, 380), (-1185, 600), (-1185, 762), (-1185, 1080), (-900, 1300)],
+    # Route 1: CENTER CROSSING & ARCH PATROL (CT yard -> Central Arena -> Archway -> Enemy Base)
+    [(-772, 160), (-772, 300), (-1000, 620), (-772, 750), (-550, 620), (-772, 900), (-772, 1350)],
 
-    # Route 2: RIGHT FLANK ALLEY (Exit spawn to Y=360, move to right corridor X=-360, push CT flank)
-    [(-772, 360), (-360, 380), (-360, 600), (-360, 762), (-360, 1080), (-600, 1300)],
-
-    # Route 3: CENTER-TO-LEFT WRAP (Push center, flank into left CT corridor)
-    [(-772, 360), (-772, 600), (-1000, 762), (-1185, 1050), (-900, 1320)],
-
-    # Route 4: CENTER-TO-RIGHT WRAP (Push center, flank into right CT corridor)
-    [(-772, 360), (-772, 600), (-550, 762), (-360, 1050), (-600, 1320)]
+    # Route 2: RIGHT FLANK & TUNNEL PATROL (Exit CT yard -> Right Tunnel -> Enemy Base)
+    [(-772, 160), (-300, 250), (-200, 500), (-200, 800), (-200, 1050), (-450, 1300), (-772, 1350)],
 ]
 
-MAP_ROUTES_CT = [
-    # Flipped for CT: Y mirror around center line 762 (1524 - y)
-    [(x, 1524 - y) for x, y in r] for r in MAP_ROUTES_T
-]
+MAP_ROUTES_CT = MAP_ROUTES_SANDBOX
+MAP_ROUTES_T = MAP_ROUTES_SANDBOX
 
 ROUTE_NAMES = [
-    "CENTER COURTYARD RUSH",
-    "LEFT FLANK ALLEY",
-    "RIGHT FLANK ALLEY",
-    "CENTER-TO-LEFT WRAP",
-    "CENTER-TO-RIGHT WRAP"
+    "LEFT FLANK & TUNNEL PATROL",
+    "CENTER CROSSING & ARCH PATROL",
+    "RIGHT FLANK & TUNNEL PATROL"
 ]
+
+def optical_color_lidar(frame_bgr):
+    """
+    Real-time Optical Color Lidar for aim_ai_sandbox:
+    Analyzes floor & obstacle colors in lower 35% of the screen.
+    - Green Floor: HSV H in [35, 85], S > 60, V > 40
+    - Red Walls: HSV H in [0, 10] or [165, 180], S > 70, V > 50
+    Returns:
+      steer_bias: float in [-1.0, 1.0] (negative = steer left 'a', positive = steer right 'd')
+      wall_ahead: bool (True if red wall is immediately in front)
+      floor_visible: bool (True if green floor is tracked)
+    """
+    if frame_bgr is None or frame_bgr.shape[0] < 100:
+        return 0.0, False, False
+
+    h, w = frame_bgr.shape[:2]
+    roi = frame_bgr[int(h * 0.65):, :]
+    hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+
+    # Green mask (walkable arena floor)
+    green_mask = cv2.inRange(hsv, np.array([35, 60, 40]), np.array([85, 255, 255]))
+
+    # Red mask (solid barrier walls)
+    red_mask1 = cv2.inRange(hsv, np.array([0, 70, 50]), np.array([10, 255, 255]))
+    red_mask2 = cv2.inRange(hsv, np.array([165, 70, 50]), np.array([180, 255, 255]))
+    red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+
+    rh, rw = green_mask.shape
+    w_third = rw // 3
+
+    left_red = float(np.mean(red_mask[:, :w_third])) / 255.0
+    center_red = float(np.mean(red_mask[:, w_third:2*w_third])) / 255.0
+    right_red = float(np.mean(red_mask[:, 2*w_third:])) / 255.0
+
+    center_green = float(np.mean(green_mask[:, w_third:2*w_third])) / 255.0
+
+    wall_ahead = (center_red > 0.28) and (center_green < 0.35)
+    steer_bias = float(np.clip((left_red - right_red) * 2.5, -1.0, 1.0))
+    floor_visible = (center_green > 0.15)
+
+    return steer_bias, wall_ahead, floor_visible
 
 # Virtual Key Codes (Win32 / SDL2 WM_KEYDOWN compatibility)
 VK_MAP = {
@@ -605,13 +636,14 @@ def is_spectator_view(frame_bgr):
 
 
 class GameLogWatcher(threading.Thread):
-    def __init__(self, on_death=None, on_kill=None, on_damaged=None, on_round_start=None, on_enemy_hit=None):
+    def __init__(self, on_death=None, on_kill=None, on_damaged=None, on_round_start=None, on_enemy_hit=None, on_round_win=None):
         super().__init__(daemon=True)
         self.on_death = on_death
         self.on_kill = on_kill
         self.on_damaged = on_damaged
         self.on_round_start = on_round_start
         self.on_enemy_hit = on_enemy_hit
+        self.on_round_win = on_round_win
         self.is_alive = True
         self.running = True
 
@@ -670,6 +702,9 @@ class GameLogWatcher(threading.Thread):
                         self.on_round_start(line_str)
                 elif 'World triggered "Round_End"' in line_str:
                     self.is_alive = False
+                elif 'triggered "CTs_Win"' in line_str:
+                    if self.on_round_win:
+                        self.on_round_win(line_str)
                 elif ' attacked "' in line_str and ("STEAM_ID_LAN" in line_str or "не моюсь" in line_str):
                     parts = line_str.split(' attacked "')
                     if len(parts) >= 2:
@@ -859,9 +894,9 @@ class CSYOLODetector:
                 if mr > 110 and mb < 80 and mg < 90:  # slightly relaxed thresholds for central crop
                     continue
 
-            # Target point: neck / upper chest (top 25% of body box)
+            # Target point: Headshot Bullseye Center (top 16% of dummy box)
             target_x = real_cx
-            target_y = (real_cy - real_h * 0.50) + (real_h * 0.25)
+            target_y = (real_cy - real_h * 0.50) + (real_h * 0.16)
 
             dx = target_x - cx_game
             dy = target_y - cy_game
@@ -878,6 +913,34 @@ class CSYOLODetector:
                 "box": (x1_c, y1_c, x2_c, y2_c),
                 "is_locked": (abs(dx) <= max(24.0, real_w * 0.65) and abs(dy) <= max(20.0, real_h * 0.75))
             })
+
+        # Dual Detection: High-contrast Crash-Test Dummy Yellow HSV detection fallback
+        if len(targets) == 0:
+            hsv_full = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HSV)
+            # Yellow Dummy body mask: Hue in [20, 36], Sat in [80, 255], Val in [70, 255]
+            yellow_mask = cv2.inRange(hsv_full, np.array([20, 80, 70]), np.array([36, 255, 255]))
+            contours, _ = cv2.findContours(yellow_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            for cnt in contours:
+                ca = cv2.contourArea(cnt)
+                if ca > 120:  # Minimum dummy blob size
+                    c_bx, c_by, c_bw, c_bh = cv2.boundingRect(cnt)
+                    aspect = c_bh / max(1.0, float(c_bw))
+                    if 1.1 <= aspect <= 4.0 and c_bh >= 22:
+                        head_x = c_bx + c_bw / 2.0
+                        head_y = c_by + c_bh * 0.18
+                        c_dx = head_x - cx_game
+                        c_dy = head_y - cy_game
+                        c_dist = math.hypot(c_dx, c_dy)
+                        targets.append({
+                            "conf": 0.88,
+                            "dx": c_dx,
+                            "dy": c_dy,
+                            "dist": c_dist,
+                            "w": float(c_bw),
+                            "h": float(c_bh),
+                            "box": (c_bx, c_by, c_bx + c_bw, c_by + c_bh),
+                            "is_locked": (abs(c_dx) <= max(24.0, c_bw * 0.65) and abs(c_dy) <= max(20.0, c_bh * 0.75))
+                        })
 
         targets.sort(key=lambda t: t["dist"])
         return targets
@@ -1371,12 +1434,25 @@ def main():
 
     def handle_kill(evt_line):
         nonlocal accumulated_reward
-        accumulated_reward += 8.0
+        is_hs = ("headshot" in evt_line.lower()) or ("***" in evt_line)
+        reward_add = 15.0 if is_hs else 10.0
+        accumulated_reward += reward_add
+        play_beep(1900 if is_hs else 1500, 60)
+        tag = "HEADSHOT +15.0" if is_hs else "KILL +10.0"
+        print(f"\n>>> [{tag}] Dummy Eliminated! <<<", flush=True)
         frame, tgts = latest_frame_holder[0], latest_frame_holder[1]
         if frame is not None:
-            ann = annotate_frame(frame, tgts, "KILL CONFIRMED!", "+".join(sorted(current_keys)), True)
+            ann = annotate_frame(frame, tgts, f"KILL CONFIRMED! [{tag}]", "+".join(sorted(current_keys)), True)
             cv2.imwrite(os.path.join(DEBUG_DIR, "KILL_latest.jpg"), ann)
             print(f"\n[Visual Black Box] Kill captured! Saved to {DEBUG_DIR}/KILL_latest.jpg", flush=True)
+
+    def handle_round_win(evt_line):
+        nonlocal accumulated_reward
+        accumulated_reward += 50.0
+        play_beep(2200, 200)
+        print(f"\n===========================================================")
+        print(f" >>> [VICTORY] ALL 11 DUMMIES CLEARED! (+50.0 REWARD) <<<")
+        print(f"===========================================================\n", flush=True)
 
     enemy_spotted = False
     damage_retaliation_until = 0.0
@@ -1436,7 +1512,8 @@ def main():
         on_kill=handle_kill,
         on_damaged=handle_damaged,
         on_round_start=handle_round_start,
-        on_enemy_hit=handle_enemy_hit
+        on_enemy_hit=handle_enemy_hit,
+        on_round_win=handle_round_win
     )
     log_watcher.start()
 
@@ -1571,23 +1648,14 @@ def main():
                 # 1. Vision Detection (YOLOv8)
                 raw_targets = detector.detect(frame_bgr)
                 cur_time_in_round = now - round_start_time
-                spawn_grace_period = 3.8  # Calibrated for $2000$: clear starting wall and crates without shooting teammates
+                spawn_grace_period = 0.8  # Fast weapon equip on spawn
                 in_spawn_grace = (cur_time_in_round < spawn_grace_period)
 
-                # Dynamic team and spawn zone determination on $2000$
-                is_terrorist = True
-                in_own_spawn = False
-                if pose is not None:
-                    cur_x, cur_y, cur_z, cur_yaw = pose[:4]
-                    is_terrorist = (cur_y < 762.0)
-                    in_own_spawn = (cur_y < 440.0) if is_terrorist else (cur_y > 1084.0)
-                else:
-                    is_terrorist = True
-                    in_own_spawn = (cur_time_in_round < 3.8)
+                # In aim_ai_sandbox, human AI Agent is always CT, hunting 11 T-dummies
+                is_terrorist = False
+                in_own_spawn = (cur_time_in_round < spawn_grace_period)
 
-                # STRICT SPAWN PEACE LOCK: Absolute fire & target ban on spawn!
-                # Nobody from enemy team can be in our spawn in first 3.8s. All entities are teammates!
-                spawn_peace_active = in_spawn_grace or in_own_spawn or (cur_time_in_round < 3.8)
+                spawn_peace_active = in_spawn_grace
 
                 targets = []
                 if not spawn_peace_active:
@@ -1910,13 +1978,12 @@ def main():
                     if pose is not None:
                         cur_x, cur_y, cur_z, cur_yaw = pose[:4]
 
-                        # Dynamic Team & Route Setup based on spawn coordinates
-                        is_terrorist = (cur_y < 762.0)
-                        active_waypoints = MAP_ROUTES_T[active_route_idx] if is_terrorist else MAP_ROUTES_CT[active_route_idx]
+                        # Tactical Route Setup on aim_ai_sandbox
+                        is_terrorist = False
+                        active_waypoints = MAP_ROUTES_SANDBOX[active_route_idx % len(MAP_ROUTES_SANDBOX)]
 
-                        # 0. SPAWN AUTO-ORIENT: Half the spawns face backward into the back wall!
-                        # Immediately turn towards the battlefield exit (+Y for T, -Y for CT)
-                        target_spawn_yaw = 90.0 if is_terrorist else -90.0
+                        # 0. SPAWN AUTO-ORIENT: Aim towards northern arena exit (+Y, 90 deg)
+                        target_spawn_yaw = 90.0
                         spawn_angle_diff = (target_spawn_yaw - cur_yaw + 180.0) % 360.0 - 180.0
                         if cur_time_in_round < 1.8 and abs(spawn_angle_diff) > 25.0:
                             steer_spawn = int(np.clip(-spawn_angle_diff * counts_per_deg * 0.55, -240, 240))
@@ -1953,13 +2020,27 @@ def main():
                                     phys_stuck_ticks = max(0, phys_stuck_ticks - 1)
                             last_phys_pos = (cur_x, cur_y)
 
+                        # Optical Color Lidar: Obstacle Avoidance via red wall / green floor detection
+                        steer_bias, wall_ahead, floor_visible = optical_color_lidar(frame_bgr)
+                        if wall_ahead:
+                            action_status = "LIDAR: RED WALL AHEAD -> DUCK-JUMP HOP"
+                            desired_keys.add("space")
+                            desired_keys.add("ctrl")
+                            if steer_bias > 0.05:
+                                desired_keys.add("d")
+                            elif steer_bias < -0.05:
+                                desired_keys.add("a")
+                            accumulated_reward -= 0.05
+                        elif abs(steer_bias) > 0.25:
+                            desired_keys.add("d" if steer_bias > 0 else "a")
+
                         # Reached final waypoint in enemy spawn: Sweep and Hunt
                         if current_wp_idx >= len(active_waypoints) - 1 and dist < 120.0:
-                            sweep = math.sin(step_count * 0.12) * 35.0
-                            base_yaw = 90.0 if is_terrorist else -90.0
+                            sweep = math.sin(step_count * 0.12) * 45.0
+                            base_yaw = 90.0
                             target_yaw = base_yaw + sweep
                             angle_diff = (target_yaw - cur_yaw + 180.0) % 360.0 - 180.0
-                            action_status = f"SWEEP SPAWN [WP {current_wp_idx+1}/{len(active_waypoints)}]"
+                            action_status = f"SWEEP ENEMY BASE [WP {current_wp_idx+1}/{len(active_waypoints)}]"
                             # Controlled strafe-peek in enemy spawn
                             if step_count % 50 < 25:
                                 desired_keys.add("w")
