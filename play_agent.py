@@ -1250,15 +1250,23 @@ class OnlineExperienceRecorder:
                 self.filename = candidate
                 break
 
+        self.total_recorded = 0
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, "r", encoding="utf-8") as f:
+                    self.total_recorded = sum(1 for _ in f)
+            except Exception:
+                self.total_recorded = 0
         self.queue = queue.Queue(maxsize=max_queue)
         self.running = True
         self.worker = threading.Thread(target=self._run, daemon=True)
         self.worker.start()
-        print(f"[*] Online Experience Recorder: Active writing to '{self.filename}'")
+        print(f"[*] Online Experience Recorder: Active writing to '{self.filename}' (Existing: {self.total_recorded} samples)")
 
     def record(self, state_30d, keys_7d, clicks_2d, aim_2d, reward):
         if not self.running:
             return
+        self.total_recorded += 1
         try:
             item = {
                 "x": [round(float(v), 5) for v in state_30d],
@@ -1297,6 +1305,170 @@ class OnlineExperienceRecorder:
         self.running = False
 
 
+class BenchmarkTelemetryTracker:
+    """
+    Automatic Telemetry Logger for 4 Core AI Modules:
+    1. Movement Module: Route, Waypoints reached, Wall avoidances, Unstuck maneuvers
+    2. Perception Module: Dummies spotted frames, Avg detection confidence, Head bullseye locks
+    3. Combat & Rewards: Kills (Total, Headshots, Body), HS %, Net round reward
+    4. Reinforcement Learning: Experience samples collected, policy update triggers
+    """
+    def __init__(self, filename="benchmarks/live_telemetry.json", baseline_file="benchmarks/baseline_10_rounds.json"):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        candidates_dir = [
+            os.path.join(os.getcwd(), "benchmarks"),
+            os.path.join(base_dir, "benchmarks"),
+            "D:/CS 1.6 GoldClient/benchmarks",
+            "/mnt/d/CS 1.6 GoldClient/benchmarks"
+        ]
+        target_dir = candidates_dir[0]
+        for cd in candidates_dir:
+            if os.path.exists(cd):
+                target_dir = cd
+                break
+        os.makedirs(target_dir, exist_ok=True)
+        self.filename = os.path.join(target_dir, "live_telemetry.json")
+        self.baseline_file = os.path.join(target_dir, "baseline_10_rounds.json")
+        self.rounds = []
+        self.current_round = 0
+        self.round_data = None
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, "r", encoding="utf-8") as f:
+                    self.rounds = json.load(f)
+                    self.current_round = len(self.rounds)
+            except Exception:
+                self.rounds = []
+        print(f"[*] Benchmark Telemetry Tracker: Logging to '{self.filename}' (Active session round: {self.current_round})")
+
+    def start_round(self, route_name):
+        self.current_round += 1
+        self.round_data = {
+            "round": self.current_round,
+            "route": route_name,
+            "start_time": time.time(),
+            "duration": 0.0,
+            "kills_total": 0,
+            "kills_headshot": 0,
+            "kills_body": 0,
+            "dummies_spotted_frames": 0,
+            "head_bullseye_locks": 0,
+            "conf_sum": 0.0,
+            "conf_count": 0,
+            "wall_avoidances": 0,
+            "unstuck_events": 0,
+            "max_wp_reached": 0,
+            "total_waypoints": 0,
+            "round_reward": 0.0,
+            "total_rl_samples": 0
+        }
+
+    def on_kill(self, is_hs):
+        if self.round_data:
+            self.round_data["kills_total"] += 1
+            if is_hs:
+                self.round_data["kills_headshot"] += 1
+            else:
+                self.round_data["kills_body"] += 1
+
+    def on_spotted(self, conf, is_head):
+        if self.round_data:
+            self.round_data["dummies_spotted_frames"] += 1
+            self.round_data["conf_sum"] += conf
+            self.round_data["conf_count"] += 1
+            if is_head:
+                self.round_data["head_bullseye_locks"] += 1
+
+    def on_wall_avoid(self):
+        if self.round_data:
+            self.round_data["wall_avoidances"] += 1
+
+    def on_unstuck(self):
+        if self.round_data:
+            self.round_data["unstuck_events"] += 1
+
+    def update_wp(self, wp_idx, total_wps):
+        if self.round_data:
+            self.round_data["max_wp_reached"] = max(self.round_data["max_wp_reached"], wp_idx)
+            self.round_data["total_waypoints"] = total_wps
+
+    def finish_round(self, net_reward, total_rl_samples=0):
+        if not self.round_data:
+            return
+        self.round_data["duration"] = round(time.time() - self.round_data["start_time"], 2)
+        self.round_data["round_reward"] = round(net_reward, 2)
+        self.round_data["avg_conf"] = round(self.round_data["conf_sum"] / max(1, self.round_data["conf_count"]), 3)
+        self.round_data["headshot_pct"] = round((self.round_data["kills_headshot"] / max(1, self.round_data["kills_total"])) * 100.0, 1)
+        self.round_data["total_rl_samples"] = total_rl_samples
+        
+        self.rounds.append(self.round_data)
+        
+        try:
+            with open(self.filename, "w", encoding="utf-8") as f:
+                json.dump(self.rounds, f, indent=2)
+        except Exception:
+            pass
+
+        d = self.round_data
+        print(f"\n" + "="*76)
+        print(f" [ROUND {d['round']:02d} TELEMETRY] Route: {d['route']} | Duration: {d['duration']:.1f}s")
+        print(f"  * 1. Movement:    Waypoints: {d['max_wp_reached']}/{d['total_waypoints']} | Wall Bounces: {d['wall_avoidances']} | Unstucks: {d['unstuck_events']}")
+        print(f"  * 2. Perception:  Spotted: {d['dummies_spotted_frames']} frames | Avg Conf: {d['avg_conf']:.2f} | Head Locks: {d['head_bullseye_locks']}")
+        print(f"  * 3. Combat:      Kills: {d['kills_total']}/11 (HS: {d['kills_headshot']}, Body: {d['kills_body']}) | HS%: {d['headshot_pct']:.1f}%")
+        print(f"  * 4. RL & Reward: Round Reward: {d['round_reward']:+.1f} | RL Buffer: {d['total_rl_samples']} samples")
+        print("="*76 + "\n", flush=True)
+
+        if self.current_round == 10:
+            self.save_baseline_summary()
+
+    def save_baseline_summary(self):
+        first_10 = self.rounds[:10]
+        if not first_10:
+            return
+        total_kills = sum(r["kills_total"] for r in first_10)
+        total_hs = sum(r["kills_headshot"] for r in first_10)
+        avg_reward = sum(r["round_reward"] for r in first_10) / len(first_10)
+        avg_wp = sum(r["max_wp_reached"] for r in first_10) / len(first_10)
+        avg_conf = sum(r["avg_conf"] for r in first_10) / len(first_10)
+        total_rl = first_10[-1].get("total_rl_samples", 0)
+        
+        summary = {
+            "benchmark_type": "BASELINE_FIRST_10_ROUNDS",
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "rounds_analyzed": len(first_10),
+            "movement": {
+                "avg_waypoints_reached": round(avg_wp, 2),
+                "total_wall_avoidances": sum(r["wall_avoidances"] for r in first_10),
+                "total_unstuck_events": sum(r["unstuck_events"] for r in first_10)
+            },
+            "perception": {
+                "avg_confidence": round(avg_conf, 3),
+                "total_spotted_frames": sum(r["dummies_spotted_frames"] for r in first_10),
+                "total_head_locks": sum(r["head_bullseye_locks"] for r in first_10)
+            },
+            "combat_and_rewards": {
+                "total_kills": total_kills,
+                "avg_kills_per_round": round(total_kills / len(first_10), 2),
+                "headshot_percentage": round((total_hs / max(1, total_kills)) * 100.0, 1),
+                "avg_round_reward": round(avg_reward, 2)
+            },
+            "reinforcement_learning": {
+                "total_samples_collected": total_rl
+            },
+            "detailed_rounds": first_10
+        }
+        try:
+            with open(self.baseline_file, "w", encoding="utf-8") as f:
+                json.dump(summary, f, indent=2)
+            print("\n" + "#"*76)
+            print(" [★ BASELINE 10-ROUND BENCHMARK SAVED TO benchmarks/baseline_10_rounds.json ★]")
+            print("  Now let the agent play for several hours!")
+            print("  Run 'python compare_benchmarks.py' anytime to see training improvements!")
+            print("#"*76 + "\n", flush=True)
+        except Exception as e:
+            print(f"[!] Error saving baseline: {e}", flush=True)
+
+
 def main():
     model_path = "models/yolov8n_crowdhuman.onnx"
     if not os.path.exists(model_path):
@@ -1308,6 +1480,7 @@ def main():
     tactical_brain = TacticalBrainExecutor(npz_path=tactical_path)
     policy_brain = PolicyBrainExecutor(npz_path="models/policy_weights.npz")
     exp_recorder = OnlineExperienceRecorder(filename="dataset/online_experiences.jsonl")
+    telemetry_tracker = BenchmarkTelemetryTracker()
     pose_history = deque(maxlen=5)
     accumulated_reward = 0.0
 
@@ -1438,8 +1611,9 @@ def main():
         reward_add = 15.0 if is_hs else 10.0
         accumulated_reward += reward_add
         play_beep(1900 if is_hs else 1500, 60)
+        telemetry_tracker.on_kill(is_hs)
         tag = "HEADSHOT +15.0" if is_hs else "KILL +10.0"
-        print(f"\n>>> [{tag}] Dummy Eliminated! <<<", flush=True)
+        print(f"\n>>> [{tag}] Dummy Eliminated! (Round Kills: {telemetry_tracker.round_data['kills_total'] if telemetry_tracker.round_data else 1}) <<<", flush=True)
         frame, tgts = latest_frame_holder[0], latest_frame_holder[1]
         if frame is not None:
             ann = annotate_frame(frame, tgts, f"KILL CONFIRMED! [{tag}]", "+".join(sorted(current_keys)), True)
@@ -1453,6 +1627,8 @@ def main():
         print(f"\n===========================================================")
         print(f" >>> [VICTORY] ALL 11 DUMMIES CLEARED! (+50.0 REWARD) <<<")
         print(f"===========================================================\n", flush=True)
+        telemetry_tracker.finish_round(accumulated_reward, total_rl_samples=exp_recorder.total_recorded)
+        accumulated_reward = 0.0
 
     enemy_spotted = False
     damage_retaliation_until = 0.0
@@ -1482,7 +1658,11 @@ def main():
     red_wall_ticks = 0
 
     def handle_round_start(evt_line):
-        nonlocal active_route_idx, current_wp_idx, phys_stuck_ticks, last_phys_pos, round_start_time, forward_start, stuck_frames, turn_remaining, lane_turn_done, lane_turn_remaining, pitch_drift, spectator_streak, alive_screen_streak, red_wall_ticks
+        nonlocal active_route_idx, current_wp_idx, phys_stuck_ticks, last_phys_pos, round_start_time, forward_start, stuck_frames, turn_remaining, lane_turn_done, lane_turn_remaining, pitch_drift, spectator_streak, alive_screen_streak, red_wall_ticks, accumulated_reward
+        if round_start_time > 0 and (time.time() - round_start_time) > 4.0:
+            telemetry_tracker.finish_round(accumulated_reward, total_rl_samples=exp_recorder.total_recorded)
+            accumulated_reward = 0.0
+
         round_start_time = time.time()
         pitch_drift = 0  # Reset pitch accumulation on new round spawn
         spectator_streak = 0
@@ -1497,8 +1677,9 @@ def main():
         turn_remaining = 0
         lane_turn_remaining = 0
         lane_turn_done = [False, False]
+        telemetry_tracker.start_round(ROUTE_NAMES[active_route_idx])
         print(f"\n\n===========================================================")
-        print(f" >>> [ROUND START] TACTICAL ROUTE: {ROUTE_NAMES[active_route_idx]} <<<")
+        print(f" >>> [ROUND {telemetry_tracker.current_round:02d} START] TACTICAL ROUTE: {ROUTE_NAMES[active_route_idx]} <<<")
         print(f"===========================================================\n", flush=True)
         play_beep(1100, 80)
 
@@ -1767,6 +1948,7 @@ def main():
                 # STATE A: COMBAT MODE (Enemy in View)
                 # ==============================================================
                 if enemy_spotted:
+                    telemetry_tracker.on_spotted(conf=conf, is_head=(is_head > 0.5))
                     forward_start = now
                     stuck_frames = 0
                     unstuck_until = 0.0
@@ -2026,6 +2208,7 @@ def main():
                         steer_bias, wall_ahead, floor_visible = optical_color_lidar(frame_bgr)
                         if wall_ahead:
                             red_wall_ticks += 1
+                            telemetry_tracker.on_wall_avoid()
                             action_status = f"LIDAR: RED WALL ({red_wall_ticks}) -> ESCAPE PIVOT"
                             desired_keys.add("space")
                             desired_keys.add("ctrl")
@@ -2051,6 +2234,7 @@ def main():
 
                         # Reached final waypoint in enemy spawn: Sweep and Hunt
                         if current_wp_idx >= len(active_waypoints) - 1 and dist < 120.0:
+                            telemetry_tracker.update_wp(len(active_waypoints), len(active_waypoints))
                             sweep = math.sin(step_count * 0.12) * 45.0
                             base_yaw = 90.0
                             target_yaw = base_yaw + sweep
@@ -2063,12 +2247,14 @@ def main():
                                 desired_keys.add("ctrl")
                         else:
                             # Active navigation towards waypoint
+                            telemetry_tracker.update_wp(current_wp_idx + 1, len(active_waypoints))
                             target_yaw = math.degrees(math.atan2(dy, dx))
                             angle_diff = (target_yaw - cur_yaw + 180.0) % 360.0 - 180.0
                             action_status = f"NAV: {ROUTE_NAMES[active_route_idx][:14]} [WP {current_wp_idx+1}/{len(active_waypoints)}]"
 
                             # Obstacle unhooking if stuck against crate corner or player
                             if phys_stuck_ticks >= 2:
+                                telemetry_tracker.on_unstuck()
                                 action_status = f"NAV: DUCK-JUMP UNHOOK (Stuck {phys_stuck_ticks})"
                                 desired_keys.add("w")
                                 desired_keys.add("space")  # Jump over low obstacle
@@ -2120,6 +2306,7 @@ def main():
 
                             # Trigger wall unhooking after 8 frames (~0.25s)
                             if stuck_frames >= 8:
+                                telemetry_tracker.on_unstuck()
                                 unstuck_until = now + 0.45  # 0.45s forward-hopping & gliding along wall
                                 patrol_dir *= -1
                                 # 65 degree pivot away from wall!
