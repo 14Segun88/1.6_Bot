@@ -1,0 +1,24 @@
+@echo off
+setlocal enabledelayedexpansion
+title CS 1.6 AI Self-Learning Benchmark Comparison (Baseline vs Trained)
+echo ===============================================================================
+echo   Counter-Strike 1.6 - AI Self-Learning Benchmark Comparison Suite
+echo   Empirical 4-Pillar Evaluation: Movement, Perception, Combat, RL Growth
+echo ===============================================================================
+echo.
+
+set "PY_EXE="
+if exist "%~dp0venv\Scripts\python.exe" set "PY_EXE=%~dp0venv\Scripts\python.exe"
+if not defined PY_EXE if exist "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" set "PY_EXE=%LOCALAPPDATA%\Programs\Python\Python313\python.exe"
+if not defined PY_EXE if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" set "PY_EXE=%LOCALAPPDATA%\Programs\Python\Python312\python.exe"
+if not defined PY_EXE if exist "%LOCALAPPDATA%\Programs\Python\Python311\python.exe" set "PY_EXE=%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
+if not defined PY_EXE if exist "%ProgramFiles%\Python313\python.exe" set "PY_EXE=%ProgramFiles%\Python313\python.exe"
+if not defined PY_EXE if exist "%ProgramFiles%\Python312\python.exe" set "PY_EXE=%ProgramFiles%\Python312\python.exe"
+if not defined PY_EXE if exist "%ProgramFiles%\Python311\python.exe" set "PY_EXE=%ProgramFiles%\Python311\python.exe"
+if not defined PY_EXE set "PY_EXE=python"
+
+cd /d "%~dp0"
+"%PY_EXE%" compare_benchmarks.py
+
+echo.
+pause
