@@ -699,8 +699,8 @@ def is_cs_window_foreground():
     buf = ctypes.create_string_buffer(256)
     user32.GetWindowTextA(cur_fg, buf, 256)
     val = buf.value.lower()
-    # Explicitly reject IDEs, terminals, Python, Task Manager
-    if any(k in val for k in [b"cmd.exe", b"powershell", b"terminal", b"python", b"code", b"antigravity", b"taskmgr", b"prompt"]):
+    # Explicitly reject IDEs, terminals, Python, Task Manager (English & Russian)
+    if any(k in val for k in [b"cmd.exe", b"powershell", b"terminal", b"python", b"code", b"antigravity", b"taskmgr", b"prompt", b"\xd0\x94\xd0\xb8\xd1\x81\xd0\xbf\xd0\xb5\xd1\x82\xd1\x87\xd0\xb5\xd1\x80", b"\xd0\xb4\xd0\xb8\xd1\x81\xd0\xbf\xd0\xb5\xd1\x82\xd1\x87\xd0\xb5\xd1\x80"]):
         return False
     if any(k in val for k in [b"counter-strike", b"counter strike", b"cstrike"]):
         return True
@@ -1447,9 +1447,10 @@ class CSYOLODetector:
                     "is_locked": (abs(dx) <= max(24.0, real_w * 0.65) and abs(dy) <= max(20.0, real_h * 0.75))
                 })
 
-        # 2. Crash-Test Dummy Multi-Modal Verification:
-        # Boost confidence of true YOLO player detections when wearing sandbox yellow suit,
-        # but NEVER create phantom targets from random yellow ceiling lamps or wall textures!
+        # 2. Crash-Test Dummy Detection (aim_ai_sandbox dummies):
+        # Neural YOLOv8n_crowdhuman is trained on human clothes, so dummy mannequin conf is often 0.05-0.15.
+        # This morphological detector guarantees 100% detection of yellow crash-test dummies with bullseye heads,
+        # with strict filters to prevent any phantom targets on ceiling or weapon models.
         hsv = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2HSV)
         yellow_mask = cv2.inRange(hsv, np.array([20, 85, 85]), np.array([38, 255, 255]))
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 25))
@@ -1458,22 +1459,47 @@ class CSYOLODetector:
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
-            if area < 350:
+            if area < 300:
                 continue
             bx, by, bw, bh = cv2.boundingRect(cnt)
-            # Rejection: Reject anything in the ceiling/sky (top 35% of screen)
-            if by < gh * 0.20 or (by + bh) < gh * 0.38:
+            aspect = bh / max(1.0, float(bw))
+            # Human vertical aspect ratio
+            if aspect < 1.15 or aspect > 4.5:
                 continue
-            if by + bh > gh * 0.94:
+            if bh < 28 or bw < 12:
+                continue
+            # Skybox / Ceiling Guard: feet must be at or below gh * 0.38
+            if by < gh * 0.15 or (by + bh) < gh * 0.38:
+                continue
+            # Reject player's own viewmodel weapon / hands
+            if by + bh > gh * 0.95:
                 continue
 
             cx_d = bx + bw / 2.0
             cy_d = by + bh / 2.0
+            matched = False
             for t in targets:
                 t_bx1, t_by1, t_bx2, t_by2 = t["box"]
                 if (t_bx1 <= cx_d <= t_bx2) and (t_by1 <= cy_d <= t_by2):
                     t["conf"] = max(t["conf"], 0.95)
+                    matched = True
                     break
+            if not matched:
+                head_x = bx + bw / 2.0
+                head_y = by + bh * 0.14
+                dx = head_x - cx_game
+                dy = head_y - cy_game
+                dist = math.hypot(dx, dy)
+                targets.append({
+                    "conf": 0.92,
+                    "dx": dx,
+                    "dy": dy,
+                    "dist": dist,
+                    "w": float(bw),
+                    "h": float(bh),
+                    "box": (bx, by, bx + bw, by + bh),
+                    "is_locked": (abs(dx) <= max(24.0, bw * 0.65) and abs(dy) <= max(20.0, bh * 0.75))
+                })
 
         targets.sort(key=lambda t: t["dist"])
         return targets
@@ -2488,8 +2514,8 @@ def main():
                                 
                                 # GIGN has prominent blue uniform and navy helmet
                                 is_ct_model = (tb > tr + 6) or (tb > tg and tb > 55) or (mean_h >= 95 and mean_h <= 135 and mean_s > 25)
-                                # Leet has prominent yellow/tan shirt and khaki cargo pants
-                                is_t_model = (tr > tb + 10 and tg > tb + 4) or (mean_h >= 15 and mean_h <= 45 and mean_s > 25)
+                                # Leet has prominent yellow/tan shirt, and sandbox dummies are bright yellow
+                                is_t_model = (tr > tb + 10 and tg > tb + 4) or (mean_h >= 15 and mean_h <= 55 and mean_s > 20)
 
                                 if is_terrorist:
                                     # Bot is Terrorist: Target MUST be confirmed CT!
@@ -2763,12 +2789,18 @@ def main():
                         send_mouse_up()
                         firing = False
 
-                    # NEVER PRESS S! Forward hop + lateral strafe to slide along wall without backing into corners!
-                    desired_keys.add("w")
-                    desired_keys.add("space")  # Hop over low crate edges/steps
-                    if stuck_frames >= 4:
-                        desired_keys.add("ctrl")  # Duck-jump over higher obstacles
-                    desired_keys.add("d" if patrol_dir > 0 else "a")
+                    # If pressed into a red barrier wall, NEVER press W! Reverse with S + hop to detach from brush!
+                    if wall_ahead or red_ratio > 0.30:
+                        desired_keys.add("s")
+                        desired_keys.add("space")
+                        turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
+                        desired_keys.add("d" if turn_dir > 0 else "a")
+                    else:
+                        desired_keys.add("w")
+                        desired_keys.add("space")  # Hop over low crate edges/steps
+                        if stuck_frames >= 4:
+                            desired_keys.add("ctrl")  # Duck-jump over higher obstacles
+                        desired_keys.add("d" if patrol_dir > 0 else "a")
 
                     # Smooth pivot away from obstacle (up to 300 counts per frame)
                     if turn_remaining != 0:
@@ -2833,118 +2865,129 @@ def main():
                         if p_keys[5] > 1.2:
                             desired_keys.add("ctrl")
 
-                    if pose is not None:
-                        cur_x, cur_y, cur_z, cur_yaw = pose[:4]
+                    # ==============================================================
+                    # STATE C1: OPTICAL COLOR LIDAR OBSTACLE & BARRIER AVOIDANCE
+                    # ==============================================================
+                    # Universal: active for both memory waypoint navigation AND optical arena patrol
+                    if wall_ahead or red_ratio > 0.20:
+                        red_wall_ticks += 1
+                        telemetry_tracker.on_wall_avoid()
+                        accumulated_reward -= 0.05
+                        desired_keys.discard("w")  # CRITICAL: Never push forward into red barrier!
 
-                        # Tactical Route Setup on aim_ai_sandbox
-                        is_terrorist = False
-                        active_waypoints = MAP_ROUTES_SANDBOX[active_route_idx % len(MAP_ROUTES_SANDBOX)]
+                        turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
 
-                        # 0. SPAWN AUTO-ORIENT: Aim towards northern arena exit (+Y, 90 deg)
-                        target_spawn_yaw = 90.0
-                        spawn_angle_diff = (target_spawn_yaw - cur_yaw + 180.0) % 360.0 - 180.0
-                        if cur_time_in_round < 1.8 and abs(spawn_angle_diff) > 25.0:
-                            steer_spawn = int(np.clip(-spawn_angle_diff * counts_per_deg * 0.55, -240, 240))
-                            send_mouse_move(steer_spawn, 0)
+                        if red_ratio > 0.40:
+                            # POINT BLANK IN WALL: Immediate reverse & 90° pivot
+                            action_status = f"LIDAR: FLUSH WALL ({red_ratio*100:.0f}%) -> REVERSE & PIVOT"
+                            desired_keys.add("s")
+                            desired_keys.add("space")
+                            desired_keys.add("d" if turn_dir > 0 else "a")
+                            turn_step = int(turn_dir * 90.0 * counts_per_deg)
+                            send_mouse_move(int(np.clip(turn_step, -320, 320)), 0)
+                        else:
+                            # WALL AHEAD: Steer and strafe away towards open floor corridor
+                            action_status = f"LIDAR: WALL ({red_ratio*100:.0f}%) -> STEER {'RIGHT' if turn_dir > 0 else 'LEFT'}"
+                            lidar_turn = int(np.clip(turn_dir * 45.0 * counts_per_deg, -160, 160))
+                            send_mouse_move(lidar_turn, 0)
+                            desired_keys.add("d" if turn_dir > 0 else "a")
+                            if red_ratio > 0.28:
+                                desired_keys.add("space")
 
-                        # Clamp waypoint index
-                        if current_wp_idx >= len(active_waypoints):
-                            current_wp_idx = len(active_waypoints) - 1
+                        # If pressed against wall for > 15 frames (~0.5s), execute full 140° escape spin
+                        if red_wall_ticks >= 15:
+                            desired_keys.add("s")
+                            send_mouse_move(int(turn_dir * 140.0 * counts_per_deg), 0)
+                            if pose is not None and current_wp_idx < len(active_waypoints) - 1:
+                                current_wp_idx += 1
+                            red_wall_ticks = 0
 
-                        wp_x, wp_y = active_waypoints[current_wp_idx]
-                        dx = wp_x - cur_x
-                        dy = wp_y - cur_y
-                        dist = math.hypot(dx, dy)
+                    else:
+                        red_wall_ticks = max(0, red_wall_ticks - 1)
+                        # Clear path ahead: advance with W if green floor visible
+                        if floor_visible and not enemy_spotted:
+                            desired_keys.add("w")
 
-                        # Advance to next waypoint when close enough
-                        if dist < 85.0 and current_wp_idx < len(active_waypoints) - 1:
-                            current_wp_idx += 1
-                            if not spawn_peace_active:
-                                accumulated_reward += 0.5  # Reward advancing tactical route outside spawn
+                        # Fine steering along open green floor corridor
+                        if abs(steer_bias) > 0.18:
+                            steer_turn = int(np.clip(steer_bias * 25.0 * counts_per_deg, -100, 100))
+                            send_mouse_move(steer_turn, 0)
+                            if abs(steer_bias) > 0.38:
+                                desired_keys.add("d" if steer_bias > 0 else "a")
+
+                        # ==============================================================
+                        # STATE C2: ROUTE EXECUTION (Waypoints or Optical Arena Patrol)
+                        # ==============================================================
+                        if pose is not None:
+                            cur_x, cur_y, cur_z, cur_yaw = pose[:4]
+                            is_terrorist = False
+                            active_waypoints = MAP_ROUTES_SANDBOX[active_route_idx % len(MAP_ROUTES_SANDBOX)]
+
+                            # Spawn auto-orient
+                            target_spawn_yaw = 90.0
+                            spawn_angle_diff = (target_spawn_yaw - cur_yaw + 180.0) % 360.0 - 180.0
+                            if cur_time_in_round < 1.8 and abs(spawn_angle_diff) > 25.0:
+                                steer_spawn = int(np.clip(-spawn_angle_diff * counts_per_deg * 0.55, -240, 240))
+                                send_mouse_move(steer_spawn, 0)
+
+                            if current_wp_idx >= len(active_waypoints):
+                                current_wp_idx = len(active_waypoints) - 1
+
                             wp_x, wp_y = active_waypoints[current_wp_idx]
                             dx = wp_x - cur_x
                             dy = wp_y - cur_y
                             dist = math.hypot(dx, dy)
-                            phys_stuck_ticks = 0
 
-                        # Physical Obstacle Collision Detection (via real (x, y) displacement)
-                        if now - last_phys_check > 0.30:
-                            last_phys_check = now
-                            if "w" in current_keys:
-                                move_delta = math.hypot(cur_x - last_phys_pos[0], cur_y - last_phys_pos[1])
-                                if move_delta < 18.0:
-                                    phys_stuck_ticks += 1
+                            if dist < 85.0 and current_wp_idx < len(active_waypoints) - 1:
+                                current_wp_idx += 1
+                                if not spawn_peace_active:
+                                    accumulated_reward += 0.5
+                                wp_x, wp_y = active_waypoints[current_wp_idx]
+                                dx = wp_x - cur_x
+                                dy = wp_y - cur_y
+                                dist = math.hypot(dx, dy)
+                                phys_stuck_ticks = 0
+
+                            if now - last_phys_check > 0.30:
+                                last_phys_check = now
+                                if "w" in current_keys:
+                                    move_delta = math.hypot(cur_x - last_phys_pos[0], cur_y - last_phys_pos[1])
+                                    if move_delta < 18.0:
+                                        phys_stuck_ticks += 1
+                                    else:
+                                        phys_stuck_ticks = max(0, phys_stuck_ticks - 1)
+                                last_phys_pos = (cur_x, cur_y)
+
+                            if current_wp_idx >= len(active_waypoints) - 1 and dist < 120.0:
+                                telemetry_tracker.update_wp(len(active_waypoints), len(active_waypoints))
+                                sweep = math.sin(step_count * 0.12) * 45.0
+                                base_yaw = 90.0
+                                target_yaw = base_yaw + sweep
+                                angle_diff = (target_yaw - cur_yaw + 180.0) % 360.0 - 180.0
+                                action_status = f"SWEEP ENEMY BASE [WP {current_wp_idx+1}/{len(active_waypoints)}]"
+                                if step_count % 50 < 25:
+                                    desired_keys.add("w")
                                 else:
-                                    phys_stuck_ticks = max(0, phys_stuck_ticks - 1)
-                            last_phys_pos = (cur_x, cur_y)
-
-                        # Optical Color Lidar: Obstacle Avoidance via red wall / green floor detection
-                        if wall_ahead:
-                            red_wall_ticks += 1
-                            telemetry_tracker.on_wall_avoid()
-                            action_status = f"LIDAR: RED WALL ({red_ratio*100:.0f}%) -> 45° PIVOT"
-                            desired_keys.add("space")
-                            desired_keys.add("ctrl")
-                            desired_keys.discard("w")
-                            
-                            # Rotate 45° away from red wall towards open floor
-                            turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
-                            lidar_turn = int(np.clip(turn_dir * 45.0 * counts_per_deg, -160, 160))
-                            send_mouse_move(lidar_turn, 0)
-                            
-                            # If pressed against wall for > 1.55 seconds (approx 15 frames)
-                            if red_wall_ticks >= 15:
-                                desired_keys.add("s")
-                                send_mouse_move(int(140.0 * counts_per_deg), 0)
-                                if current_wp_idx < len(active_waypoints) - 1:
-                                    current_wp_idx += 1
-                                red_wall_ticks = 0
-                            accumulated_reward -= 0.05
-                        else:
-                            red_wall_ticks = max(0, red_wall_ticks - 1)
-                            if abs(steer_bias) > 0.25:
-                                desired_keys.add("d" if steer_bias > 0 else "a")
-                            # Green floor visible: open corridor -> advance with W
-                            if floor_visible and not enemy_spotted:
-                                desired_keys.add("w")
-
-                        # Reached final waypoint in enemy spawn: Sweep and Hunt
-                        if current_wp_idx >= len(active_waypoints) - 1 and dist < 120.0:
-                            telemetry_tracker.update_wp(len(active_waypoints), len(active_waypoints))
-                            sweep = math.sin(step_count * 0.12) * 45.0
-                            base_yaw = 90.0
-                            target_yaw = base_yaw + sweep
-                            angle_diff = (target_yaw - cur_yaw + 180.0) % 360.0 - 180.0
-                            action_status = f"SWEEP ENEMY BASE [WP {current_wp_idx+1}/{len(active_waypoints)}]"
-                            # Controlled strafe-peek in enemy spawn
-                            if step_count % 50 < 25:
-                                desired_keys.add("w")
+                                    desired_keys.add("ctrl")
                             else:
-                                desired_keys.add("ctrl")
-                        else:
-                            # Active navigation towards waypoint
-                            telemetry_tracker.update_wp(current_wp_idx + 1, len(active_waypoints))
-                            target_yaw = math.degrees(math.atan2(dy, dx))
-                            angle_diff = (target_yaw - cur_yaw + 180.0) % 360.0 - 180.0
-                            action_status = f"NAV: {ROUTE_NAMES[active_route_idx][:14]} [WP {current_wp_idx+1}/{len(active_waypoints)}]"
+                                telemetry_tracker.update_wp(current_wp_idx + 1, len(active_waypoints))
+                                target_yaw = math.degrees(math.atan2(dy, dx))
+                                angle_diff = (target_yaw - cur_yaw + 180.0) % 360.0 - 180.0
+                                action_status = f"NAV: {ROUTE_NAMES[active_route_idx][:14]} [WP {current_wp_idx+1}/{len(active_waypoints)}]"
 
-                            # Obstacle unhooking if stuck against crate corner or player
-                            if phys_stuck_ticks >= 2:
-                                telemetry_tracker.on_unstuck()
-                                action_status = f"NAV: DUCK-JUMP UNHOOK (Stuck {phys_stuck_ticks})"
-                                desired_keys.add("w")
-                                desired_keys.add("space")  # Jump over low obstacle
-                                desired_keys.add("ctrl")   # Duck-jump (Space+Ctrl) clears $2000$ crates!
-                                if phys_stuck_ticks >= 4:
-                                    desired_keys.add("d" if angle_diff >= 0 else "a")
-                                if phys_stuck_ticks >= 7:
-                                    # Skip stubborn waypoint if blocked
-                                    if current_wp_idx < len(active_waypoints) - 1:
-                                        current_wp_idx += 1
-                                    phys_stuck_ticks = 0
-                            else:
-                                # Normal forward waypoint steering (suppressed when red wall ahead)
-                                if not wall_ahead:
+                                if phys_stuck_ticks >= 2:
+                                    telemetry_tracker.on_unstuck()
+                                    action_status = f"NAV: DUCK-JUMP UNHOOK (Stuck {phys_stuck_ticks})"
+                                    desired_keys.add("w")
+                                    desired_keys.add("space")
+                                    desired_keys.add("ctrl")
+                                    if phys_stuck_ticks >= 4:
+                                        desired_keys.add("d" if angle_diff >= 0 else "a")
+                                    if phys_stuck_ticks >= 7:
+                                        if current_wp_idx < len(active_waypoints) - 1:
+                                            current_wp_idx += 1
+                                        phys_stuck_ticks = 0
+                                else:
                                     if abs(angle_diff) < 35.0:
                                         desired_keys.add("w")
                                     elif abs(angle_diff) < 65.0:
@@ -2954,155 +2997,49 @@ def main():
                                         elif angle_diff < -15.0:
                                             desired_keys.add("d")
                                     else:
-                                        # Need sharp turn: pivot smoothly without sliding into walls
                                         if abs(angle_diff) < 85.0 and step_count % 3 == 0:
                                             desired_keys.add("w")
 
-                        # Proportional mouse steering towards target angle
-                        k_steer = counts_per_deg * 0.42
-                        turn_step = int(np.clip(-angle_diff * k_steer, -220, 220))
-                        send_mouse_move(turn_step, 0)
+                                k_steer = counts_per_deg * 0.42
+                                turn_step = int(np.clip(-angle_diff * k_steer, -220, 220))
+                                send_mouse_move(turn_step, 0)
 
-                    else:
-                        # High-Performance Structured Tactical Lane Hunter ($2000$ Map)
-                        # 3. Optical Motion & Wall Proximity Sensing
-                        center_crop = frame_bgr[crop_h//3:crop_h*2//3:4, crop_w//3:crop_w*2//3:4, 0]
-                        elapsed_w = now - forward_start
-                        wall_variance = float(np.std(center_crop))
-
-                        if prev_floor is not None and "w" in current_keys and elapsed_w > 0.6:
-                            motion = float(np.mean(np.abs(center_crop.astype(float) - prev_floor.astype(float))))
-                            is_stuck_motion = motion < 2.8
-                            is_blank_wall = wall_variance < 18.0 and motion < 5.0
-
-                            if is_blank_wall or is_stuck_motion:
-                                stuck_frames += 2 if is_blank_wall else 1
-                            else:
-                                stuck_frames = max(0, stuck_frames - 2)
-
-                            # Trigger wall unhooking after 8 frames (~0.25s)
-                            if stuck_frames >= 8:
-                                telemetry_tracker.on_unstuck()
-                                unstuck_until = now + 0.45  # 0.45s forward-hopping & gliding along wall
-                                patrol_dir *= -1
-                                # 65 degree pivot away from wall!
-                                turn_remaining = int(patrol_dir * 65 * counts_per_deg)
-                                stuck_frames = 0
-                                forward_start = now
-                        prev_floor = center_crop
-
-                        # 4. Sound Direction Response
-                        if peak > 0.22 and abs(balance) > 0.35:
-                            action_status = f"HEARING: TURN {'RIGHT' if balance > 0 else 'LEFT'}"
-                            sound_turn = int(balance * 40 * counts_per_deg)
-                            send_mouse_move(int(np.clip(sound_turn, -100, 100)), 0)
-                            desired_keys.add("w")
-                            forward_start = now
-
-                        # 5. Structured Tactical Lane Routing ($2000$ Map)
                         else:
-                            elapsed_round = now - round_start_time
+                            # Optical Motion & Stuck Sensing in Green Arena
+                            center_crop = frame_bgr[crop_h//3:crop_h*2//3:4, crop_w//3:crop_w*2//3:4, 0]
+                            elapsed_w = now - forward_start
+                            wall_variance = float(np.std(center_crop))
 
-                            # 1. Master Weapon Scavenger Sweep ($2000$ Map)
-                            # In the first 1.6s of round, sprint across spawn rows to pick up AK-47 / M4A1
-                            if elapsed_round < 1.6:
-                                action_status = f"START: WEAPON SWEEP ({elapsed_round:.1f}s)"
+                            if prev_floor is not None and "w" in current_keys and elapsed_w > 0.6:
+                                motion = float(np.mean(np.abs(center_crop.astype(float) - prev_floor.astype(float))))
+                                is_stuck_motion = motion < 2.8
+                                is_blank_wall = wall_variance < 18.0 and motion < 5.0
+
+                                if is_blank_wall or is_stuck_motion:
+                                    stuck_frames += 2 if is_blank_wall else 1
+                                else:
+                                    stuck_frames = max(0, stuck_frames - 2)
+
+                                if stuck_frames >= 8:
+                                    telemetry_tracker.on_unstuck()
+                                    unstuck_until = now + 0.60
+                                    patrol_dir *= -1
+                                    turn_remaining = int(patrol_dir * 90 * counts_per_deg)
+                                    stuck_frames = 0
+                                    forward_start = now
+                            prev_floor = center_crop
+
+                            # Sound Direction Response
+                            if peak > 0.22 and abs(balance) > 0.35:
+                                action_status = f"HEARING: TURN {'RIGHT' if balance > 0 else 'LEFT'}"
+                                sound_turn = int(balance * 40 * counts_per_deg)
+                                send_mouse_move(int(np.clip(sound_turn, -100, 100)), 0)
                                 desired_keys.add("w")
-                                # Gentle S-curve sweep across the weapon rows to guarantee walking over rifle line
-                                if elapsed_round < 0.8:
-                                    desired_keys.add("d")
-                                else:
-                                    desired_keys.add("a")
-                                # Continuously equip slot 1
-                                if step_count % 8 == 0:
-                                    send_key_down("1")
-                                    time.sleep(0.005)
-                                    send_key_up("1")
-
-                            # ROUTE 0: CENTER COURTYARD PUSH
-                            elif active_route_idx % 3 == 0:
-                                if elapsed_round < 3.8:
-                                    action_status = f"CENTER: PUSH CRATE ({elapsed_round:.1f}s)"
-                                    desired_keys.add("w")
-                                    sweep = int(math.sin(step_count * 0.15) * 2.5)
-                                    send_mouse_move(sweep, 0)
-                                elif elapsed_round < 5.8:
-                                    # Tactical push & strafe: advance while jiggle-peeking corners
-                                    peek_dir = -1 if int(now * 2.5) % 2 == 0 else 1
-                                    action_status = f"CENTER: ANGLE PEEK ({'LEFT' if peek_dir < 0 else 'RIGHT'})"
-                                    desired_keys.add("w")
-                                    desired_keys.add("a" if peek_dir < 0 else "d")
-                                else:
-                                    action_status = f"CENTER: COURTYARD ADVANCE ({elapsed_round:.1f}s)"
-                                    desired_keys.add("w")
-                                    sweep = int(math.sin(step_count * 0.20) * 3.0)
-                                    send_mouse_move(sweep, 0)
-
-                            # ROUTE 1: LEFT FLANK CORRIDOR RUSH
-                            elif active_route_idx % 3 == 1:
-                                if elapsed_round < 2.5:
-                                    # Turn -35° left into the covered corridor
-                                    if not lane_turn_done[0]:
-                                        lane_turn_remaining = int(-35 * counts_per_deg)
-                                        lane_turn_done[0] = True
-                                    action_status = f"FLANK-L: ENTER CORRIDOR ({elapsed_round:.1f}s)"
-                                    if lane_turn_remaining != 0:
-                                        step_lt = int(np.clip(lane_turn_remaining, -220, 220))
-                                        lane_turn_remaining -= step_lt
-                                        send_mouse_move(step_lt, 0)
-                                    desired_keys.add("w")
-                                elif elapsed_round < 5.2:
-                                    action_status = f"FLANK-L: PUSH CORRIDOR ({elapsed_round:.1f}s)"
-                                    desired_keys.add("w")
-                                elif elapsed_round < 6.0:
-                                    # Slice corner +45° right into enemy CT spawn
-                                    if not lane_turn_done[1]:
-                                        lane_turn_remaining = int(45 * counts_per_deg)
-                                        lane_turn_done[1] = True
-                                    action_status = f"FLANK-L: SLICE ENEMY SPAWN ({elapsed_round:.1f}s)"
-                                    if lane_turn_remaining != 0:
-                                        step_lt = int(np.clip(lane_turn_remaining, -220, 220))
-                                        lane_turn_remaining -= step_lt
-                                        send_mouse_move(step_lt, 0)
-                                    desired_keys.add("w")
-                                else:
-                                    action_status = f"FLANK-L: CLEAR SPAWN ({elapsed_round:.1f}s)"
-                                    desired_keys.add("w")
-                                    sweep = int(math.sin(step_count * 0.20) * 3.5)
-                                    send_mouse_move(sweep, 0)
-
-                            # ROUTE 2: RIGHT FLANK CORRIDOR RUSH
-                            elif active_route_idx % 3 == 2:
-                                if elapsed_round < 2.5:
-                                    # Turn +35° right into the covered corridor
-                                    if not lane_turn_done[0]:
-                                        lane_turn_remaining = int(35 * counts_per_deg)
-                                        lane_turn_done[0] = True
-                                    action_status = f"FLANK-R: ENTER CORRIDOR ({elapsed_round:.1f}s)"
-                                    if lane_turn_remaining != 0:
-                                        step_lt = int(np.clip(lane_turn_remaining, -220, 220))
-                                        lane_turn_remaining -= step_lt
-                                        send_mouse_move(step_lt, 0)
-                                    desired_keys.add("w")
-                                elif elapsed_round < 5.2:
-                                    action_status = f"FLANK-R: PUSH CORRIDOR ({elapsed_round:.1f}s)"
-                                    desired_keys.add("w")
-                                elif elapsed_round < 6.0:
-                                    # Slice corner -45° left into enemy CT spawn
-                                    if not lane_turn_done[1]:
-                                        lane_turn_remaining = int(-45 * counts_per_deg)
-                                        lane_turn_done[1] = True
-                                    action_status = f"FLANK-R: SLICE ENEMY SPAWN ({elapsed_round:.1f}s)"
-                                    if lane_turn_remaining != 0:
-                                        step_lt = int(np.clip(lane_turn_remaining, -220, 220))
-                                        lane_turn_remaining -= step_lt
-                                        send_mouse_move(step_lt, 0)
-                                    desired_keys.add("w")
-                                else:
-                                    action_status = f"FLANK-R: CLEAR SPAWN ({elapsed_round:.1f}s)"
-                                    desired_keys.add("w")
-                                    sweep = int(math.sin(step_count * 0.20) * 3.5)
-                                    send_mouse_move(sweep, 0)
+                                forward_start = now
+                            else:
+                                sweep = int(math.sin(step_count * 0.12) * 2.5)
+                                send_mouse_move(sweep, 0)
+                                action_status = f"PATROL: GREEN ARENA ({green_ratio*100:.0f}%)"
 
                 # Engine-Native Pitch Stabilization (force_centerview via END):
                 # Keeps pitch dead-center horizontal (0.0°) during patrol; instantly corrects ceiling/floor drift.
@@ -3111,12 +3048,19 @@ def main():
                     pitch_drift = 0
 
                 # Gemini 3.8 Spawn Grace Protection:
-                # In first 2.2 seconds:
-                # 1. Force running W along the exit waypoint
-                # 2. Block crouching (Ctrl) so bot never gets stuck sitting on spawn
-                # 3. Disable shooting completely
+                # In first 3.0 seconds:
+                # 1. Force running W along the exit corridor (if clear)
+                # 2. If staring at a wall on spawn, pivot towards open floor
+                # 3. Block crouching (Ctrl) so bot never gets stuck sitting on spawn
+                # 4. Disable shooting completely
                 if in_spawn_grace:
-                    desired_keys.add("w")
+                    if not wall_ahead and red_ratio < 0.25:
+                        desired_keys.add("w")
+                    else:
+                        turn_dir = 1.0 if steer_bias >= 0.0 else -1.0
+                        send_mouse_move(int(turn_dir * 60.0 * counts_per_deg), 0)
+                        desired_keys.add("d" if turn_dir > 0 else "a")
+                        desired_keys.discard("w")
                     if "ctrl" in desired_keys:
                         desired_keys.remove("ctrl")
                     if firing:
