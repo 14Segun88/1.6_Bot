@@ -420,33 +420,24 @@ def tap_key(name, hold_sec=0.035):
 def execute_autobuy():
     """
     Robust Buy Sequence for CS 1.6:
-    1. Dismiss any modal UI or character selection menu ('1' then 'escape').
-    2. Buy Rifle: 'b' -> '4' -> '3' (M4A1 for CT / AK-47 for T).
-    3. Buy Armor+Helmet: 'b' -> '8' -> '2'.
-    4. Top off Ammo: ',' (buyammo1) and '.' (buyammo2).
-    5. Close buy menu: 'escape'.
-    6. Draw Primary Rifle: '1'.
-    NOTE: We NEVER press F1 or F2 directly, because in custom CS 1.6 configs
-    F1 is often bound to 'jointeam 2' (which pops up the character model menu!)
-    and F2 to 'bot_quota 11'.
+    1. Buy Rifle: 'b' -> '4' -> '3' (M4A1 for CT / AK-47 for T).
+    2. Buy Armor+Helmet: 'b' -> '8' -> '2'.
+    3. Top off Ammo: ',' (buyammo1) and '.' (buyammo2).
+    4. Draw Primary Rifle: '1'.
+    NOTE: In CS 1.6 purchasing a weapon automatically closes the buy menu.
+    We NEVER send 'escape' because Escape opens the main game menu and can minimize the game.
     """
     if not (IS_WINDOWS and user32):
         return
     def _buy_worker():
-        time.sleep(0.10)
-        # Step 0: Dismiss any open team/character selection menu or briefing
-        tap_key("1", 0.03)
-        time.sleep(0.04)
-        tap_key("escape", 0.03)
-        time.sleep(0.04)
-
+        time.sleep(0.12)
         # Step 1: Buy Primary Rifle (b -> 4 -> 3 = M4A1 / AK-47)
         tap_key("b", 0.03)
         time.sleep(0.04)
         tap_key("4", 0.03)
         time.sleep(0.04)
         tap_key("3", 0.03)
-        time.sleep(0.04)
+        time.sleep(0.05)
 
         # Step 2: Buy Kevlar + Helmet (b -> 8 -> 2)
         tap_key("b", 0.03)
@@ -454,7 +445,7 @@ def execute_autobuy():
         tap_key("8", 0.03)
         time.sleep(0.04)
         tap_key("2", 0.03)
-        time.sleep(0.04)
+        time.sleep(0.05)
 
         # Step 3: Top off primary & secondary ammo (',' and '.')
         for _ in range(2):
@@ -463,13 +454,11 @@ def execute_autobuy():
             tap_key(".", 0.03)
             time.sleep(0.03)
 
-        # Step 4: Close any open buy menus and draw Primary weapon ('1')
-        tap_key("escape", 0.03)
-        time.sleep(0.04)
+        # Step 4: Draw Primary weapon ('1')
         tap_key("1", 0.04)
 
         play_beep(1300, 50)
-        print("[★ AUTOBUY] Clean equipment purchase (Rifle + Kevlar + Ammo + Dismiss Menus)!", flush=True)
+        print("[★ AUTOBUY] Clean equipment purchase (Rifle + Kevlar + Ammo)!", flush=True)
 
     t = threading.Thread(target=_buy_worker, daemon=True)
     t.start()
@@ -2192,9 +2181,8 @@ def main():
                     time.sleep(0.03)
                     continue
 
-                # Freeze-time / early round ammo top-off & menu dismiss
-                if (now - round_start_time < 3.5) and (step_count % 25 == 12):
-                    tap_key("escape", 0.03)
+                # Freeze-time / early round ammo top-off
+                if (now - round_start_time < 3.5) and (step_count % 30 == 15):
                     tap_key(",", 0.03)
                     tap_key(".", 0.03)
                     tap_key("1", 0.03)
