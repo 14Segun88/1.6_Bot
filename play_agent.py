@@ -293,6 +293,13 @@ VK_MAP = {
     "2": 0x32,
     "3": 0x33,
     "4": 0x34,
+    "5": 0x35,
+    "6": 0x36,
+    "7": 0x37,
+    "8": 0x38,
+    "9": 0x39,
+    "0": 0x30,
+    "escape": 0x1B,
     "e": 0x45,
     "b": 0x42,
     ",": 0xBC,
@@ -322,6 +329,13 @@ SCAN_CODES = {
     "2": 0x03,
     "3": 0x04,
     "4": 0x05,
+    "5": 0x06,
+    "6": 0x07,
+    "7": 0x08,
+    "8": 0x09,
+    "9": 0x0A,
+    "0": 0x0B,
+    "escape": 0x01,
     "e": 0x12,
     "b": 0x30,
     ",": 0x33,
@@ -405,30 +419,57 @@ def tap_key(name, hold_sec=0.035):
 
 def execute_autobuy():
     """
-    Automatic buy routine (F1 Autobuy + F2 Rebuy + Primary/Secondary Ammo).
-    CS 1.6 executes 'autobuy' on F1 (Primary weapon, Kevlar+Helmet, Ammo, Defuser)
-    and 'rebuy' on F2, plus ',' and '.' for maximum reserve ammo.
-    Executed in a background thread to prevent any game loop stutter.
+    Robust Buy Sequence for CS 1.6:
+    1. Dismiss any modal UI or character selection menu ('1' then 'escape').
+    2. Buy Rifle: 'b' -> '4' -> '3' (M4A1 for CT / AK-47 for T).
+    3. Buy Armor+Helmet: 'b' -> '8' -> '2'.
+    4. Top off Ammo: ',' (buyammo1) and '.' (buyammo2).
+    5. Close buy menu: 'escape'.
+    6. Draw Primary Rifle: '1'.
+    NOTE: We NEVER press F1 or F2 directly, because in custom CS 1.6 configs
+    F1 is often bound to 'jointeam 2' (which pops up the character model menu!)
+    and F2 to 'bot_quota 11'.
     """
     if not (IS_WINDOWS and user32):
         return
     def _buy_worker():
-        time.sleep(0.12)
-        # 1. Tap F1 (autobuy) twice to guarantee registration through freeze-time
+        time.sleep(0.10)
+        # Step 0: Dismiss any open team/character selection menu or briefing
+        tap_key("1", 0.03)
+        time.sleep(0.04)
+        tap_key("escape", 0.03)
+        time.sleep(0.04)
+
+        # Step 1: Buy Primary Rifle (b -> 4 -> 3 = M4A1 / AK-47)
+        tap_key("b", 0.03)
+        time.sleep(0.04)
+        tap_key("4", 0.03)
+        time.sleep(0.04)
+        tap_key("3", 0.03)
+        time.sleep(0.04)
+
+        # Step 2: Buy Kevlar + Helmet (b -> 8 -> 2)
+        tap_key("b", 0.03)
+        time.sleep(0.04)
+        tap_key("8", 0.03)
+        time.sleep(0.04)
+        tap_key("2", 0.03)
+        time.sleep(0.04)
+
+        # Step 3: Top off primary & secondary ammo (',' and '.')
         for _ in range(2):
-            tap_key("f1", 0.04)
-            time.sleep(0.06)
-        # 2. Tap F2 (rebuy previous loadout if available)
-        tap_key("f2", 0.04)
-        time.sleep(0.05)
-        # 3. Top off primary & secondary ammo (',' and '.')
-        for k in [",", ".", ",", "."]:
-            tap_key(k, 0.03)
+            tap_key(",", 0.03)
             time.sleep(0.03)
-        # 4. Ensure Primary Weapon ('1') is selected and ready
+            tap_key(".", 0.03)
+            time.sleep(0.03)
+
+        # Step 4: Close any open buy menus and draw Primary weapon ('1')
+        tap_key("escape", 0.03)
+        time.sleep(0.04)
         tap_key("1", 0.04)
+
         play_beep(1300, 50)
-        print("[★ AUTOBUY] Executed F1 Autobuy + Ammo top-off + Draw Primary ('1')!", flush=True)
+        print("[★ AUTOBUY] Clean equipment purchase (Rifle + Kevlar + Ammo + Dismiss Menus)!", flush=True)
 
     t = threading.Thread(target=_buy_worker, daemon=True)
     t.start()
@@ -2151,9 +2192,9 @@ def main():
                     time.sleep(0.03)
                     continue
 
-                # Freeze-time / early round auto-buy pulse (reinforce F1 buy in first 3.5s)
+                # Freeze-time / early round ammo top-off & menu dismiss
                 if (now - round_start_time < 3.5) and (step_count % 25 == 12):
-                    tap_key("f1", 0.04)
+                    tap_key("escape", 0.03)
                     tap_key(",", 0.03)
                     tap_key(".", 0.03)
                     tap_key("1", 0.03)
@@ -2415,8 +2456,8 @@ def main():
                                 action_status = "TACTICAL RELOAD [R] (Magazine Empty)"
                                 play_beep(900, 45)
                                 if now - round_start_time < 35.0:
-                                    tap_key("f1", 0.03)
                                     tap_key(",", 0.03)
+                                    tap_key(".", 0.03)
                             elif active_weapon_slot == 1 and reload_attempts >= 1:
                                 # Primary has 0 reserve ammo! Switch to Sidearm (Pistol [2])
                                 if firing:
@@ -2430,8 +2471,8 @@ def main():
                                 action_status = "PRIMARY EMPTY -> DRAW PISTOL [2]"
                                 play_beep(1400, 40)
                                 if now - round_start_time < 35.0:
-                                    tap_key("f1", 0.03)
                                     tap_key(",", 0.03)
+                                    tap_key(".", 0.03)
                             elif active_weapon_slot == 2 and burst_count >= 5:
                                 # Sidearm also empty! Switch to Knife [3] and melee charge
                                 if firing:
