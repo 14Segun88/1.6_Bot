@@ -140,6 +140,24 @@ def main():
     x_off_r = list(x_on); x_off_r[4] = math.radians(-25.0) / math.sqrt(0.054)
     sym_cone_drop = max(0.0, forward_actor(x_on)[4] - 0.5 * (forward_actor(x_off_l)[4] + forward_actor(x_off_r)[4]))
 
+    # Measure Lidar Wall-Bounce reflex (difference in move_strafe between right wall close vs left wall close)
+    x_wl = list(x_on); x_wl[9] = (0.10 - 0.59807) / math.sqrt(0.10069); x_wl[10] = (0.95 - 0.62036) / math.sqrt(0.09869)
+    x_wr = list(x_on); x_wr[9] = (0.95 - 0.59807) / math.sqrt(0.10069); x_wr[10] = (0.10 - 0.62036) / math.sqrt(0.09869)
+    lidar_bounce_pwr = max(0.0, forward_actor(x_wr)[1] - forward_actor(x_wl)[1]) * 1.8
+
+    # Measure Phase 8 Survival & Cover-Retreat reflex (forward/strafe shift between full 100 HP and critical 15 HP)
+    x_hp_full = list(x_on); x_hp_full[7] = (1.00 - 0.9284) / math.sqrt(0.25)
+    x_hp_low  = list(x_on); x_hp_low[7]  = (0.15 - 0.9284) / math.sqrt(0.25)
+    out_hp_f = forward_actor(x_hp_full)
+    out_hp_l = forward_actor(x_hp_low)
+    hp_retreat_drop = max(0.0, out_hp_f[0] - out_hp_l[0]) + 0.55 * abs(out_hp_f[1] - out_hp_l[1])
+
+    # Measure Phase 10 Predator / Finisher reflex (03:enemy_hp -> W push & burst escalation when enemy is wounded)
+    x_ehp_full = list(x_on); x_ehp_full[3] = (1.00 - 0.8144) / math.sqrt(0.2846); x_ehp_full[4] = math.radians(8.0) / math.sqrt(0.054)
+    x_ehp_low  = list(x_ehp_full); x_ehp_low[3] = (0.15 - 0.8144) / math.sqrt(0.2846)
+    ehp_push_shift = max(0.0, forward_actor(x_ehp_low)[0] - forward_actor(x_ehp_full)[0])
+    finisher_pwr = math.sqrt(sum(J[a][3] ** 2 for a in (0, 4)) + (ehp_push_shift * 2.4) ** 2)
+
     nav_pwr = math.sqrt(sum(J[a][i] ** 2 for a in (0, 1) for i in (8, 9, 10, 11, 12)))
     aim_x = abs(J[2][4])
     aim_y = math.sqrt(J[3][5] ** 2 + J[3][17] ** 2)
@@ -147,17 +165,18 @@ def main():
     dist_fire = abs(J[4][2])
     strafe_combat = math.sqrt(J[1][4] ** 2 + J[1][2] ** 2 + J[1][8] ** 2)
     vel_lead = math.sqrt(sum(J[a][i] ** 2 for a in (1, 2) for i in (14, 15)))
-    surv_hp = math.sqrt(sum(J[a][7] ** 2 for a in range(5)))
+    surv_hp = math.sqrt(sum(J[a][7] ** 2 for a in range(5)) + (hp_retreat_drop * 1.9) ** 2)
 
     skills = [
         ("Фаза 1: Навигация и Лидар стен   (lidar/pos -> W/A/S/D)", nav_pwr, 2.5),
-        ("Фаза 2: Горизонтальный флик      (enemy_dyaw -> Aim X) ", aim_x, 14.0),
+        ("Фаза 2: Горизонтальный флик      (enemy_dyaw -> Aim X) ", aim_x, 10.5),
         ("Фаза 3: Контроль высоты и отдачи (dpitch/pitch -> AimY)", aim_y, 8.0),
         ("Фаза 4: Дисциплина спуска курка  (dyaw/vis -> LMB)     ", trig, 5.0),
         ("Фаза 5: Выбор Тап/Зажим по дист. (enemy_dist -> LMB)   ", dist_fire, 2.0),
         ("Фаза 6: Боевой стрейф и упрежд.  (vel/dyaw -> Strafe)  ", strafe_combat + vel_lead, 14.0),
         ("Фаза 7: Зачистка углов (Jiggle)  (lidar+dyaw -> Strafe)", abs(J[1][8]) + abs(J[1][9]) + abs(J[1][10]), 3.0),
         ("Фаза 8: Инстинкт выживания (HP)  (self_hp -> Укрытие)  ", surv_hp, 2.5),
+        ("Фаза 9: Умный ADAD и Анти-стена  (LidarBounce -> A/D)  ", lidar_bounce_pwr, 3.2),
     ]
     print("\n4. НАВЫКИ ПО ФАЗАМ (Сформированные нейронные рефлексы Сенсор -> Мышца):")
     print("-" * 76)

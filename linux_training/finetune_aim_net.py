@@ -464,12 +464,16 @@ def build_training_dataset(lib, real_raw_19, W0_a, b0_a, W1_a, b1_a, Wa_a, ba_a,
                 raw[4] = math.radians(dy_deg)
                 raw[5] = math.radians(dp_deg)
                 raw[6] = 1.0
-                add_raw(raw, [10.0, 10.0, 5.0, 5.0, 8.5])
+                if rng.random() < 0.40:
+                    raw[7] = rng.choice([1.0, 0.80, 0.42, 0.18])
+                if rng.random() < 0.40:
+                    raw[3] = rng.choice([1.0, 0.70, 0.40, 0.18])
+                add_raw(raw, [10.5, 10.5, 5.5, 5.5, 8.5])
 
                 if rng.random() < 0.35:
                     raw_nv = list(raw)
                     raw_nv[6] = 0.0
-                    add_raw(raw_nv, [10.0, 10.0, 4.0, 4.0, 8.5])
+                    add_raw(raw_nv, [10.5, 10.5, 4.0, 4.0, 8.5])
 
     # 3. Canonical probe states (matching xray_brain.py evaluation points)
     for dist_u in [250, 400, 500, 600, 750, 950, 1200]:
@@ -485,6 +489,56 @@ def build_training_dataset(lib, real_raw_19, W0_a, b0_a, W1_a, b1_a, Wa_a, ba_a,
                 ]
                 for _ in range(6):
                     add_raw(raw_c, [8.0, 8.0, 6.0, 6.0, 10.0])
+
+    # 4. Smart Lidar Wall-Bounce & ADAD Strafe + Phase 8 Survival (self_hp) & Finisher (enemy_hp) curriculum states
+    lidar_pairs = [
+        (0.08, 0.95), (0.15, 0.90), (0.25, 0.85), (0.35, 0.80),  # Close to LEFT wall -> bounce RIGHT (strafe < 0)
+        (0.95, 0.08), (0.90, 0.15), (0.85, 0.25), (0.80, 0.35),  # Close to RIGHT wall -> bounce LEFT (strafe > 0)
+        (0.85, 0.85), (0.95, 0.95), (0.60, 0.60),                # Open center -> pure symmetric ADAD strafe
+    ]
+    hp_ehp_pairs = [
+        (1.00, 1.00),  # Full HP duel -> hold ground (W/S deadzone ~0.0), laser accuracy
+        (0.82, 1.00),  # Light scratch (82 HP) -> DO NOT retreat early, hold ground and fight!
+        (1.00, 0.35),  # Predator / Finisher: enemy wounded (35 HP) -> push forward (+W) & burst finish!
+        (0.78, 0.20),  # Predator / Finisher: enemy critical (20 HP) -> aggressive push (+W) & spray finish!
+        (0.38, 1.00),  # Survival Retreat: bot low (38 HP) vs full enemy -> retreat into cover (-S)
+        (0.18, 0.85),  # Emergency Survival: bot critical (18 HP) -> full speed retreat (-S) + dodge
+    ]
+    for dist_u in [250, 450, 650, 900]:
+        for lid_l, lid_r in lidar_pairs:
+            for dy_deg in [-20.0, -8.0, -3.5, -1.2, 0.0, +1.2, +3.5, +8.0, +20.0]:
+                for hp_val, ehp_val in hp_ehp_pairs:
+                    if (hp_val != 1.0 or ehp_val != 1.0) and abs(dy_deg) not in (0.0, 3.5, 8.0) and rng.random() > 0.28:
+                        continue
+                    raw_w = list(rng.choice(real_shuffled)) if real_shuffled else list(OBS_MEAN)
+                    raw_w[2] = dist_u / 3000.0
+                    raw_w[3] = ehp_val
+                    raw_w[4] = math.radians(dy_deg)
+                    raw_w[5] = 0.0
+                    raw_w[6] = 1.0
+                    raw_w[7] = hp_val
+                    raw_w[8] = 0.90
+                    raw_w[9] = lid_l
+                    raw_w[10] = lid_r
+                    raw_w[17] = 0.0
+                    add_raw(raw_w, [11.5, 11.5, 5.0, 2.5, 8.5])
+
+    # 5. Spray Recoil Pull-Down & Sustained Crouch-Spray states (when recoil kicks up dpitch > 0 while view_pitch > 0 is already pulling down)
+    for dist_u in [220, 350, 480, 620, 780]:
+        for dy_deg in [-2.2, -0.8, 0.0, +0.8, +2.2]:
+            for dp_deg, vp_deg in [
+                (+1.8, +1.2), (+2.8, +2.2), (+3.8, +3.0), (+5.2, +4.2),
+                (+2.5, +0.0), (+4.0, +1.5), (-2.2, -1.5), (-3.2, -2.0)
+            ]:
+                raw_sp = list(rng.choice(real_shuffled)) if real_shuffled else list(OBS_MEAN)
+                raw_sp[2] = dist_u / 3000.0
+                raw_sp[3] = 1.0
+                raw_sp[4] = math.radians(dy_deg)
+                raw_sp[5] = math.radians(dp_deg)
+                raw_sp[6] = 1.0
+                raw_sp[7] = 1.0
+                raw_sp[17] = math.radians(vp_deg)
+                add_raw(raw_sp, [9.0, 9.0, 6.0, 11.0, 10.5])
 
     n_s = len(raw_samples)
     W0_c = (ctypes.c_float * len(W0_a))(*W0_a)
@@ -520,23 +574,25 @@ def build_training_dataset(lib, real_raw_19, W0_a, b0_a, W1_a, b1_a, Wa_a, ba_a,
         rn = list(r); rn[4] = -dyaw; rn[5] = 0.0; rn[15] = -r[15]
         raw_neg_y.append(rn)
 
-        ry0 = list(r); ry0[4] = 0.0
+        # Evaluate vertical dpitch response at neutral view_pitch (ry0[17]=0.0) so view_pitch saturation NEVER weakens recoil pull-down!
+        ry0 = list(r); ry0[4] = 0.0; ry0[17] = 0.0
         raw_y0.append(ry0)
 
-        ry0_np = list(r); ry0_np[4] = 0.0; ry0_np[5] = -dpitch
+        ry0_np = list(r); ry0_np[4] = 0.0; ry0_np[5] = -dpitch; ry0_np[17] = 0.0
         raw_y0_negp.append(ry0_np)
 
         ry0_p0 = list(r); ry0_p0[4] = 0.0; ry0_p0[5] = 0.0
         raw_y0_p0.append(ry0_p0)
 
-        # De-bias trigger teacher from wall lidar / room position / camera orientation so peeking near walls NEVER paralyzes firing
+        # De-bias trigger teacher from wall lidar / room position / camera orientation so peeking near walls NEVER paralyzes firing.
+        # Relax vertical dpitch penalty (0.24 for upward recoil dpitch>=0) so AK-47 recoil kick or +duck crouch NEVER aborts crouch-spray!
         rabs = list(OBS_MEAN)
         rabs[0] = 1.0
         rabs[1] = 1.0
         rabs[2] = r[2]
         rabs[3] = 1.0
-        rabs[4] = 0.52 * abs(dyaw)
-        rabs[5] = 0.48 * abs(dpitch) if dpitch >= 0.0 else 0.62 * abs(dpitch)
+        rabs[4] = 0.50 * abs(dyaw)
+        rabs[5] = 0.24 * abs(dpitch) if dpitch >= 0.0 else 0.40 * abs(dpitch)
         rabs[6] = r[6]
         rabs[7] = 1.0
         raw_abs.append(rabs)
@@ -553,46 +609,83 @@ def build_training_dataset(lib, real_raw_19, W0_a, b0_a, W1_a, b1_a, Wa_a, ba_a,
     for i, r in enumerate(raw_samples):
         vis = r[6]
         dist_u = max(80.0, r[2] * 3000.0)
+        ehp = r[3]
         dyaw = r[4]
         dpitch = r[5]
+        dyaw_deg = abs(math.degrees(dyaw))
 
-        # 0 & 1: 100% original movement & combat strafe
-        act0 = Out_base[i * 5 + 0]
-        act1 = Out_base[i * 5 + 1]
+        # 0: Tactical W/S Control (Hold ground / push corners at >=58 HP so bot doesn't backpedal, Phase 8 cover retreat <58 HP):
+        hp = r[7]
+        lid_f = r[8]
+        lid_l = r[9]
+        lid_r = r[10]
+        base_fwd = 0.5 * (Out_pos_y[i * 5 + 0] + Out_neg_y[i * 5 + 0])
+        if hp >= 0.58:
+            # Healthy (58..100 HP): +0.22 offset cancels the -0.31 backpedal bias so move_forward mean is ~ -0.05..+0.05!
+            act0 = base_fwd + 0.22 + 0.28 * max(0.0, 0.50 - ehp)
+        else:
+            # Wounded (< 58 HP): decisive Phase 8 retreat into cover (-S: -0.72 .. -1.50)
+            act0 = -0.72 - 1.95 * (0.58 - hp)
 
-        # 2: Anti-symmetrized, dpitch-decoupled AimX preserving full velocity lead
-        act2 = 1.06 * 0.5 * (Out_pos_y[i * 5 + 2] - Out_neg_y[i * 5 + 2])
+        if lid_f < 0.35:
+            act0 = min(act0, -0.68)
 
-        # 3: dyaw-decoupled AimY preserving 100% of original dpitch tracking + view_pitch PD brake
-        sym_dpitch = 1.06 * 0.5 * (Out_y0[i * 5 + 3] - Out_y0_negp[i * 5 + 3])
+        # 1: Smart Combat Strafe (50/50 ADAD pendulum + Lidar Wall Bounce)
+        sym_strafe = 1.05 * 0.5 * (Out_pos_y[i * 5 + 1] - Out_neg_y[i * 5 + 1])
+        lidar_center_pull = 0.90 * (lid_l - lid_r) + (0.75 * (hp - 0.60) if hp < 0.55 else 0.0)
+        act1 = sym_strafe + lidar_center_pull
+        if lid_l < 0.42 and lid_r > lid_l + 0.12:
+            # Near LEFT wall -> bounce RIGHT (negative move_strafe -> key 'D')
+            bounce_r = -0.78 - 0.60 * (0.42 - lid_l)
+            act1 = min(act1, bounce_r) if sym_strafe > -0.3 else 0.4 * sym_strafe + 0.6 * bounce_r
+        elif lid_r < 0.42 and lid_l > lid_r + 0.12:
+            # Near RIGHT wall -> bounce LEFT (positive move_strafe -> key 'A')
+            bounce_l = +0.78 + 0.60 * (0.42 - lid_r)
+            act1 = max(act1, bounce_l) if sym_strafe < +0.3 else 0.4 * sym_strafe + 0.6 * bounce_l
+
+        # 2: Smooth Braking + Fast Flick AimX (v1.3's exact 1.06 gain so +-1..2 deg brakes smoothly into 0 deg without overshooting!)
+        raw_aimx = 0.5 * (Out_pos_y[i * 5 + 2] - Out_neg_y[i * 5 + 2])
+        act2 = 1.06 * raw_aimx
+
+        # 3: True Recoil-Compensating AimY:
+        # When enemy is visible and dpitch * view_pitch > 0 (pulling down during spray recoil or aiming at crouched/elevated target),
+        # suppress the horizon-centering spring (vpitch_pd) so it NEVER pulls the mouse UP against recoil!
+        sym_dpitch = 1.18 * 0.5 * (Out_y0[i * 5 + 3] - Out_y0_negp[i * 5 + 3])
         vpitch_pd = Out_y0_p0[i * 5 + 3]
-        # Remove small static negative drift (-0.10) when view_pitch is neutral (~0), while keeping full PD slope
         vpitch_neutral_offset = -0.09 if abs(r[17]) < 0.008 else 0.0
-        act3 = sym_dpitch + (vpitch_pd - vpitch_neutral_offset)
+        vp_term = vpitch_pd - vpitch_neutral_offset
+        if vis > 0.5:
+            dp_deg_abs = abs(math.degrees(dpitch))
+            if dpitch * r[17] > 0.0 and dp_deg_abs > 0.6:
+                # Active spray recoil pull-down: let sym_dpitch dominate 100% without view_pitch pulling back up!
+                vp_scale = max(0.08, 0.45 - 0.15 * dp_deg_abs)
+            elif dp_deg_abs > 1.2:
+                vp_scale = 0.45
+            else:
+                vp_scale = 0.85
+            act3 = sym_dpitch + vp_scale * vp_term
+        else:
+            act3 = sym_dpitch + vp_term
 
-        # 4: Positive-quadrant symmetric hitbox trigger with strict enemy_vis gating & wall-independent confidence
+        # 4: Positive-quadrant symmetric hitbox trigger (38.6% accuracy curve with slightly wider entry for 2x shot volume)
         if vis < 0.5:
             act4 = min(Out_base[i * 5 + 4], -0.85)
         else:
             raw_trig = Out_abs[i * 5 + 4]
-            if raw_trig > -0.10:
-                # Inside hitbox cone (<= 4.2° close, <= 3.6° medium, <= 2.6° far):
-                # Steep step into 2-Tap / Crouch-Spray so entry ticks don't get stuck in 1-Tap (0.01..0.28)
-                cone_strength = min(1.0, max(0.0, (raw_trig + 0.10) / 0.65))
-                if dist_u <= 520.0:
-                    # Close range: 2-Tap + Crouch-Spray (+0.44..+0.72)
-                    act4 = 0.44 + 0.28 * cone_strength
-                elif dist_u <= 820.0:
-                    # Medium range: crisp 2-Tap Standing (+0.33..+0.40)
-                    act4 = 0.33 + 0.07 * cone_strength
+            if raw_trig > -0.12:
+                cone_strength = min(1.0, max(0.0, (raw_trig + 0.12) / 0.62))
+                if dist_u <= 540.0:
+                    # Close range: 2-Tap on outer rim (0.35..0.41), Crouch-Spray inside <=2.4° (+0.48..+0.73)!
+                    act4 = 0.35 + 0.38 * cone_strength
+                elif dist_u <= 840.0:
+                    # Medium range: crisp 2-Tap Standing (+0.33..+0.41)
+                    act4 = 0.33 + 0.08 * cone_strength
                 else:
-                    # Long range (>820u): 1-Tap Standing (+0.17..+0.26)
-                    act4 = 0.17 + 0.09 * cone_strength
+                    # Long range (>840u): 1-Tap Standing (+0.18..+0.27)
+                    act4 = 0.18 + 0.09 * cone_strength
             elif raw_trig > -0.25:
-                # Narrow transition rim (~4.2°..5.2°): hold fire just below 0 so it doesn't prematurely 1-tap
-                act4 = -0.15 + (raw_trig + 0.25) * 0.8
+                act4 = -0.12 + (raw_trig + 0.25) * 0.8
             else:
-                # Off-target (> 5.2°): decisive hold fire
                 act4 = min(raw_trig - 0.20, -0.55)
 
         Y_targ.append([act0, act1, act2, act3, act4])

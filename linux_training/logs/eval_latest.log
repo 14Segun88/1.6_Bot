@@ -5,49 +5,49 @@ EVALUATION RESULTS
 Model:             linux_training/models/ppo_cs16_phase8_final.zip
 Aim Control Mode:  PURE AI (100% Neural Network)
 Episodes:          10
-Reward (mean±std): 56.26 ± 47.50
-Reward range:      [20.30, 175.59]
+Reward (mean±std): 46.14 ± 26.67
+Reward range:      [7.23, 91.67]
 Length (mean±std): 512.0 ± 0.0
-Kills (total):     5 (mean: 0.50)
-Hits (total):      23 (mean: 2.30)
-Hits / Kills:      4.60
-Deaths (total):    3 (mean: 0.30)
-K/D Ratio:         1.67
+Kills (total):     4 (mean: 0.40)
+Hits (total):      14 (mean: 1.40)
+Hits / Kills:      3.50
+Deaths (total):    2 (mean: 0.20)
+K/D Ratio:         2.00
 ------------------------------------------------------------
 Action Distribution:
-  move_forward   : mean=-0.341, std=0.341
-  move_strafe    : mean=+0.643, std=0.534
-  delta_yaw      : mean=+0.035, std=0.397
-  delta_pitch    : mean=-0.006, std=0.488
-  fire_rate      : 0.059
+  move_forward   : mean=-0.015, std=0.515
+  move_strafe    : mean=-0.040, std=0.494
+  delta_yaw      : mean=-0.029, std=0.364
+  delta_pitch    : mean=-0.019, std=0.487
+  fire_rate      : 0.068
 ------------------------------------------------------------
 Firing Mode Choice (3 Mechanics: 1-Tap | 2-Tap Standing | 2-Tap+Crouch-Spray):
-  long  > 550u [decisions]: 1-tap  71 (75.5%) | 2-tap  19 (20.2%) | 2tap+crouch-spray   4 ( 4.3%)
-  long  > 550u [ticks/hit]: 1-tap  71 (hits  5) | 2-tap  53 (hits  7) | 2tap+crouch-spray  10 (hits  1)
-  close <= 550u [decisions]: 1-tap   5 (38.5%) | 2-tap   3 (23.1%) | 2tap+crouch-spray   5 (38.5%)
-  close <= 550u [ticks/hit]: 1-tap   5 (hits  4) | 2-tap   9 (hits  1) | 2tap+crouch-spray  13 (hits  5)
-  crouch-spray (+duck held):    6 ticks (hits   0)
+  long  > 550u [decisions]: 1-tap  45 (52.3%) | 2-tap  21 (24.4%) | 2tap+crouch-spray  20 (23.3%)
+  long  > 550u [ticks/hit]: 1-tap  45 (hits  4) | 2-tap  62 (hits  6) | 2tap+crouch-spray  56 (hits  0)
+  close <= 550u [decisions]: 1-tap   3 (60.0%) | 2-tap   0 ( 0.0%) | 2tap+crouch-spray   2 (40.0%)
+  close <= 550u [ticks/hit]: 1-tap   3 (hits  0) | 2-tap   0 (hits  0) | 2tap+crouch-spray  13 (hits  4)
+  crouch-spray (+duck held):   25 ticks (hits   2)
 ------------------------------------------------------------
 Duel Telemetry (1v1 Benchmark):
-  survival_rate (0 deaths) : 7/10 (70.0%)
-  shots_fired / accuracy   : 161 ticks (14.3% hits)
-  reaction_to_1st_shot     : 20.18 ticks (~807 ms)
-  time_to_1st_hit          : 38.22 ticks (~1529 ms)
-  aim_error_at_fire        : 2.96 deg
-  cover_retreats           : 0
-  shots_err <=5/<=14/>30 deg: 92% / 99% / 1% (median 2.6 deg, n=161)
-  shots_while_moving(>0.30): 26% (median speed 0.00)
-  hits by mode             : tap 9/76 | 2tap 8/62 | spray 6/23
+  survival_rate (0 deaths) : 8/10 (80.0%)
+  shots_fired / accuracy   : 179 ticks (7.8% hits)
+  reaction_to_1st_shot     : 7.00 ticks (~280 ms)
+  time_to_1st_hit          : 27.71 ticks (~1109 ms)
+  aim_error_at_fire        : 2.39 deg
+  cover_retreats           : 1
+  shots_err <=5/<=14/>30 deg: 93% / 100% / 0% (median 1.9 deg, n=179)
+  shots_while_moving(>0.30): 18% (median speed 0.00)
+  hits by mode             : tap 4/48 | 2tap 6/62 | spray 4/69
 ------------------------------------------------------------
 Active-Episode View (excluding dead_wait episodes):
   dead_wait episodes       : 0/10
   active / no-contact      : 10 / 0
-  active K/D               : 5/3 = 1.67
+  active K/D               : 4/2 = 2.00
   origin span median/max   : 0 / 0 units (≈0 => bot not moving or origin sensor frozen)
 ------------------------------------------------------------
 Gameplay Metrics:
-  enemy_visible_rate       : 0.189
-  avg_enemy_distance       : 0.789
-  avg_health               : 0.952
+  enemy_visible_rate       : 0.137
+  avg_enemy_distance       : 0.812
+  avg_health               : 0.927
   min_health               : 0.000
 ============================================================

@@ -12,3 +12,4 @@ linux_training/models/phase*_checkpoints/
 linux_training/logs/*.npz
 *.tmp
 *.tmp.npz
+
