@@ -1,0 +1,39 @@
+2026-11-02 05:40:52,746 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase7_20261102_054052.log
+2026-11-02 05:40:52,747 - INFO - === Selected: Phase 7: Full 2-Corridor Arena Loop & Corner Ambush Reflex (20 Alcoves, Edge Flick, Situational Crouch-Spray) ===
+2026-11-02 05:40:52,747 - INFO - Phase 7 auto-selected base model from Phase 6: models/ppo_cs16_phase6_final.zip
+2026-11-02 05:40:52,747 - INFO - Phase 7 auto-selected base VecNormalize from Phase 6: models/vecnormalize_phase6.pkl
+2026-11-02 05:40:52,756 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-11-02 05:40:52,770 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-02 05:40:52,775 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-02 05:40:55,687 - INFO - Episode 1 started
+2026-11-02 05:40:55,688 - INFO - Resuming model from models/ppo_cs16_phase6_final.zip...
+2026-11-02 05:40:55,690 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase6.pkl
+2026-11-02 05:40:59,411 - INFO - Model learning rate configured to: 0.0001
+2026-11-02 05:40:59,412 - INFO - Starting training run: PPO_CS16_Phase7_20261102_054052
+2026-11-02 05:40:59,412 - INFO - Target Timesteps: 100000
+2026-11-02 05:40:59,412 - INFO - Device: cuda
+2026-11-02 05:40:59,412 - INFO - ============================================================
+2026-11-02 05:40:59,413 - INFO - >>> ПЕРЕКЛЮЧИТЕСЬ В ОКНО CS 1.6 (кликните внутрь игры)! Старт через 5 секунд...
+2026-11-02 05:40:59,414 - INFO - ============================================================
+2026-11-02 05:40:59,414 - INFO - Старт через 5 сек...
+2026-11-02 05:41:00,416 - INFO - Старт через 4 сек...
+2026-11-02 05:41:01,421 - INFO - Старт через 3 сек...
+2026-11-02 05:41:02,423 - INFO - Старт через 2 сек...
+2026-11-02 05:41:03,425 - INFO - Старт через 1 сек...
+2026-11-02 05:41:03,344 - INFO - >>> СТАРТ ТРЕНИРОВКИ! <<<
+2026-11-02 05:41:04,336 - INFO - Episode 2 started
+2026-11-02 05:41:53,587 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-02 05:52:16,774 - WARNING - ZMQ socket reconnecting after error: Resource temporarily unavailable
+2026-11-02 05:52:16,775 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-02 05:52:16,779 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-02 05:52:17,435 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-02 05:52:21,641 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-02 06:02:23,032 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-02 06:02:48,166 - INFO - Episode 2 ended: steps=512, reward=193.43
+2026-11-02 06:02:52,113 - INFO - Episode 3 started
+2026-11-02 06:04:06,262 - INFO - Episode 3 ended: steps=512, reward=-39.91
+2026-11-02 06:04:08,060 - INFO - Episode 4 started
+2026-11-02 06:05:00,770 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-02 06:15:02,165 - INFO - Training manually interrupted by user
+2026-11-02 06:15:02,420 - INFO - Phase 7 model successfully saved to: models/ppo_cs16_phase7_final
+2026-11-02 06:15:02,862 - INFO - Environment closed

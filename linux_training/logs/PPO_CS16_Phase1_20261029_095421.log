@@ -1,0 +1,223 @@
+2026-10-29 09:54:21,680 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase1_20261029_095421.log
+2026-10-29 09:54:21,681 - INFO - === Selected: Phase 1: Aim & Trigger (Bullseye Aim & Fire calibration) ===
+2026-10-29 09:54:21,688 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-29 09:54:21,696 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-29 09:54:21,702 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-29 09:54:22,210 - INFO - Episode 1 started
+2026-10-29 09:54:24,129 - INFO - Starting training run: PPO_CS16_Phase1_20261029_095421
+2026-10-29 09:54:24,130 - INFO - Target Timesteps: 50000
+2026-10-29 09:54:24,130 - INFO - Device: cuda
+2026-10-29 09:54:24,631 - INFO - Episode 2 started
+2026-10-29 09:54:25,232 - INFO - Episode 2 ended: steps=1, reward=-5.60
+2026-10-29 09:54:25,734 - INFO - Episode 3 started
+2026-10-29 09:54:25,764 - INFO - Episode 3 ended: steps=1, reward=-5.60
+2026-10-29 09:54:26,266 - INFO - Episode 4 started
+2026-10-29 09:54:26,302 - INFO - Episode 4 ended: steps=1, reward=-5.80
+2026-10-29 09:54:26,823 - INFO - Episode 5 started
+2026-10-29 09:54:26,862 - INFO - Episode 5 ended: steps=1, reward=-5.60
+2026-10-29 09:54:27,375 - INFO - Episode 6 started
+2026-10-29 09:54:27,416 - INFO - Episode 6 ended: steps=1, reward=-5.60
+2026-10-29 09:54:27,926 - INFO - Episode 7 started
+2026-10-29 09:54:27,957 - INFO - Episode 7 ended: steps=1, reward=-5.60
+2026-10-29 09:54:28,469 - INFO - Episode 8 started
+2026-10-29 09:54:28,504 - INFO - Episode 8 ended: steps=1, reward=-5.60
+2026-10-29 09:54:29,014 - INFO - Episode 9 started
+2026-10-29 09:54:29,049 - INFO - Episode 9 ended: steps=1, reward=-5.60
+2026-10-29 09:54:29,556 - INFO - Episode 10 started
+2026-10-29 09:54:29,590 - INFO - Episode 10 ended: steps=1, reward=-5.60
+2026-10-29 09:54:30,093 - INFO - Episode 11 started
+2026-10-29 09:54:30,130 - INFO - Episode 11 ended: steps=1, reward=-5.80
+2026-10-29 09:54:30,632 - INFO - Episode 12 started
+2026-10-29 09:54:30,668 - INFO - Episode 12 ended: steps=1, reward=-5.80
+2026-10-29 09:54:31,172 - INFO - Episode 13 started
+2026-10-29 09:54:31,200 - INFO - Episode 13 ended: steps=1, reward=-5.60
+2026-10-29 09:54:31,704 - INFO - Episode 14 started
+2026-10-29 09:54:31,765 - INFO - Episode 14 ended: steps=1, reward=-5.80
+2026-10-29 09:54:32,268 - INFO - Episode 15 started
+2026-10-29 09:54:32,316 - INFO - Episode 15 ended: steps=1, reward=-5.80
+2026-10-29 09:54:32,820 - INFO - Episode 16 started
+2026-10-29 09:54:32,865 - INFO - Episode 16 ended: steps=1, reward=-5.80
+2026-10-29 09:54:33,370 - INFO - Episode 17 started
+2026-10-29 09:54:33,395 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-29 09:54:36,428 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-10-29 09:54:36,429 - INFO - Episode 17 ended: steps=1, reward=-5.60
+2026-10-29 09:54:36,937 - INFO - Episode 18 started
+2026-10-29 09:54:36,966 - INFO - Episode 18 ended: steps=1, reward=-5.80
+2026-10-29 09:54:37,475 - INFO - Episode 19 started
+2026-10-29 09:54:37,526 - INFO - Episode 19 ended: steps=1, reward=-5.60
+2026-10-29 09:54:38,036 - INFO - Episode 20 started
+2026-10-29 09:54:38,080 - INFO - Episode 20 ended: steps=1, reward=-5.80
+2026-10-29 09:54:38,585 - INFO - Episode 21 started
+2026-10-29 09:54:38,627 - INFO - Episode 21 ended: steps=1, reward=-5.60
+2026-10-29 09:54:39,132 - INFO - Episode 22 started
+2026-10-29 09:54:39,163 - INFO - Episode 22 ended: steps=1, reward=-5.60
+2026-10-29 09:54:39,670 - INFO - Episode 23 started
+2026-10-29 09:54:39,708 - INFO - Episode 23 ended: steps=1, reward=-5.60
+2026-10-29 09:54:40,212 - INFO - Episode 24 started
+2026-10-29 09:54:40,254 - INFO - Episode 24 ended: steps=1, reward=-5.80
+2026-10-29 09:54:40,758 - INFO - Episode 25 started
+2026-10-29 09:54:40,829 - INFO - Episode 25 ended: steps=1, reward=-5.60
+2026-10-29 09:54:41,333 - INFO - Episode 26 started
+2026-10-29 09:54:41,376 - INFO - Episode 26 ended: steps=1, reward=-5.80
+2026-10-29 09:54:41,884 - INFO - Episode 27 started
+2026-10-29 09:54:41,932 - INFO - Episode 27 ended: steps=1, reward=-5.60
+2026-10-29 09:54:42,438 - INFO - Episode 28 started
+2026-10-29 09:54:42,478 - INFO - Episode 28 ended: steps=1, reward=-5.60
+2026-10-29 09:54:42,984 - INFO - Episode 29 started
+2026-10-29 09:54:43,019 - INFO - Episode 29 ended: steps=1, reward=-5.60
+2026-10-29 09:54:43,526 - INFO - Episode 30 started
+2026-10-29 09:54:43,557 - INFO - Episode 30 ended: steps=1, reward=-5.80
+2026-10-29 09:54:44,066 - INFO - Episode 31 started
+2026-10-29 09:54:44,099 - INFO - Episode 31 ended: steps=1, reward=-5.60
+2026-10-29 09:54:44,605 - INFO - Episode 32 started
+2026-10-29 09:54:44,648 - INFO - Episode 32 ended: steps=1, reward=-5.60
+2026-10-29 09:54:45,156 - INFO - Episode 33 started
+2026-10-29 09:54:45,189 - INFO - Episode 33 ended: steps=1, reward=-5.80
+2026-10-29 09:54:45,697 - INFO - Episode 34 started
+2026-10-29 09:54:45,732 - INFO - Episode 34 ended: steps=1, reward=-5.80
+2026-10-29 09:54:46,240 - INFO - Episode 35 started
+2026-10-29 09:54:46,273 - INFO - Episode 35 ended: steps=1, reward=-5.60
+2026-10-29 09:54:46,782 - INFO - Episode 36 started
+2026-10-29 09:54:46,830 - INFO - Episode 36 ended: steps=1, reward=-5.60
+2026-10-29 09:54:47,336 - INFO - Episode 37 started
+2026-10-29 09:54:47,376 - INFO - Episode 37 ended: steps=1, reward=-5.60
+2026-10-29 09:54:47,881 - INFO - Episode 38 started
+2026-10-29 09:54:47,910 - INFO - Episode 38 ended: steps=1, reward=-5.60
+2026-10-29 09:54:48,407 - INFO - Episode 39 started
+2026-10-29 09:54:48,444 - INFO - Episode 39 ended: steps=1, reward=-5.60
+2026-10-29 09:54:48,940 - INFO - Episode 40 started
+2026-10-29 09:54:48,979 - INFO - Episode 40 ended: steps=1, reward=-5.80
+2026-10-29 09:54:49,475 - INFO - Episode 41 started
+2026-10-29 09:54:49,516 - INFO - Episode 41 ended: steps=1, reward=-5.60
+2026-10-29 09:54:50,012 - INFO - Episode 42 started
+2026-10-29 09:54:50,045 - INFO - Episode 42 ended: steps=1, reward=-5.60
+2026-10-29 09:54:50,544 - INFO - Episode 43 started
+2026-10-29 09:54:50,578 - INFO - Episode 43 ended: steps=1, reward=-5.80
+2026-10-29 09:54:51,080 - INFO - Episode 44 started
+2026-10-29 09:54:51,114 - INFO - Episode 44 ended: steps=1, reward=-5.60
+2026-10-29 09:54:51,617 - INFO - Episode 45 started
+2026-10-29 09:54:51,668 - INFO - Episode 45 ended: steps=1, reward=-5.80
+2026-10-29 09:54:52,171 - INFO - Episode 46 started
+2026-10-29 09:54:52,208 - INFO - Episode 46 ended: steps=1, reward=-5.80
+2026-10-29 09:54:52,715 - INFO - Episode 47 started
+2026-10-29 09:54:52,794 - INFO - Episode 47 ended: steps=1, reward=-5.60
+2026-10-29 09:54:53,304 - INFO - Episode 48 started
+2026-10-29 09:54:53,352 - INFO - Episode 48 ended: steps=1, reward=-5.80
+2026-10-29 09:54:53,859 - INFO - Episode 49 started
+2026-10-29 09:54:53,894 - INFO - Episode 49 ended: steps=1, reward=-5.60
+2026-10-29 09:54:54,397 - INFO - Episode 50 started
+2026-10-29 09:54:54,434 - INFO - Episode 50 ended: steps=1, reward=-5.60
+2026-10-29 09:54:54,935 - INFO - Episode 51 started
+2026-10-29 09:54:54,969 - INFO - Episode 51 ended: steps=1, reward=-5.80
+2026-10-29 09:54:55,472 - INFO - Episode 52 started
+2026-10-29 09:54:55,509 - INFO - Episode 52 ended: steps=1, reward=-5.60
+2026-10-29 09:54:56,009 - INFO - Episode 53 started
+2026-10-29 09:54:56,047 - INFO - Episode 53 ended: steps=1, reward=-5.80
+2026-10-29 09:54:56,548 - INFO - Episode 54 started
+2026-10-29 09:54:56,589 - INFO - Episode 54 ended: steps=1, reward=-5.80
+2026-10-29 09:54:57,093 - INFO - Episode 55 started
+2026-10-29 09:54:57,142 - INFO - Episode 55 ended: steps=1, reward=-5.60
+2026-10-29 09:54:57,651 - INFO - Episode 56 started
+2026-10-29 09:54:57,700 - INFO - Episode 56 ended: steps=1, reward=-5.60
+2026-10-29 09:54:58,202 - INFO - Episode 57 started
+2026-10-29 09:54:58,245 - INFO - Episode 57 ended: steps=1, reward=-5.80
+2026-10-29 09:54:58,754 - INFO - Episode 58 started
+2026-10-29 09:54:58,789 - INFO - Episode 58 ended: steps=1, reward=-5.60
+2026-10-29 09:54:59,300 - INFO - Episode 59 started
+2026-10-29 09:54:59,349 - INFO - Episode 59 ended: steps=1, reward=-5.80
+2026-10-29 09:54:59,860 - INFO - Episode 60 started
+2026-10-29 09:54:59,891 - INFO - Episode 60 ended: steps=1, reward=-5.60
+2026-10-29 09:55:00,403 - INFO - Episode 61 started
+2026-10-29 09:55:00,444 - INFO - Episode 61 ended: steps=1, reward=-5.60
+2026-10-29 09:55:00,956 - INFO - Episode 62 started
+2026-10-29 09:55:00,993 - INFO - Episode 62 ended: steps=1, reward=-5.60
+2026-10-29 09:55:01,500 - INFO - Episode 63 started
+2026-10-29 09:55:01,541 - INFO - Episode 63 ended: steps=1, reward=-5.60
+2026-10-29 09:55:02,044 - INFO - Episode 64 started
+2026-10-29 09:55:02,082 - INFO - Episode 64 ended: steps=1, reward=-5.80
+2026-10-29 09:55:02,585 - INFO - Episode 65 started
+2026-10-29 09:55:02,624 - INFO - Episode 65 ended: steps=1, reward=-5.60
+2026-10-29 09:55:03,127 - INFO - Episode 66 started
+2026-10-29 09:55:03,161 - INFO - Episode 66 ended: steps=1, reward=-5.60
+2026-10-29 09:55:03,665 - INFO - Episode 67 started
+2026-10-29 09:55:03,699 - INFO - Episode 67 ended: steps=1, reward=-5.80
+2026-10-29 09:55:04,203 - INFO - Episode 68 started
+2026-10-29 09:55:04,246 - INFO - Episode 68 ended: steps=1, reward=-5.60
+2026-10-29 09:55:04,750 - INFO - Episode 69 started
+2026-10-29 09:55:04,788 - INFO - Episode 69 ended: steps=1, reward=-5.80
+2026-10-29 09:55:05,291 - INFO - Episode 70 started
+2026-10-29 09:55:05,344 - INFO - Episode 70 ended: steps=1, reward=-5.80
+2026-10-29 09:55:05,850 - INFO - Episode 71 started
+2026-10-29 09:55:05,887 - INFO - Episode 71 ended: steps=1, reward=-5.80
+2026-10-29 09:55:06,393 - INFO - Episode 72 started
+2026-10-29 09:55:06,433 - INFO - Episode 72 ended: steps=1, reward=-5.60
+2026-10-29 09:55:06,950 - INFO - Episode 73 started
+2026-10-29 09:55:06,990 - INFO - Episode 73 ended: steps=1, reward=-5.60
+2026-10-29 09:55:07,504 - INFO - Episode 74 started
+2026-10-29 09:55:07,535 - INFO - Episode 74 ended: steps=1, reward=-5.60
+2026-10-29 09:55:08,051 - INFO - Episode 75 started
+2026-10-29 09:55:08,094 - INFO - Episode 75 ended: steps=1, reward=-5.60
+2026-10-29 09:55:08,608 - INFO - Episode 76 started
+2026-10-29 09:55:08,646 - INFO - Episode 76 ended: steps=1, reward=-5.60
+2026-10-29 09:55:09,150 - INFO - Episode 77 started
+2026-10-29 09:55:09,181 - INFO - Episode 77 ended: steps=1, reward=-5.60
+2026-10-29 09:55:09,691 - INFO - Episode 78 started
+2026-10-29 09:55:09,725 - INFO - Episode 78 ended: steps=1, reward=-5.60
+2026-10-29 09:55:10,229 - INFO - Episode 79 started
+2026-10-29 09:55:10,268 - INFO - Episode 79 ended: steps=1, reward=-5.60
+2026-10-29 09:55:10,773 - INFO - Episode 80 started
+2026-10-29 09:55:10,816 - INFO - Episode 80 ended: steps=1, reward=-5.60
+2026-10-29 09:55:11,319 - INFO - Episode 81 started
+2026-10-29 09:55:11,352 - INFO - Episode 81 ended: steps=1, reward=-5.80
+2026-10-29 09:55:11,856 - INFO - Episode 82 started
+2026-10-29 09:55:11,893 - INFO - Episode 82 ended: steps=1, reward=-5.60
+2026-10-29 09:55:12,399 - INFO - Episode 83 started
+2026-10-29 09:55:12,439 - INFO - Episode 83 ended: steps=1, reward=-5.80
+2026-10-29 09:55:12,944 - INFO - Episode 84 started
+2026-10-29 09:55:12,985 - INFO - Episode 84 ended: steps=1, reward=-5.80
+2026-10-29 09:55:13,491 - INFO - Episode 85 started
+2026-10-29 09:55:13,526 - INFO - Episode 85 ended: steps=1, reward=-5.80
+2026-10-29 09:55:14,030 - INFO - Episode 86 started
+2026-10-29 09:55:14,065 - INFO - Episode 86 ended: steps=1, reward=-5.80
+2026-10-29 09:55:14,570 - INFO - Episode 87 started
+2026-10-29 09:55:14,620 - INFO - Episode 87 ended: steps=1, reward=-5.60
+2026-10-29 09:55:15,128 - INFO - Episode 88 started
+2026-10-29 09:55:15,178 - INFO - Episode 88 ended: steps=1, reward=-5.60
+2026-10-29 09:55:15,685 - INFO - Episode 89 started
+2026-10-29 09:55:15,730 - INFO - Episode 89 ended: steps=1, reward=-5.60
+2026-10-29 09:55:16,239 - INFO - Episode 90 started
+2026-10-29 09:55:16,288 - INFO - Episode 90 ended: steps=1, reward=-5.80
+2026-10-29 09:55:16,797 - INFO - Episode 91 started
+2026-10-29 09:55:16,836 - INFO - Episode 91 ended: steps=1, reward=-5.60
+2026-10-29 09:55:17,345 - INFO - Episode 92 started
+2026-10-29 09:55:17,382 - INFO - Episode 92 ended: steps=1, reward=-5.60
+2026-10-29 09:55:17,893 - INFO - Episode 93 started
+2026-10-29 09:55:17,936 - INFO - Episode 93 ended: steps=1, reward=-5.60
+2026-10-29 09:55:18,442 - INFO - Episode 94 started
+2026-10-29 09:55:18,486 - INFO - Episode 94 ended: steps=1, reward=-5.60
+2026-10-29 09:55:18,990 - INFO - Episode 95 started
+2026-10-29 09:55:19,032 - INFO - Episode 95 ended: steps=1, reward=-5.60
+2026-10-29 09:55:19,537 - INFO - Episode 96 started
+2026-10-29 09:55:19,569 - INFO - Episode 96 ended: steps=1, reward=-5.60
+2026-10-29 09:55:20,072 - INFO - Episode 97 started
+2026-10-29 09:55:20,104 - INFO - Episode 97 ended: steps=1, reward=-5.60
+2026-10-29 09:55:20,602 - INFO - Episode 98 started
+2026-10-29 09:55:20,643 - INFO - Episode 98 ended: steps=1, reward=-5.60
+2026-10-29 09:55:21,139 - INFO - Episode 99 started
+2026-10-29 09:55:21,171 - INFO - Episode 99 ended: steps=1, reward=-5.80
+2026-10-29 09:55:21,669 - INFO - Episode 100 started
+2026-10-29 09:55:21,703 - INFO - Episode 100 ended: steps=1, reward=-5.80
+2026-10-29 09:55:22,199 - INFO - Episode 101 started
+2026-10-29 09:55:22,236 - INFO - Episode 101 ended: steps=1, reward=-5.60
+2026-10-29 09:55:22,738 - INFO - Episode 102 started
+2026-10-29 09:55:22,771 - INFO - Episode 102 ended: steps=1, reward=-5.60
+2026-10-29 09:55:23,279 - INFO - Episode 103 started
+2026-10-29 09:55:23,311 - INFO - Episode 103 ended: steps=1, reward=-5.60
+2026-10-29 09:55:23,817 - INFO - Episode 104 started
+2026-10-29 09:55:23,861 - INFO - Episode 104 ended: steps=1, reward=-5.60
+2026-10-29 09:55:24,368 - INFO - Episode 105 started
+2026-10-29 09:55:24,397 - INFO - Episode 105 ended: steps=1, reward=-5.80
+2026-10-29 09:55:24,905 - INFO - Episode 106 started
+2026-10-29 09:55:24,944 - INFO - Episode 106 ended: steps=1, reward=-5.60
+2026-10-29 09:55:25,453 - INFO - Episode 107 started
+2026-10-29 09:55:25,463 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...

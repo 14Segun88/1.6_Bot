@@ -1,0 +1,12 @@
+2026-10-29 10:18:53,624 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase1_20261029_101853.log
+2026-10-29 10:18:53,625 - INFO - === Selected: Phase 1: Aim & Trigger (Bullseye Aim & Fire calibration) ===
+2026-10-29 10:18:53,633 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-29 10:18:53,649 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-29 10:18:53,655 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-29 10:18:54,164 - INFO - Episode 1 started
+2026-10-29 10:18:56,408 - INFO - Starting training run: PPO_CS16_Phase1_20261029_101853
+2026-10-29 10:18:56,409 - INFO - Target Timesteps: 50000
+2026-10-29 10:18:56,409 - INFO - Device: cuda
+2026-10-29 10:18:56,915 - INFO - Episode 2 started
+2026-10-29 10:20:07,497 - INFO - Rollout  1 | Steps:   2048 | FPS: 27 | EpRewMean:   0.0 | EpLenMean:  0 | Entropy: 1.85 | KL: 0.025
+2026-10-29 10:20:17,124 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...

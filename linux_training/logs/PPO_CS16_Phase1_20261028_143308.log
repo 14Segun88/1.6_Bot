@@ -1,0 +1,777 @@
+2026-10-28 14:33:08,968 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase1_20261028_143308.log
+2026-10-28 14:33:08,969 - INFO - === Selected: Phase 1: Aim & Trigger (Bullseye Aim & Fire calibration) ===
+2026-10-28 14:33:08,988 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-28 14:33:08,999 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-28 14:33:09,002 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-28 14:33:09,479 - INFO - Episode 1 started
+2026-10-28 14:33:09,480 - INFO - Resuming model from models/ppo_cs16_phase1_final.zip...
+2026-10-28 14:33:09,484 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase1.pkl
+2026-10-28 14:33:12,813 - INFO - Starting training run: PPO_CS16_Phase1_20261028_143308
+2026-10-28 14:33:12,814 - INFO - Target Timesteps: 100000
+2026-10-28 14:33:12,814 - INFO - Device: cuda
+2026-10-28 14:33:13,285 - INFO - Episode 2 started
+2026-10-28 14:33:14,090 - INFO - Episode 2 ended: steps=1, reward=-5.80
+2026-10-28 14:33:14,562 - INFO - Episode 3 started
+2026-10-28 14:33:14,601 - INFO - Episode 3 ended: steps=1, reward=-5.80
+2026-10-28 14:33:15,075 - INFO - Episode 4 started
+2026-10-28 14:33:15,110 - INFO - Episode 4 ended: steps=1, reward=-5.80
+2026-10-28 14:33:15,585 - INFO - Episode 5 started
+2026-10-28 14:33:15,613 - INFO - Episode 5 ended: steps=1, reward=-5.80
+2026-10-28 14:33:16,086 - INFO - Episode 6 started
+2026-10-28 14:33:16,120 - INFO - Episode 6 ended: steps=1, reward=-5.80
+2026-10-28 14:33:16,593 - INFO - Episode 7 started
+2026-10-28 14:33:16,623 - INFO - Episode 7 ended: steps=1, reward=-5.80
+2026-10-28 14:33:17,096 - INFO - Episode 8 started
+2026-10-28 14:33:17,124 - INFO - Episode 8 ended: steps=1, reward=-5.80
+2026-10-28 14:33:17,597 - INFO - Episode 9 started
+2026-10-28 14:33:17,625 - INFO - Episode 9 ended: steps=1, reward=-5.80
+2026-10-28 14:33:18,098 - INFO - Episode 10 started
+2026-10-28 14:33:18,134 - INFO - Episode 10 ended: steps=1, reward=-5.80
+2026-10-28 14:33:18,609 - INFO - Episode 11 started
+2026-10-28 14:33:18,638 - INFO - Episode 11 ended: steps=1, reward=-5.80
+2026-10-28 14:33:19,114 - INFO - Episode 12 started
+2026-10-28 14:33:19,148 - INFO - Episode 12 ended: steps=1, reward=-5.80
+2026-10-28 14:33:19,621 - INFO - Episode 13 started
+2026-10-28 14:33:19,650 - INFO - Episode 13 ended: steps=1, reward=-5.80
+2026-10-28 14:33:20,124 - INFO - Episode 14 started
+2026-10-28 14:33:20,160 - INFO - Episode 14 ended: steps=1, reward=-5.80
+2026-10-28 14:33:20,636 - INFO - Episode 15 started
+2026-10-28 14:33:20,665 - INFO - Episode 15 ended: steps=1, reward=-5.80
+2026-10-28 14:33:21,138 - INFO - Episode 16 started
+2026-10-28 14:33:21,174 - INFO - Episode 16 ended: steps=1, reward=-5.80
+2026-10-28 14:33:21,648 - INFO - Episode 17 started
+2026-10-28 14:33:21,681 - INFO - Episode 17 ended: steps=1, reward=-5.80
+2026-10-28 14:33:22,156 - INFO - Episode 18 started
+2026-10-28 14:33:22,208 - INFO - Episode 18 ended: steps=1, reward=-5.80
+2026-10-28 14:33:22,681 - INFO - Episode 19 started
+2026-10-28 14:33:22,713 - INFO - Episode 19 ended: steps=1, reward=-5.80
+2026-10-28 14:33:23,187 - INFO - Episode 20 started
+2026-10-28 14:33:23,223 - INFO - Episode 20 ended: steps=1, reward=-5.80
+2026-10-28 14:33:23,697 - INFO - Episode 21 started
+2026-10-28 14:33:23,727 - INFO - Episode 21 ended: steps=1, reward=-5.80
+2026-10-28 14:33:24,201 - INFO - Episode 22 started
+2026-10-28 14:33:24,238 - INFO - Episode 22 ended: steps=1, reward=-5.80
+2026-10-28 14:33:24,712 - INFO - Episode 23 started
+2026-10-28 14:33:24,747 - INFO - Episode 23 ended: steps=1, reward=-5.80
+2026-10-28 14:33:25,223 - INFO - Episode 24 started
+2026-10-28 14:33:25,264 - INFO - Episode 24 ended: steps=1, reward=-5.80
+2026-10-28 14:33:25,738 - INFO - Episode 25 started
+2026-10-28 14:33:25,766 - INFO - Episode 25 ended: steps=1, reward=-5.80
+2026-10-28 14:33:26,244 - INFO - Episode 26 started
+2026-10-28 14:33:26,276 - INFO - Episode 26 ended: steps=1, reward=-5.80
+2026-10-28 14:33:26,751 - INFO - Episode 27 started
+2026-10-28 14:33:26,787 - INFO - Episode 27 ended: steps=1, reward=-5.80
+2026-10-28 14:33:27,261 - INFO - Episode 28 started
+2026-10-28 14:33:27,291 - INFO - Episode 28 ended: steps=1, reward=-5.80
+2026-10-28 14:33:29,870 - INFO - Episode 29 started
+2026-10-28 14:33:29,907 - INFO - Episode 29 ended: steps=1, reward=-5.80
+2026-10-28 14:33:30,383 - INFO - Episode 30 started
+2026-10-28 14:33:30,417 - INFO - Episode 30 ended: steps=1, reward=-5.80
+2026-10-28 14:33:30,893 - INFO - Episode 31 started
+2026-10-28 14:33:30,929 - INFO - Episode 31 ended: steps=1, reward=-5.80
+2026-10-28 14:33:31,404 - INFO - Episode 32 started
+2026-10-28 14:33:31,440 - INFO - Episode 32 ended: steps=1, reward=-5.80
+2026-10-28 14:33:31,916 - INFO - Episode 33 started
+2026-10-28 14:33:31,949 - INFO - Episode 33 ended: steps=1, reward=-5.80
+2026-10-28 14:33:32,424 - INFO - Episode 34 started
+2026-10-28 14:33:32,466 - INFO - Episode 34 ended: steps=1, reward=-5.80
+2026-10-28 14:33:32,941 - INFO - Episode 35 started
+2026-10-28 14:33:32,968 - INFO - Episode 35 ended: steps=1, reward=-5.80
+2026-10-28 14:33:33,443 - INFO - Episode 36 started
+2026-10-28 14:33:33,471 - INFO - Episode 36 ended: steps=1, reward=-5.80
+2026-10-28 14:33:33,945 - INFO - Episode 37 started
+2026-10-28 14:33:33,973 - INFO - Episode 37 ended: steps=1, reward=-5.80
+2026-10-28 14:33:34,447 - INFO - Episode 38 started
+2026-10-28 14:33:34,482 - INFO - Episode 38 ended: steps=1, reward=-5.80
+2026-10-28 14:33:34,957 - INFO - Episode 39 started
+2026-10-28 14:33:34,986 - INFO - Episode 39 ended: steps=1, reward=-5.80
+2026-10-28 14:33:35,466 - INFO - Episode 40 started
+2026-10-28 14:33:35,496 - INFO - Episode 40 ended: steps=1, reward=-5.80
+2026-10-28 14:33:35,970 - INFO - Episode 41 started
+2026-10-28 14:33:36,000 - INFO - Episode 41 ended: steps=1, reward=-5.80
+2026-10-28 14:33:36,474 - INFO - Episode 42 started
+2026-10-28 14:33:36,510 - INFO - Episode 42 ended: steps=1, reward=-5.80
+2026-10-28 14:33:36,987 - INFO - Episode 43 started
+2026-10-28 14:33:37,018 - INFO - Episode 43 ended: steps=1, reward=-5.80
+2026-10-28 14:33:37,493 - INFO - Episode 44 started
+2026-10-28 14:33:37,519 - INFO - Episode 44 ended: steps=1, reward=-5.80
+2026-10-28 14:33:37,993 - INFO - Episode 45 started
+2026-10-28 14:33:38,025 - INFO - Episode 45 ended: steps=1, reward=-5.80
+2026-10-28 14:33:38,500 - INFO - Episode 46 started
+2026-10-28 14:33:38,529 - INFO - Episode 46 ended: steps=1, reward=-5.80
+2026-10-28 14:33:39,004 - INFO - Episode 47 started
+2026-10-28 14:33:39,047 - INFO - Episode 47 ended: steps=1, reward=-5.80
+2026-10-28 14:33:39,521 - INFO - Episode 48 started
+2026-10-28 14:33:39,550 - INFO - Episode 48 ended: steps=1, reward=-5.80
+2026-10-28 14:33:40,025 - INFO - Episode 49 started
+2026-10-28 14:33:40,057 - INFO - Episode 49 ended: steps=1, reward=-5.80
+2026-10-28 14:33:40,533 - INFO - Episode 50 started
+2026-10-28 14:33:40,563 - INFO - Episode 50 ended: steps=1, reward=-5.80
+2026-10-28 14:33:41,038 - INFO - Episode 51 started
+2026-10-28 14:33:41,067 - INFO - Episode 51 ended: steps=1, reward=-5.80
+2026-10-28 14:33:41,541 - INFO - Episode 52 started
+2026-10-28 14:33:41,568 - INFO - Episode 52 ended: steps=1, reward=-5.80
+2026-10-28 14:33:42,043 - INFO - Episode 53 started
+2026-10-28 14:33:42,084 - INFO - Episode 53 ended: steps=1, reward=-5.80
+2026-10-28 14:33:42,559 - INFO - Episode 54 started
+2026-10-28 14:33:42,592 - INFO - Episode 54 ended: steps=1, reward=-5.80
+2026-10-28 14:33:43,066 - INFO - Episode 55 started
+2026-10-28 14:33:43,092 - INFO - Episode 55 ended: steps=1, reward=-5.80
+2026-10-28 14:33:43,566 - INFO - Episode 56 started
+2026-10-28 14:33:43,599 - INFO - Episode 56 ended: steps=1, reward=-5.80
+2026-10-28 14:33:44,074 - INFO - Episode 57 started
+2026-10-28 14:33:44,113 - INFO - Episode 57 ended: steps=1, reward=-5.80
+2026-10-28 14:33:44,586 - INFO - Episode 58 started
+2026-10-28 14:33:44,619 - INFO - Episode 58 ended: steps=1, reward=-5.80
+2026-10-28 14:33:45,093 - INFO - Episode 59 started
+2026-10-28 14:33:45,126 - INFO - Episode 59 ended: steps=1, reward=-5.80
+2026-10-28 14:33:45,604 - INFO - Episode 60 started
+2026-10-28 14:33:45,634 - INFO - Episode 60 ended: steps=1, reward=-5.80
+2026-10-28 14:33:46,107 - INFO - Episode 61 started
+2026-10-28 14:33:46,136 - INFO - Episode 61 ended: steps=1, reward=-5.80
+2026-10-28 14:33:46,609 - INFO - Episode 62 started
+2026-10-28 14:33:46,671 - INFO - Episode 62 ended: steps=1, reward=-5.80
+2026-10-28 14:33:47,142 - INFO - Episode 63 started
+2026-10-28 14:33:47,176 - INFO - Episode 63 ended: steps=1, reward=-5.80
+2026-10-28 14:33:47,649 - INFO - Episode 64 started
+2026-10-28 14:33:47,681 - INFO - Episode 64 ended: steps=1, reward=-5.80
+2026-10-28 14:33:48,156 - INFO - Episode 65 started
+2026-10-28 14:33:48,189 - INFO - Episode 65 ended: steps=1, reward=-5.80
+2026-10-28 14:33:48,663 - INFO - Episode 66 started
+2026-10-28 14:33:48,692 - INFO - Episode 66 ended: steps=1, reward=-5.80
+2026-10-28 14:33:49,165 - INFO - Episode 67 started
+2026-10-28 14:33:49,201 - INFO - Episode 67 ended: steps=1, reward=-5.80
+2026-10-28 14:33:49,672 - INFO - Episode 68 started
+2026-10-28 14:33:49,720 - INFO - Episode 68 ended: steps=1, reward=-5.80
+2026-10-28 14:33:50,194 - INFO - Episode 69 started
+2026-10-28 14:33:50,221 - INFO - Episode 69 ended: steps=1, reward=-5.80
+2026-10-28 14:33:50,696 - INFO - Episode 70 started
+2026-10-28 14:33:50,731 - INFO - Episode 70 ended: steps=1, reward=-5.80
+2026-10-28 14:33:51,210 - INFO - Episode 71 started
+2026-10-28 14:33:51,252 - INFO - Episode 71 ended: steps=1, reward=-5.80
+2026-10-28 14:33:51,726 - INFO - Episode 72 started
+2026-10-28 14:33:51,756 - INFO - Episode 72 ended: steps=1, reward=-5.80
+2026-10-28 14:33:52,232 - INFO - Episode 73 started
+2026-10-28 14:33:52,279 - INFO - Episode 73 ended: steps=1, reward=-5.80
+2026-10-28 14:33:52,754 - INFO - Episode 74 started
+2026-10-28 14:33:52,792 - INFO - Episode 74 ended: steps=1, reward=-5.80
+2026-10-28 14:33:53,266 - INFO - Episode 75 started
+2026-10-28 14:33:53,302 - INFO - Episode 75 ended: steps=1, reward=-5.80
+2026-10-28 14:33:53,778 - INFO - Episode 76 started
+2026-10-28 14:33:53,807 - INFO - Episode 76 ended: steps=1, reward=-5.80
+2026-10-28 14:33:54,283 - INFO - Episode 77 started
+2026-10-28 14:33:54,322 - INFO - Episode 77 ended: steps=1, reward=-5.80
+2026-10-28 14:33:54,796 - INFO - Episode 78 started
+2026-10-28 14:33:54,835 - INFO - Episode 78 ended: steps=1, reward=-5.80
+2026-10-28 14:33:55,310 - INFO - Episode 79 started
+2026-10-28 14:33:55,341 - INFO - Episode 79 ended: steps=1, reward=-5.80
+2026-10-28 14:33:55,816 - INFO - Episode 80 started
+2026-10-28 14:33:55,854 - INFO - Episode 80 ended: steps=1, reward=-5.80
+2026-10-28 14:33:56,329 - INFO - Episode 81 started
+2026-10-28 14:33:56,368 - INFO - Episode 81 ended: steps=1, reward=-5.80
+2026-10-28 14:33:56,843 - INFO - Episode 82 started
+2026-10-28 14:33:56,873 - INFO - Episode 82 ended: steps=1, reward=-5.80
+2026-10-28 14:33:57,349 - INFO - Episode 83 started
+2026-10-28 14:33:57,391 - INFO - Episode 83 ended: steps=1, reward=-5.80
+2026-10-28 14:33:57,866 - INFO - Episode 84 started
+2026-10-28 14:33:57,903 - INFO - Episode 84 ended: steps=1, reward=-5.80
+2026-10-28 14:33:58,378 - INFO - Episode 85 started
+2026-10-28 14:33:58,407 - INFO - Episode 85 ended: steps=1, reward=-5.80
+2026-10-28 14:33:58,885 - INFO - Episode 86 started
+2026-10-28 14:33:58,913 - INFO - Episode 86 ended: steps=1, reward=-5.80
+2026-10-28 14:33:59,390 - INFO - Episode 87 started
+2026-10-28 14:33:59,427 - INFO - Episode 87 ended: steps=1, reward=-5.80
+2026-10-28 14:33:59,905 - INFO - Episode 88 started
+2026-10-28 14:33:59,935 - INFO - Episode 88 ended: steps=1, reward=-5.80
+2026-10-28 14:34:00,411 - INFO - Episode 89 started
+2026-10-28 14:34:00,451 - INFO - Episode 89 ended: steps=1, reward=-5.80
+2026-10-28 14:34:00,927 - INFO - Episode 90 started
+2026-10-28 14:34:00,967 - INFO - Episode 90 ended: steps=1, reward=-5.80
+2026-10-28 14:34:01,445 - INFO - Episode 91 started
+2026-10-28 14:34:01,476 - INFO - Episode 91 ended: steps=1, reward=-5.80
+2026-10-28 14:34:04,018 - INFO - Episode 92 started
+2026-10-28 14:34:04,046 - INFO - Episode 92 ended: steps=1, reward=-5.80
+2026-10-28 14:34:04,522 - INFO - Episode 93 started
+2026-10-28 14:34:04,557 - INFO - Episode 93 ended: steps=1, reward=-5.80
+2026-10-28 14:34:05,034 - INFO - Episode 94 started
+2026-10-28 14:34:05,063 - INFO - Episode 94 ended: steps=1, reward=-5.80
+2026-10-28 14:34:05,540 - INFO - Episode 95 started
+2026-10-28 14:34:05,573 - INFO - Episode 95 ended: steps=1, reward=-5.80
+2026-10-28 14:34:06,051 - INFO - Episode 96 started
+2026-10-28 14:34:06,085 - INFO - Episode 96 ended: steps=1, reward=-5.80
+2026-10-28 14:34:06,562 - INFO - Episode 97 started
+2026-10-28 14:34:06,590 - INFO - Episode 97 ended: steps=1, reward=-5.80
+2026-10-28 14:34:07,071 - INFO - Episode 98 started
+2026-10-28 14:34:07,100 - INFO - Episode 98 ended: steps=1, reward=-5.80
+2026-10-28 14:34:07,580 - INFO - Episode 99 started
+2026-10-28 14:34:07,633 - INFO - Episode 99 ended: steps=1, reward=-5.80
+2026-10-28 14:34:08,111 - INFO - Episode 100 started
+2026-10-28 14:34:08,146 - INFO - Episode 100 ended: steps=1, reward=-5.80
+2026-10-28 14:34:08,623 - INFO - Episode 101 started
+2026-10-28 14:34:08,659 - INFO - Episode 101 ended: steps=1, reward=-5.80
+2026-10-28 14:34:09,136 - INFO - Episode 102 started
+2026-10-28 14:34:09,166 - INFO - Episode 102 ended: steps=1, reward=-5.80
+2026-10-28 14:34:09,643 - INFO - Episode 103 started
+2026-10-28 14:34:09,674 - INFO - Episode 103 ended: steps=1, reward=-5.80
+2026-10-28 14:34:10,156 - INFO - Episode 104 started
+2026-10-28 14:34:10,192 - INFO - Episode 104 ended: steps=1, reward=-5.80
+2026-10-28 14:34:10,669 - INFO - Episode 105 started
+2026-10-28 14:34:10,698 - INFO - Episode 105 ended: steps=1, reward=-5.80
+2026-10-28 14:34:11,173 - INFO - Episode 106 started
+2026-10-28 14:34:11,206 - INFO - Episode 106 ended: steps=1, reward=-5.80
+2026-10-28 14:34:11,683 - INFO - Episode 107 started
+2026-10-28 14:34:11,711 - INFO - Episode 107 ended: steps=1, reward=-5.80
+2026-10-28 14:34:12,188 - INFO - Episode 108 started
+2026-10-28 14:34:12,224 - INFO - Episode 108 ended: steps=1, reward=-5.80
+2026-10-28 14:34:12,697 - INFO - Episode 109 started
+2026-10-28 14:34:12,735 - INFO - Episode 109 ended: steps=1, reward=-5.80
+2026-10-28 14:34:13,212 - INFO - Episode 110 started
+2026-10-28 14:34:13,241 - INFO - Episode 110 ended: steps=1, reward=-5.80
+2026-10-28 14:34:13,718 - INFO - Episode 111 started
+2026-10-28 14:34:13,754 - INFO - Episode 111 ended: steps=1, reward=-5.80
+2026-10-28 14:34:14,232 - INFO - Episode 112 started
+2026-10-28 14:34:14,269 - INFO - Episode 112 ended: steps=1, reward=-5.80
+2026-10-28 14:34:14,745 - INFO - Episode 113 started
+2026-10-28 14:34:14,779 - INFO - Episode 113 ended: steps=1, reward=-5.80
+2026-10-28 14:34:15,254 - INFO - Episode 114 started
+2026-10-28 14:34:15,284 - INFO - Episode 114 ended: steps=1, reward=-5.80
+2026-10-28 14:34:15,760 - INFO - Episode 115 started
+2026-10-28 14:34:15,799 - INFO - Episode 115 ended: steps=1, reward=-5.80
+2026-10-28 14:34:16,275 - INFO - Episode 116 started
+2026-10-28 14:34:16,305 - INFO - Episode 116 ended: steps=1, reward=-5.80
+2026-10-28 14:34:16,779 - INFO - Episode 117 started
+2026-10-28 14:34:16,808 - INFO - Episode 117 ended: steps=1, reward=-5.80
+2026-10-28 14:34:17,280 - INFO - Episode 118 started
+2026-10-28 14:34:17,311 - INFO - Episode 118 ended: steps=1, reward=-5.80
+2026-10-28 14:34:17,787 - INFO - Episode 119 started
+2026-10-28 14:34:17,819 - INFO - Episode 119 ended: steps=1, reward=-5.80
+2026-10-28 14:34:18,297 - INFO - Episode 120 started
+2026-10-28 14:34:18,331 - INFO - Episode 120 ended: steps=1, reward=-5.80
+2026-10-28 14:34:18,805 - INFO - Episode 121 started
+2026-10-28 14:34:18,837 - INFO - Episode 121 ended: steps=1, reward=-5.80
+2026-10-28 14:34:19,310 - INFO - Episode 122 started
+2026-10-28 14:34:19,340 - INFO - Episode 122 ended: steps=1, reward=-5.80
+2026-10-28 14:34:19,813 - INFO - Episode 123 started
+2026-10-28 14:34:19,846 - INFO - Episode 123 ended: steps=1, reward=-5.80
+2026-10-28 14:34:20,322 - INFO - Episode 124 started
+2026-10-28 14:34:20,350 - INFO - Episode 124 ended: steps=1, reward=-5.80
+2026-10-28 14:34:20,822 - INFO - Episode 125 started
+2026-10-28 14:34:20,855 - INFO - Episode 125 ended: steps=1, reward=-5.80
+2026-10-28 14:34:21,328 - INFO - Episode 126 started
+2026-10-28 14:34:21,375 - INFO - Episode 126 ended: steps=1, reward=-5.80
+2026-10-28 14:34:21,848 - INFO - Episode 127 started
+2026-10-28 14:34:21,894 - INFO - Episode 127 ended: steps=1, reward=-5.80
+2026-10-28 14:34:22,368 - INFO - Episode 128 started
+2026-10-28 14:34:22,401 - INFO - Episode 128 ended: steps=1, reward=-5.80
+2026-10-28 14:34:22,874 - INFO - Episode 129 started
+2026-10-28 14:34:22,919 - INFO - Episode 129 ended: steps=1, reward=-5.80
+2026-10-28 14:34:23,393 - INFO - Episode 130 started
+2026-10-28 14:34:23,420 - INFO - Episode 130 ended: steps=1, reward=-5.80
+2026-10-28 14:34:23,893 - INFO - Episode 131 started
+2026-10-28 14:34:23,921 - INFO - Episode 131 ended: steps=1, reward=-5.80
+2026-10-28 14:34:24,396 - INFO - Episode 132 started
+2026-10-28 14:34:24,424 - INFO - Episode 132 ended: steps=1, reward=-5.80
+2026-10-28 14:34:24,900 - INFO - Episode 133 started
+2026-10-28 14:34:24,931 - INFO - Episode 133 ended: steps=1, reward=-5.80
+2026-10-28 14:34:25,410 - INFO - Episode 134 started
+2026-10-28 14:34:25,438 - INFO - Episode 134 ended: steps=1, reward=-5.80
+2026-10-28 14:34:25,913 - INFO - Episode 135 started
+2026-10-28 14:34:25,945 - INFO - Episode 135 ended: steps=1, reward=-5.80
+2026-10-28 14:34:26,421 - INFO - Episode 136 started
+2026-10-28 14:34:26,459 - INFO - Episode 136 ended: steps=1, reward=-5.80
+2026-10-28 14:34:26,935 - INFO - Episode 137 started
+2026-10-28 14:34:26,967 - INFO - Episode 137 ended: steps=1, reward=-5.80
+2026-10-28 14:34:27,442 - INFO - Episode 138 started
+2026-10-28 14:34:27,471 - INFO - Episode 138 ended: steps=1, reward=-5.80
+2026-10-28 14:34:27,950 - INFO - Episode 139 started
+2026-10-28 14:34:27,978 - INFO - Episode 139 ended: steps=1, reward=-5.80
+2026-10-28 14:34:28,455 - INFO - Episode 140 started
+2026-10-28 14:34:28,482 - INFO - Episode 140 ended: steps=1, reward=-5.80
+2026-10-28 14:34:28,958 - INFO - Episode 141 started
+2026-10-28 14:34:28,986 - INFO - Episode 141 ended: steps=1, reward=-5.80
+2026-10-28 14:34:29,461 - INFO - Episode 142 started
+2026-10-28 14:34:29,494 - INFO - Episode 142 ended: steps=1, reward=-5.80
+2026-10-28 14:34:29,972 - INFO - Episode 143 started
+2026-10-28 14:34:29,999 - INFO - Episode 143 ended: steps=1, reward=-5.80
+2026-10-28 14:34:30,478 - INFO - Episode 144 started
+2026-10-28 14:34:30,506 - INFO - Episode 144 ended: steps=1, reward=-5.80
+2026-10-28 14:34:30,983 - INFO - Episode 145 started
+2026-10-28 14:34:31,020 - INFO - Episode 145 ended: steps=1, reward=-5.80
+2026-10-28 14:34:31,497 - INFO - Episode 146 started
+2026-10-28 14:34:31,528 - INFO - Episode 146 ended: steps=1, reward=-5.80
+2026-10-28 14:34:32,005 - INFO - Episode 147 started
+2026-10-28 14:34:32,038 - INFO - Episode 147 ended: steps=1, reward=-5.80
+2026-10-28 14:34:32,515 - INFO - Episode 148 started
+2026-10-28 14:34:32,542 - INFO - Episode 148 ended: steps=1, reward=-5.80
+2026-10-28 14:34:33,019 - INFO - Episode 149 started
+2026-10-28 14:34:33,047 - INFO - Episode 149 ended: steps=1, reward=-5.80
+2026-10-28 14:34:33,523 - INFO - Episode 150 started
+2026-10-28 14:34:33,562 - INFO - Episode 150 ended: steps=1, reward=-5.80
+2026-10-28 14:34:34,041 - INFO - Episode 151 started
+2026-10-28 14:34:34,083 - INFO - Episode 151 ended: steps=1, reward=-5.80
+2026-10-28 14:34:34,561 - INFO - Episode 152 started
+2026-10-28 14:34:34,595 - INFO - Episode 152 ended: steps=1, reward=-5.80
+2026-10-28 14:34:35,072 - INFO - Episode 153 started
+2026-10-28 14:34:35,108 - INFO - Episode 153 ended: steps=1, reward=-5.80
+2026-10-28 14:34:35,586 - INFO - Episode 154 started
+2026-10-28 14:34:35,613 - INFO - Episode 154 ended: steps=1, reward=-5.80
+2026-10-28 14:34:36,091 - INFO - Episode 155 started
+2026-10-28 14:34:36,133 - INFO - Episode 155 ended: steps=1, reward=-5.80
+2026-10-28 14:34:38,602 - INFO - Episode 156 started
+2026-10-28 14:34:38,631 - INFO - Episode 156 ended: steps=1, reward=-5.80
+2026-10-28 14:34:39,110 - INFO - Episode 157 started
+2026-10-28 14:34:39,146 - INFO - Episode 157 ended: steps=1, reward=-5.80
+2026-10-28 14:34:39,624 - INFO - Episode 158 started
+2026-10-28 14:34:39,661 - INFO - Episode 158 ended: steps=1, reward=-5.80
+2026-10-28 14:34:40,141 - INFO - Episode 159 started
+2026-10-28 14:34:40,179 - INFO - Episode 159 ended: steps=1, reward=-5.80
+2026-10-28 14:34:40,660 - INFO - Episode 160 started
+2026-10-28 14:34:40,690 - INFO - Episode 160 ended: steps=1, reward=-5.80
+2026-10-28 14:34:41,167 - INFO - Episode 161 started
+2026-10-28 14:34:41,203 - INFO - Episode 161 ended: steps=1, reward=-5.80
+2026-10-28 14:34:41,683 - INFO - Episode 162 started
+2026-10-28 14:34:41,711 - INFO - Episode 162 ended: steps=1, reward=-5.80
+2026-10-28 14:34:42,190 - INFO - Episode 163 started
+2026-10-28 14:34:42,225 - INFO - Episode 163 ended: steps=1, reward=-5.80
+2026-10-28 14:34:42,701 - INFO - Episode 164 started
+2026-10-28 14:34:42,732 - INFO - Episode 164 ended: steps=1, reward=-5.80
+2026-10-28 14:34:43,208 - INFO - Episode 165 started
+2026-10-28 14:34:43,243 - INFO - Episode 165 ended: steps=1, reward=-5.80
+2026-10-28 14:34:43,722 - INFO - Episode 166 started
+2026-10-28 14:34:43,761 - INFO - Episode 166 ended: steps=1, reward=-5.80
+2026-10-28 14:34:44,239 - INFO - Episode 167 started
+2026-10-28 14:34:44,273 - INFO - Episode 167 ended: steps=1, reward=-5.80
+2026-10-28 14:34:44,749 - INFO - Episode 168 started
+2026-10-28 14:34:44,788 - INFO - Episode 168 ended: steps=1, reward=-5.80
+2026-10-28 14:34:45,270 - INFO - Episode 169 started
+2026-10-28 14:34:45,301 - INFO - Episode 169 ended: steps=1, reward=-5.80
+2026-10-28 14:34:45,778 - INFO - Episode 170 started
+2026-10-28 14:34:45,806 - INFO - Episode 170 ended: steps=1, reward=-5.80
+2026-10-28 14:34:46,283 - INFO - Episode 171 started
+2026-10-28 14:34:46,319 - INFO - Episode 171 ended: steps=1, reward=-5.80
+2026-10-28 14:34:46,795 - INFO - Episode 172 started
+2026-10-28 14:34:46,833 - INFO - Episode 172 ended: steps=1, reward=-5.80
+2026-10-28 14:34:47,310 - INFO - Episode 173 started
+2026-10-28 14:34:47,338 - INFO - Episode 173 ended: steps=1, reward=-5.80
+2026-10-28 14:34:47,816 - INFO - Episode 174 started
+2026-10-28 14:34:47,847 - INFO - Episode 174 ended: steps=1, reward=-5.80
+2026-10-28 14:34:48,323 - INFO - Episode 175 started
+2026-10-28 14:34:48,357 - INFO - Episode 175 ended: steps=1, reward=-5.80
+2026-10-28 14:34:48,834 - INFO - Episode 176 started
+2026-10-28 14:34:48,862 - INFO - Episode 176 ended: steps=1, reward=-5.80
+2026-10-28 14:34:49,341 - INFO - Episode 177 started
+2026-10-28 14:34:49,369 - INFO - Episode 177 ended: steps=1, reward=-5.80
+2026-10-28 14:34:49,847 - INFO - Episode 178 started
+2026-10-28 14:34:49,875 - INFO - Episode 178 ended: steps=1, reward=-5.80
+2026-10-28 14:34:50,352 - INFO - Episode 179 started
+2026-10-28 14:34:50,390 - INFO - Episode 179 ended: steps=1, reward=-5.80
+2026-10-28 14:34:50,866 - INFO - Episode 180 started
+2026-10-28 14:34:50,914 - INFO - Episode 180 ended: steps=1, reward=-5.80
+2026-10-28 14:34:51,392 - INFO - Episode 181 started
+2026-10-28 14:34:51,428 - INFO - Episode 181 ended: steps=1, reward=-5.80
+2026-10-28 14:34:51,904 - INFO - Episode 182 started
+2026-10-28 14:34:51,932 - INFO - Episode 182 ended: steps=1, reward=-5.80
+2026-10-28 14:34:52,408 - INFO - Episode 183 started
+2026-10-28 14:34:52,435 - INFO - Episode 183 ended: steps=1, reward=-5.80
+2026-10-28 14:34:52,913 - INFO - Episode 184 started
+2026-10-28 14:34:52,943 - INFO - Episode 184 ended: steps=1, reward=-5.80
+2026-10-28 14:34:53,420 - INFO - Episode 185 started
+2026-10-28 14:34:53,457 - INFO - Episode 185 ended: steps=1, reward=-5.80
+2026-10-28 14:34:53,934 - INFO - Episode 186 started
+2026-10-28 14:34:53,968 - INFO - Episode 186 ended: steps=1, reward=-5.80
+2026-10-28 14:34:54,442 - INFO - Episode 187 started
+2026-10-28 14:34:54,476 - INFO - Episode 187 ended: steps=1, reward=-5.80
+2026-10-28 14:34:54,952 - INFO - Episode 188 started
+2026-10-28 14:34:54,994 - INFO - Episode 188 ended: steps=1, reward=-5.80
+2026-10-28 14:34:55,469 - INFO - Episode 189 started
+2026-10-28 14:34:55,497 - INFO - Episode 189 ended: steps=1, reward=-5.80
+2026-10-28 14:34:55,973 - INFO - Episode 190 started
+2026-10-28 14:34:56,003 - INFO - Episode 190 ended: steps=1, reward=-5.80
+2026-10-28 14:34:56,478 - INFO - Episode 191 started
+2026-10-28 14:34:56,509 - INFO - Episode 191 ended: steps=1, reward=-5.80
+2026-10-28 14:34:56,988 - INFO - Episode 192 started
+2026-10-28 14:34:57,020 - INFO - Episode 192 ended: steps=1, reward=-5.80
+2026-10-28 14:34:57,495 - INFO - Episode 193 started
+2026-10-28 14:34:57,540 - INFO - Episode 193 ended: steps=1, reward=-5.80
+2026-10-28 14:34:58,015 - INFO - Episode 194 started
+2026-10-28 14:34:58,048 - INFO - Episode 194 ended: steps=1, reward=-5.80
+2026-10-28 14:34:58,524 - INFO - Episode 195 started
+2026-10-28 14:34:58,553 - INFO - Episode 195 ended: steps=1, reward=-5.80
+2026-10-28 14:34:59,028 - INFO - Episode 196 started
+2026-10-28 14:34:59,057 - INFO - Episode 196 ended: steps=1, reward=-5.80
+2026-10-28 14:34:59,534 - INFO - Episode 197 started
+2026-10-28 14:34:59,562 - INFO - Episode 197 ended: steps=1, reward=-5.80
+2026-10-28 14:35:00,038 - INFO - Episode 198 started
+2026-10-28 14:35:00,068 - INFO - Episode 198 ended: steps=1, reward=-5.80
+2026-10-28 14:35:00,542 - INFO - Episode 199 started
+2026-10-28 14:35:00,571 - INFO - Episode 199 ended: steps=1, reward=-5.80
+2026-10-28 14:35:01,045 - INFO - Episode 200 started
+2026-10-28 14:35:01,075 - INFO - Episode 200 ended: steps=1, reward=-5.80
+2026-10-28 14:35:01,553 - INFO - Episode 201 started
+2026-10-28 14:35:01,582 - INFO - Episode 201 ended: steps=1, reward=-5.80
+2026-10-28 14:35:02,057 - INFO - Episode 202 started
+2026-10-28 14:35:02,101 - INFO - Episode 202 ended: steps=1, reward=-5.80
+2026-10-28 14:35:02,577 - INFO - Episode 203 started
+2026-10-28 14:35:02,618 - INFO - Episode 203 ended: steps=1, reward=-5.80
+2026-10-28 14:35:03,092 - INFO - Episode 204 started
+2026-10-28 14:35:03,135 - INFO - Episode 204 ended: steps=1, reward=-5.80
+2026-10-28 14:35:03,611 - INFO - Episode 205 started
+2026-10-28 14:35:03,638 - INFO - Episode 205 ended: steps=1, reward=-5.80
+2026-10-28 14:35:04,113 - INFO - Episode 206 started
+2026-10-28 14:35:04,142 - INFO - Episode 206 ended: steps=1, reward=-5.80
+2026-10-28 14:35:04,620 - INFO - Episode 207 started
+2026-10-28 14:35:04,652 - INFO - Episode 207 ended: steps=1, reward=-5.80
+2026-10-28 14:35:05,126 - INFO - Episode 208 started
+2026-10-28 14:35:05,155 - INFO - Episode 208 ended: steps=1, reward=-5.80
+2026-10-28 14:35:05,629 - INFO - Episode 209 started
+2026-10-28 14:35:05,658 - INFO - Episode 209 ended: steps=1, reward=-5.80
+2026-10-28 14:35:06,131 - INFO - Episode 210 started
+2026-10-28 14:35:06,159 - INFO - Episode 210 ended: steps=1, reward=-5.80
+2026-10-28 14:35:06,632 - INFO - Episode 211 started
+2026-10-28 14:35:06,671 - INFO - Episode 211 ended: steps=1, reward=-5.80
+2026-10-28 14:35:07,146 - INFO - Episode 212 started
+2026-10-28 14:35:07,179 - INFO - Episode 212 ended: steps=1, reward=-5.80
+2026-10-28 14:35:07,653 - INFO - Episode 213 started
+2026-10-28 14:35:07,688 - INFO - Episode 213 ended: steps=1, reward=-5.80
+2026-10-28 14:35:08,165 - INFO - Episode 214 started
+2026-10-28 14:35:08,203 - INFO - Episode 214 ended: steps=1, reward=-5.60
+2026-10-28 14:35:08,678 - INFO - Episode 215 started
+2026-10-28 14:35:08,708 - INFO - Episode 215 ended: steps=1, reward=-5.80
+2026-10-28 14:35:09,181 - INFO - Episode 216 started
+2026-10-28 14:35:09,216 - INFO - Episode 216 ended: steps=1, reward=-5.80
+2026-10-28 14:35:09,689 - INFO - Episode 217 started
+2026-10-28 14:35:09,718 - INFO - Episode 217 ended: steps=1, reward=-5.80
+2026-10-28 14:35:10,193 - INFO - Episode 218 started
+2026-10-28 14:35:10,224 - INFO - Episode 218 ended: steps=1, reward=-5.80
+2026-10-28 14:35:12,693 - INFO - Episode 219 started
+2026-10-28 14:35:12,725 - INFO - Episode 219 ended: steps=1, reward=-5.80
+2026-10-28 14:35:13,198 - INFO - Episode 220 started
+2026-10-28 14:35:13,227 - INFO - Episode 220 ended: steps=1, reward=-5.80
+2026-10-28 14:35:13,701 - INFO - Episode 221 started
+2026-10-28 14:35:13,738 - INFO - Episode 221 ended: steps=1, reward=-5.80
+2026-10-28 14:35:14,211 - INFO - Episode 222 started
+2026-10-28 14:35:14,255 - INFO - Episode 222 ended: steps=1, reward=-5.80
+2026-10-28 14:35:14,729 - INFO - Episode 223 started
+2026-10-28 14:35:14,757 - INFO - Episode 223 ended: steps=1, reward=-5.80
+2026-10-28 14:35:15,230 - INFO - Episode 224 started
+2026-10-28 14:35:15,261 - INFO - Episode 224 ended: steps=1, reward=-5.80
+2026-10-28 14:35:15,735 - INFO - Episode 225 started
+2026-10-28 14:35:15,774 - INFO - Episode 225 ended: steps=1, reward=-5.80
+2026-10-28 14:35:16,250 - INFO - Episode 226 started
+2026-10-28 14:35:16,283 - INFO - Episode 226 ended: steps=1, reward=-5.80
+2026-10-28 14:35:16,757 - INFO - Episode 227 started
+2026-10-28 14:35:16,786 - INFO - Episode 227 ended: steps=1, reward=-5.80
+2026-10-28 14:35:17,265 - INFO - Episode 228 started
+2026-10-28 14:35:17,294 - INFO - Episode 228 ended: steps=1, reward=-5.80
+2026-10-28 14:35:17,770 - INFO - Episode 229 started
+2026-10-28 14:35:17,798 - INFO - Episode 229 ended: steps=1, reward=-5.80
+2026-10-28 14:35:18,272 - INFO - Episode 230 started
+2026-10-28 14:35:18,314 - INFO - Episode 230 ended: steps=1, reward=-5.80
+2026-10-28 14:35:18,790 - INFO - Episode 231 started
+2026-10-28 14:35:18,841 - INFO - Episode 231 ended: steps=1, reward=-5.80
+2026-10-28 14:35:19,317 - INFO - Episode 232 started
+2026-10-28 14:35:19,345 - INFO - Episode 232 ended: steps=1, reward=-5.80
+2026-10-28 14:35:19,819 - INFO - Episode 233 started
+2026-10-28 14:35:19,850 - INFO - Episode 233 ended: steps=1, reward=-5.80
+2026-10-28 14:35:20,326 - INFO - Episode 234 started
+2026-10-28 14:35:20,357 - INFO - Episode 234 ended: steps=1, reward=-5.80
+2026-10-28 14:35:20,834 - INFO - Episode 235 started
+2026-10-28 14:35:20,877 - INFO - Episode 235 ended: steps=1, reward=-5.80
+2026-10-28 14:35:21,353 - INFO - Episode 236 started
+2026-10-28 14:35:21,383 - INFO - Episode 236 ended: steps=1, reward=-5.80
+2026-10-28 14:35:21,858 - INFO - Episode 237 started
+2026-10-28 14:35:21,886 - INFO - Episode 237 ended: steps=1, reward=-5.80
+2026-10-28 14:35:22,362 - INFO - Episode 238 started
+2026-10-28 14:35:22,390 - INFO - Episode 238 ended: steps=1, reward=-5.80
+2026-10-28 14:35:22,865 - INFO - Episode 239 started
+2026-10-28 14:35:22,893 - INFO - Episode 239 ended: steps=1, reward=-5.80
+2026-10-28 14:35:23,371 - INFO - Episode 240 started
+2026-10-28 14:35:23,405 - INFO - Episode 240 ended: steps=1, reward=-5.80
+2026-10-28 14:35:23,880 - INFO - Episode 241 started
+2026-10-28 14:35:23,911 - INFO - Episode 241 ended: steps=1, reward=-5.80
+2026-10-28 14:35:24,388 - INFO - Episode 242 started
+2026-10-28 14:35:24,419 - INFO - Episode 242 ended: steps=1, reward=-5.80
+2026-10-28 14:35:24,893 - INFO - Episode 243 started
+2026-10-28 14:35:24,926 - INFO - Episode 243 ended: steps=1, reward=-5.80
+2026-10-28 14:35:25,399 - INFO - Episode 244 started
+2026-10-28 14:35:25,431 - INFO - Episode 244 ended: steps=1, reward=-5.80
+2026-10-28 14:35:25,904 - INFO - Episode 245 started
+2026-10-28 14:35:25,937 - INFO - Episode 245 ended: steps=1, reward=-5.80
+2026-10-28 14:35:26,412 - INFO - Episode 246 started
+2026-10-28 14:35:26,447 - INFO - Episode 246 ended: steps=1, reward=-5.80
+2026-10-28 14:35:26,920 - INFO - Episode 247 started
+2026-10-28 14:35:26,950 - INFO - Episode 247 ended: steps=1, reward=-5.80
+2026-10-28 14:35:27,428 - INFO - Episode 248 started
+2026-10-28 14:35:27,463 - INFO - Episode 248 ended: steps=1, reward=-5.80
+2026-10-28 14:35:27,937 - INFO - Episode 249 started
+2026-10-28 14:35:27,975 - INFO - Episode 249 ended: steps=1, reward=-5.80
+2026-10-28 14:35:28,448 - INFO - Episode 250 started
+2026-10-28 14:35:28,492 - INFO - Episode 250 ended: steps=1, reward=-5.80
+2026-10-28 14:35:28,966 - INFO - Episode 251 started
+2026-10-28 14:35:28,999 - INFO - Episode 251 ended: steps=1, reward=-5.80
+2026-10-28 14:35:29,474 - INFO - Episode 252 started
+2026-10-28 14:35:29,511 - INFO - Episode 252 ended: steps=1, reward=-5.80
+2026-10-28 14:35:29,983 - INFO - Episode 253 started
+2026-10-28 14:35:30,013 - INFO - Episode 253 ended: steps=1, reward=-5.80
+2026-10-28 14:35:30,485 - INFO - Episode 254 started
+2026-10-28 14:35:30,520 - INFO - Episode 254 ended: steps=1, reward=-5.80
+2026-10-28 14:35:30,994 - INFO - Episode 255 started
+2026-10-28 14:35:31,029 - INFO - Episode 255 ended: steps=1, reward=-5.80
+2026-10-28 14:35:31,502 - INFO - Episode 256 started
+2026-10-28 14:35:31,536 - INFO - Episode 256 ended: steps=1, reward=-5.80
+2026-10-28 14:35:32,009 - INFO - Episode 257 started
+2026-10-28 14:35:32,049 - INFO - Episode 257 ended: steps=1, reward=-5.80
+2026-10-28 14:35:32,522 - INFO - Episode 258 started
+2026-10-28 14:35:32,549 - INFO - Episode 258 ended: steps=1, reward=-5.80
+2026-10-28 14:35:33,017 - INFO - Episode 259 started
+2026-10-28 14:35:33,044 - INFO - Episode 259 ended: steps=1, reward=-5.80
+2026-10-28 14:35:33,512 - INFO - Episode 260 started
+2026-10-28 14:35:33,550 - INFO - Episode 260 ended: steps=1, reward=-5.80
+2026-10-28 14:35:34,021 - INFO - Episode 261 started
+2026-10-28 14:35:34,050 - INFO - Episode 261 ended: steps=1, reward=-5.80
+2026-10-28 14:35:34,518 - INFO - Episode 262 started
+2026-10-28 14:35:34,558 - INFO - Episode 262 ended: steps=1, reward=-5.80
+2026-10-28 14:35:35,028 - INFO - Episode 263 started
+2026-10-28 14:35:35,071 - INFO - Episode 263 ended: steps=1, reward=-5.80
+2026-10-28 14:35:35,542 - INFO - Episode 264 started
+2026-10-28 14:35:35,577 - INFO - Episode 264 ended: steps=1, reward=-5.80
+2026-10-28 14:35:36,045 - INFO - Episode 265 started
+2026-10-28 14:35:36,074 - INFO - Episode 265 ended: steps=1, reward=-5.80
+2026-10-28 14:35:36,543 - INFO - Episode 266 started
+2026-10-28 14:35:36,570 - INFO - Episode 266 ended: steps=1, reward=-5.80
+2026-10-28 14:35:37,039 - INFO - Episode 267 started
+2026-10-28 14:35:37,077 - INFO - Episode 267 ended: steps=1, reward=-5.80
+2026-10-28 14:35:37,545 - INFO - Episode 268 started
+2026-10-28 14:35:37,588 - INFO - Episode 268 ended: steps=1, reward=-5.80
+2026-10-28 14:35:38,057 - INFO - Episode 269 started
+2026-10-28 14:35:38,091 - INFO - Episode 269 ended: steps=1, reward=-5.80
+2026-10-28 14:35:38,561 - INFO - Episode 270 started
+2026-10-28 14:35:38,588 - INFO - Episode 270 ended: steps=1, reward=-5.80
+2026-10-28 14:35:39,059 - INFO - Episode 271 started
+2026-10-28 14:35:39,096 - INFO - Episode 271 ended: steps=1, reward=-5.80
+2026-10-28 14:35:39,566 - INFO - Episode 272 started
+2026-10-28 14:35:39,607 - INFO - Episode 272 ended: steps=1, reward=-5.80
+2026-10-28 14:35:40,075 - INFO - Episode 273 started
+2026-10-28 14:35:40,102 - INFO - Episode 273 ended: steps=1, reward=-5.80
+2026-10-28 14:35:40,571 - INFO - Episode 274 started
+2026-10-28 14:35:40,599 - INFO - Episode 274 ended: steps=1, reward=-5.80
+2026-10-28 14:35:41,071 - INFO - Episode 275 started
+2026-10-28 14:35:41,106 - INFO - Episode 275 ended: steps=1, reward=-5.80
+2026-10-28 14:35:41,579 - INFO - Episode 276 started
+2026-10-28 14:35:41,607 - INFO - Episode 276 ended: steps=1, reward=-5.80
+2026-10-28 14:35:42,082 - INFO - Episode 277 started
+2026-10-28 14:35:42,124 - INFO - Episode 277 ended: steps=1, reward=-5.80
+2026-10-28 14:35:42,597 - INFO - Episode 278 started
+2026-10-28 14:35:42,635 - INFO - Episode 278 ended: steps=1, reward=-5.80
+2026-10-28 14:35:43,109 - INFO - Episode 279 started
+2026-10-28 14:35:43,144 - INFO - Episode 279 ended: steps=1, reward=-5.80
+2026-10-28 14:35:43,617 - INFO - Episode 280 started
+2026-10-28 14:35:43,652 - INFO - Episode 280 ended: steps=1, reward=-5.80
+2026-10-28 14:35:44,125 - INFO - Episode 281 started
+2026-10-28 14:35:44,153 - INFO - Episode 281 ended: steps=1, reward=-5.80
+2026-10-28 14:35:44,628 - INFO - Episode 282 started
+2026-10-28 14:35:44,659 - INFO - Episode 282 ended: steps=1, reward=-5.80
+2026-10-28 14:35:47,337 - INFO - Episode 283 started
+2026-10-28 14:35:47,374 - INFO - Episode 283 ended: steps=1, reward=-5.80
+2026-10-28 14:35:47,845 - INFO - Episode 284 started
+2026-10-28 14:35:47,874 - INFO - Episode 284 ended: steps=1, reward=-5.80
+2026-10-28 14:35:48,346 - INFO - Episode 285 started
+2026-10-28 14:35:48,378 - INFO - Episode 285 ended: steps=1, reward=-5.80
+2026-10-28 14:35:48,851 - INFO - Episode 286 started
+2026-10-28 14:35:48,883 - INFO - Episode 286 ended: steps=1, reward=-5.80
+2026-10-28 14:35:49,355 - INFO - Episode 287 started
+2026-10-28 14:35:49,393 - INFO - Episode 287 ended: steps=1, reward=-5.80
+2026-10-28 14:35:49,864 - INFO - Episode 288 started
+2026-10-28 14:35:49,902 - INFO - Episode 288 ended: steps=1, reward=-5.80
+2026-10-28 14:35:50,376 - INFO - Episode 289 started
+2026-10-28 14:35:50,409 - INFO - Episode 289 ended: steps=1, reward=-5.80
+2026-10-28 14:35:50,882 - INFO - Episode 290 started
+2026-10-28 14:35:50,928 - INFO - Episode 290 ended: steps=1, reward=-5.80
+2026-10-28 14:35:51,402 - INFO - Episode 291 started
+2026-10-28 14:35:51,436 - INFO - Episode 291 ended: steps=1, reward=-5.80
+2026-10-28 14:35:51,912 - INFO - Episode 292 started
+2026-10-28 14:35:51,940 - INFO - Episode 292 ended: steps=1, reward=-5.80
+2026-10-28 14:35:52,415 - INFO - Episode 293 started
+2026-10-28 14:35:52,443 - INFO - Episode 293 ended: steps=1, reward=-5.80
+2026-10-28 14:35:52,919 - INFO - Episode 294 started
+2026-10-28 14:35:52,954 - INFO - Episode 294 ended: steps=1, reward=-5.80
+2026-10-28 14:35:53,432 - INFO - Episode 295 started
+2026-10-28 14:35:53,460 - INFO - Episode 295 ended: steps=1, reward=-5.80
+2026-10-28 14:35:53,940 - INFO - Episode 296 started
+2026-10-28 14:35:53,973 - INFO - Episode 296 ended: steps=1, reward=-5.80
+2026-10-28 14:35:54,450 - INFO - Episode 297 started
+2026-10-28 14:35:54,480 - INFO - Episode 297 ended: steps=1, reward=-5.80
+2026-10-28 14:35:54,955 - INFO - Episode 298 started
+2026-10-28 14:35:54,995 - INFO - Episode 298 ended: steps=1, reward=-5.80
+2026-10-28 14:35:55,471 - INFO - Episode 299 started
+2026-10-28 14:35:55,504 - INFO - Episode 299 ended: steps=1, reward=-5.80
+2026-10-28 14:35:55,979 - INFO - Episode 300 started
+2026-10-28 14:35:56,009 - INFO - Episode 300 ended: steps=1, reward=-5.80
+2026-10-28 14:35:56,484 - INFO - Episode 301 started
+2026-10-28 14:35:56,521 - INFO - Episode 301 ended: steps=1, reward=-5.80
+2026-10-28 14:35:56,997 - INFO - Episode 302 started
+2026-10-28 14:35:57,027 - INFO - Episode 302 ended: steps=1, reward=-5.80
+2026-10-28 14:35:57,502 - INFO - Episode 303 started
+2026-10-28 14:35:57,541 - INFO - Episode 303 ended: steps=1, reward=-5.80
+2026-10-28 14:35:58,016 - INFO - Episode 304 started
+2026-10-28 14:35:58,058 - INFO - Episode 304 ended: steps=1, reward=-5.80
+2026-10-28 14:35:58,533 - INFO - Episode 305 started
+2026-10-28 14:35:58,568 - INFO - Episode 305 ended: steps=1, reward=-5.80
+2026-10-28 14:35:59,048 - INFO - Episode 306 started
+2026-10-28 14:35:59,084 - INFO - Episode 306 ended: steps=1, reward=-5.80
+2026-10-28 14:35:59,557 - INFO - Episode 307 started
+2026-10-28 14:35:59,592 - INFO - Episode 307 ended: steps=1, reward=-5.80
+2026-10-28 14:36:00,065 - INFO - Episode 308 started
+2026-10-28 14:36:00,094 - INFO - Episode 308 ended: steps=1, reward=-5.80
+2026-10-28 14:36:00,567 - INFO - Episode 309 started
+2026-10-28 14:36:00,596 - INFO - Episode 309 ended: steps=1, reward=-5.80
+2026-10-28 14:36:01,068 - INFO - Episode 310 started
+2026-10-28 14:36:01,098 - INFO - Episode 310 ended: steps=1, reward=-5.80
+2026-10-28 14:36:01,570 - INFO - Episode 311 started
+2026-10-28 14:36:01,604 - INFO - Episode 311 ended: steps=1, reward=-5.80
+2026-10-28 14:36:02,078 - INFO - Episode 312 started
+2026-10-28 14:36:02,114 - INFO - Episode 312 ended: steps=1, reward=-5.80
+2026-10-28 14:36:02,586 - INFO - Episode 313 started
+2026-10-28 14:36:02,618 - INFO - Episode 313 ended: steps=1, reward=-5.80
+2026-10-28 14:36:03,091 - INFO - Episode 314 started
+2026-10-28 14:36:03,121 - INFO - Episode 314 ended: steps=1, reward=-5.80
+2026-10-28 14:36:03,596 - INFO - Episode 315 started
+2026-10-28 14:36:03,636 - INFO - Episode 315 ended: steps=1, reward=-5.80
+2026-10-28 14:36:04,110 - INFO - Episode 316 started
+2026-10-28 14:36:04,149 - INFO - Episode 316 ended: steps=1, reward=-5.80
+2026-10-28 14:36:04,622 - INFO - Episode 317 started
+2026-10-28 14:36:04,650 - INFO - Episode 317 ended: steps=1, reward=-5.80
+2026-10-28 14:36:05,123 - INFO - Episode 318 started
+2026-10-28 14:36:05,151 - INFO - Episode 318 ended: steps=1, reward=-5.80
+2026-10-28 14:36:05,624 - INFO - Episode 319 started
+2026-10-28 14:36:05,652 - INFO - Episode 319 ended: steps=1, reward=-5.80
+2026-10-28 14:36:06,126 - INFO - Episode 320 started
+2026-10-28 14:36:06,157 - INFO - Episode 320 ended: steps=1, reward=-5.80
+2026-10-28 14:36:06,629 - INFO - Episode 321 started
+2026-10-28 14:36:06,671 - INFO - Episode 321 ended: steps=1, reward=-5.80
+2026-10-28 14:36:07,145 - INFO - Episode 322 started
+2026-10-28 14:36:07,179 - INFO - Episode 322 ended: steps=1, reward=-5.80
+2026-10-28 14:36:07,652 - INFO - Episode 323 started
+2026-10-28 14:36:07,688 - INFO - Episode 323 ended: steps=1, reward=-5.80
+2026-10-28 14:36:08,161 - INFO - Episode 324 started
+2026-10-28 14:36:08,194 - INFO - Episode 324 ended: steps=1, reward=-5.80
+2026-10-28 14:36:08,667 - INFO - Episode 325 started
+2026-10-28 14:36:08,700 - INFO - Episode 325 ended: steps=1, reward=-5.80
+2026-10-28 14:36:09,174 - INFO - Episode 326 started
+2026-10-28 14:36:09,207 - INFO - Episode 326 ended: steps=1, reward=-5.80
+2026-10-28 14:36:09,681 - INFO - Episode 327 started
+2026-10-28 14:36:09,716 - INFO - Episode 327 ended: steps=1, reward=-5.80
+2026-10-28 14:36:10,190 - INFO - Episode 328 started
+2026-10-28 14:36:10,221 - INFO - Episode 328 ended: steps=1, reward=-5.80
+2026-10-28 14:36:10,695 - INFO - Episode 329 started
+2026-10-28 14:36:10,727 - INFO - Episode 329 ended: steps=1, reward=-5.80
+2026-10-28 14:36:11,203 - INFO - Episode 330 started
+2026-10-28 14:36:11,230 - INFO - Episode 330 ended: steps=1, reward=-5.80
+2026-10-28 14:36:11,704 - INFO - Episode 331 started
+2026-10-28 14:36:11,732 - INFO - Episode 331 ended: steps=1, reward=-5.80
+2026-10-28 14:36:12,204 - INFO - Episode 332 started
+2026-10-28 14:36:12,236 - INFO - Episode 332 ended: steps=1, reward=-5.80
+2026-10-28 14:36:12,707 - INFO - Episode 333 started
+2026-10-28 14:36:12,744 - INFO - Episode 333 ended: steps=1, reward=-5.80
+2026-10-28 14:36:13,218 - INFO - Episode 334 started
+2026-10-28 14:36:13,256 - INFO - Episode 334 ended: steps=1, reward=-5.80
+2026-10-28 14:36:13,729 - INFO - Episode 335 started
+2026-10-28 14:36:13,759 - INFO - Episode 335 ended: steps=1, reward=-5.80
+2026-10-28 14:36:14,231 - INFO - Episode 336 started
+2026-10-28 14:36:14,267 - INFO - Episode 336 ended: steps=1, reward=-5.80
+2026-10-28 14:36:14,740 - INFO - Episode 337 started
+2026-10-28 14:36:14,771 - INFO - Episode 337 ended: steps=1, reward=-5.80
+2026-10-28 14:36:15,243 - INFO - Episode 338 started
+2026-10-28 14:36:15,276 - INFO - Episode 338 ended: steps=1, reward=-5.80
+2026-10-28 14:36:15,749 - INFO - Episode 339 started
+2026-10-28 14:36:15,779 - INFO - Episode 339 ended: steps=1, reward=-5.80
+2026-10-28 14:36:16,253 - INFO - Episode 340 started
+2026-10-28 14:36:16,282 - INFO - Episode 340 ended: steps=1, reward=-5.80
+2026-10-28 14:36:16,756 - INFO - Episode 341 started
+2026-10-28 14:36:16,785 - INFO - Episode 341 ended: steps=1, reward=-5.80
+2026-10-28 14:36:17,259 - INFO - Episode 342 started
+2026-10-28 14:36:17,295 - INFO - Episode 342 ended: steps=1, reward=-5.80
+2026-10-28 14:36:17,767 - INFO - Episode 343 started
+2026-10-28 14:36:17,801 - INFO - Episode 343 ended: steps=1, reward=-5.80
+2026-10-28 14:36:18,275 - INFO - Episode 344 started
+2026-10-28 14:36:18,322 - INFO - Episode 344 ended: steps=1, reward=-5.80
+2026-10-28 14:36:18,795 - INFO - Episode 345 started
+2026-10-28 14:36:18,829 - INFO - Episode 345 ended: steps=1, reward=-5.80
+2026-10-28 14:36:21,435 - INFO - Episode 346 started
+2026-10-28 14:36:21,472 - INFO - Episode 346 ended: steps=1, reward=-5.80
+2026-10-28 14:36:21,946 - INFO - Episode 347 started
+2026-10-28 14:36:21,973 - INFO - Episode 347 ended: steps=1, reward=-5.80
+2026-10-28 14:36:22,447 - INFO - Episode 348 started
+2026-10-28 14:36:22,478 - INFO - Episode 348 ended: steps=1, reward=-5.80
+2026-10-28 14:36:22,952 - INFO - Episode 349 started
+2026-10-28 14:36:22,986 - INFO - Episode 349 ended: steps=1, reward=-5.80
+2026-10-28 14:36:23,459 - INFO - Episode 350 started
+2026-10-28 14:36:23,489 - INFO - Episode 350 ended: steps=1, reward=-5.80
+2026-10-28 14:36:23,963 - INFO - Episode 351 started
+2026-10-28 14:36:24,001 - INFO - Episode 351 ended: steps=1, reward=-5.80
+2026-10-28 14:36:24,474 - INFO - Episode 352 started
+2026-10-28 14:36:24,506 - INFO - Episode 352 ended: steps=1, reward=-5.80
+2026-10-28 14:36:25,004 - INFO - Episode 353 started
+2026-10-28 14:36:25,043 - INFO - Episode 353 ended: steps=1, reward=-5.80
+2026-10-28 14:36:25,518 - INFO - Episode 354 started
+2026-10-28 14:36:25,547 - INFO - Episode 354 ended: steps=1, reward=-5.80
+2026-10-28 14:36:26,023 - INFO - Episode 355 started
+2026-10-28 14:36:26,050 - INFO - Episode 355 ended: steps=1, reward=-5.80
+2026-10-28 14:36:26,525 - INFO - Episode 356 started
+2026-10-28 14:36:26,553 - INFO - Episode 356 ended: steps=1, reward=-5.80
+2026-10-28 14:36:27,028 - INFO - Episode 357 started
+2026-10-28 14:36:27,063 - INFO - Episode 357 ended: steps=1, reward=-5.80
+2026-10-28 14:36:27,537 - INFO - Episode 358 started
+2026-10-28 14:36:27,577 - INFO - Episode 358 ended: steps=1, reward=-5.80
+2026-10-28 14:36:28,053 - INFO - Episode 359 started
+2026-10-28 14:36:28,088 - INFO - Episode 359 ended: steps=1, reward=-5.80
+2026-10-28 14:36:28,564 - INFO - Episode 360 started
+2026-10-28 14:36:28,593 - INFO - Episode 360 ended: steps=1, reward=-5.80
+2026-10-28 14:36:29,068 - INFO - Episode 361 started
+2026-10-28 14:36:29,096 - INFO - Episode 361 ended: steps=1, reward=-5.80
+2026-10-28 14:36:29,572 - INFO - Episode 362 started
+2026-10-28 14:36:29,609 - INFO - Episode 362 ended: steps=1, reward=-5.80
+2026-10-28 14:36:30,083 - INFO - Episode 363 started
+2026-10-28 14:36:30,113 - INFO - Episode 363 ended: steps=1, reward=-5.80
+2026-10-28 14:36:30,587 - INFO - Episode 364 started
+2026-10-28 14:36:30,628 - INFO - Episode 364 ended: steps=1, reward=-5.80
+2026-10-28 14:36:31,103 - INFO - Episode 365 started
+2026-10-28 14:36:31,134 - INFO - Episode 365 ended: steps=1, reward=-5.80
+2026-10-28 14:36:31,609 - INFO - Episode 366 started
+2026-10-28 14:36:31,642 - INFO - Episode 366 ended: steps=1, reward=-5.80
+2026-10-28 14:36:32,118 - INFO - Episode 367 started
+2026-10-28 14:36:32,147 - INFO - Episode 367 ended: steps=1, reward=-5.80
+2026-10-28 14:36:32,621 - INFO - Episode 368 started
+2026-10-28 14:36:32,648 - INFO - Episode 368 ended: steps=1, reward=-5.80
+2026-10-28 14:36:33,123 - INFO - Episode 369 started
+2026-10-28 14:36:33,151 - INFO - Episode 369 ended: steps=1, reward=-5.80
+2026-10-28 14:36:33,626 - INFO - Episode 370 started
+2026-10-28 14:36:33,668 - INFO - Episode 370 ended: steps=1, reward=-5.80
+2026-10-28 14:36:34,140 - INFO - Episode 371 started
+2026-10-28 14:36:34,180 - INFO - Episode 371 ended: steps=1, reward=-5.80
+2026-10-28 14:36:34,656 - INFO - Episode 372 started
+2026-10-28 14:36:34,686 - INFO - Episode 372 ended: steps=1, reward=-5.80
+2026-10-28 14:36:35,159 - INFO - Episode 373 started
+2026-10-28 14:36:35,191 - INFO - Episode 373 ended: steps=1, reward=-5.80
+2026-10-28 14:36:35,663 - INFO - Episode 374 started
+2026-10-28 14:36:35,694 - INFO - Episode 374 ended: steps=1, reward=-5.80
+2026-10-28 14:36:36,167 - INFO - Episode 375 started
+2026-10-28 14:36:36,194 - INFO - Episode 375 ended: steps=1, reward=-5.80
+2026-10-28 14:36:36,667 - INFO - Episode 376 started
+2026-10-28 14:36:36,699 - INFO - Episode 376 ended: steps=1, reward=-5.80
+2026-10-28 14:36:37,172 - INFO - Episode 377 started
+2026-10-28 14:36:37,203 - INFO - Episode 377 ended: steps=1, reward=-5.80
+2026-10-28 14:36:37,676 - INFO - Episode 378 started
+2026-10-28 14:36:37,704 - INFO - Episode 378 ended: steps=1, reward=-5.80
+2026-10-28 14:36:38,179 - INFO - Episode 379 started
+2026-10-28 14:36:38,212 - INFO - Episode 379 ended: steps=1, reward=-5.80
+2026-10-28 14:36:38,684 - INFO - Episode 380 started
+2026-10-28 14:36:38,717 - INFO - Episode 380 ended: steps=1, reward=-5.80
+2026-10-28 14:36:39,189 - INFO - Episode 381 started
+2026-10-28 14:36:39,222 - INFO - Episode 381 ended: steps=1, reward=-5.80
+2026-10-28 14:36:39,695 - INFO - Episode 382 started
+2026-10-28 14:36:39,737 - INFO - Episode 382 ended: steps=1, reward=-5.80
+2026-10-28 14:36:44,742 - ERROR - Timeout waiting for bridge server response
+2026-10-28 14:36:44,743 - ERROR - Training error: Bridge server timeout
+2026-10-28 14:36:44,790 - INFO - Phase 1 model successfully saved to: models/ppo_cs16_phase1_final
+2026-10-28 14:36:45,199 - INFO - Environment closed

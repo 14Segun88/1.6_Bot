@@ -1,0 +1,151 @@
+2026-11-03 00:06:35,349 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase7_20261103_000635.log
+2026-11-03 00:06:35,350 - INFO - === Selected: Phase 7: Full 2-Corridor Arena Loop & Corner Ambush Reflex (20 Alcoves, Edge Flick, Situational Crouch-Spray) ===
+2026-11-03 00:06:35,351 - INFO - Phase 7 auto-selected model from Phase 7 Stage 1 corners checkpoint: models/ppo_cs16_phase7_corners.zip
+2026-11-03 00:06:35,352 - INFO - Phase 7 auto-selected VecNormalize from Phase 7 Stage 1 corners checkpoint: models/vecnormalize_phase7_corners.pkl
+2026-11-03 00:06:35,402 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-11-03 00:06:35,423 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-03 00:06:36,260 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-03 00:06:36,790 - INFO - Episode 1 started
+2026-11-03 00:06:36,791 - INFO - Resuming model from models/ppo_cs16_phase7_corners.zip...
+2026-11-03 00:06:36,797 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase7_corners.pkl
+2026-11-03 00:06:41,761 - INFO - Model learning rate configured to: 0.0001
+2026-11-03 00:06:41,761 - INFO - Starting training run: PPO_CS16_Phase7_20261103_000635
+2026-11-03 00:06:41,761 - INFO - Target Timesteps: 23000
+2026-11-03 00:06:41,761 - INFO - Device: cuda
+2026-11-03 00:06:41,762 - INFO - ============================================================
+2026-11-03 00:06:41,762 - INFO - >>> ПЕРЕКЛЮЧИТЕСЬ В ОКНО CS 1.6 (кликните внутрь игры)! Старт через 5 секунд...
+2026-11-03 00:06:41,762 - INFO - ============================================================
+2026-11-03 00:06:41,762 - INFO - Старт через 5 сек...
+2026-11-03 00:06:42,764 - INFO - Старт через 4 сек...
+2026-11-03 00:06:43,765 - INFO - Старт через 3 сек...
+2026-11-03 00:06:44,767 - INFO - Старт через 2 сек...
+2026-11-03 00:06:45,768 - INFO - Старт через 1 сек...
+2026-11-03 00:06:46,770 - INFO - >>> СТАРТ ТРЕНИРОВКИ! <<<
+2026-11-03 00:06:46,770 - INFO - =================================================================
+2026-11-03 00:06:46,770 - INFO - >>> STAGE 1/2: Phase 7 Deep Corner Loop (8000 steps) <<<
+2026-11-03 00:06:46,771 - INFO - =================================================================
+2026-11-03 00:06:46,791 - INFO - Switched bridge curriculum mode to 'phase7_corners' (phase=7): {'status': 'ok', 'mode': 'phase7_corners'}
+2026-11-03 00:06:47,300 - INFO - Episode 2 started
+2026-11-03 00:07:13,325 - INFO - Episode 2 ended: steps=512, reward=0.87
+2026-11-03 00:07:17,359 - INFO - Episode 3 started
+2026-11-03 00:07:21,504 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-03 00:12:26,651 - WARNING - ZMQ socket reconnecting after error: Resource temporarily unavailable
+2026-11-03 00:12:26,657 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-03 00:12:28,180 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-03 00:12:28,707 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-03 00:12:34,983 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-03 00:13:21,770 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-03 00:14:41,215 - INFO - Episode 3 ended: steps=512, reward=177.96
+2026-11-03 00:14:47,464 - INFO - Episode 4 started
+2026-11-03 00:16:37,033 - INFO - Episode 4 ended: steps=512, reward=196.66
+2026-11-03 00:16:43,195 - INFO - Episode 5 started
+2026-11-03 00:18:37,572 - INFO - Episode 5 ended: steps=512, reward=289.49
+2026-11-03 00:18:40,538 - INFO - Episode 6 started
+2026-11-03 00:18:40,586 - INFO - Rollout  1 | Steps:   2048 | FPS:  2 | EpRewMean: 166.2 | EpLenMean: 512 | Entropy: 1.85 | KL: 0.025
+2026-11-03 00:20:41,710 - INFO - Episode 6 ended: steps=512, reward=100.07
+2026-11-03 00:20:45,378 - INFO - Episode 7 started
+2026-11-03 00:22:44,268 - INFO - Episode 7 ended: steps=512, reward=221.51
+2026-11-03 00:22:50,391 - INFO - Episode 8 started
+2026-11-03 00:24:45,764 - INFO - Episode 8 ended: steps=512, reward=273.53
+2026-11-03 00:24:50,765 - INFO - Episode 9 started
+2026-11-03 00:26:38,948 - INFO - Episode 9 ended: steps=512, reward=173.52
+2026-11-03 00:26:45,244 - INFO - Episode 10 started
+2026-11-03 00:26:45,373 - INFO - Rollout  2 | Steps:   4096 | FPS:  3 | EpRewMean: 179.2 | EpLenMean: 512 | Entropy: 0.38 | KL: 0.026
+2026-11-03 00:28:31,960 - INFO - Episode 10 ended: steps=512, reward=241.47
+2026-11-03 00:28:36,045 - INFO - Episode 11 started
+2026-11-03 00:29:50,843 - INFO - Episode 11 ended: steps=512, reward=183.29
+2026-11-03 00:29:52,967 - INFO - Episode 12 started
+2026-11-03 00:30:51,617 - INFO - Episode 12 ended: steps=512, reward=3.25
+2026-11-03 00:30:54,082 - INFO - Episode 13 started
+2026-11-03 00:31:59,205 - INFO - Episode 13 ended: steps=512, reward=244.99
+2026-11-03 00:32:02,770 - INFO - Episode 14 started
+2026-11-03 00:32:02,832 - INFO - Rollout  3 | Steps:   6144 | FPS:  4 | EpRewMean: 175.6 | EpLenMean: 512 | Entropy: 0.38 | KL: 0.024
+2026-11-03 00:33:29,945 - INFO - Episode 14 ended: steps=512, reward=218.38
+2026-11-03 00:33:32,637 - INFO - Episode 15 started
+2026-11-03 00:34:45,575 - INFO - Episode 15 ended: steps=512, reward=238.77
+2026-11-03 00:34:49,617 - INFO - Episode 16 started
+2026-11-03 00:35:59,270 - INFO - Episode 16 ended: steps=512, reward=124.01
+2026-11-03 00:36:01,960 - INFO - Episode 17 started
+2026-11-03 00:37:16,900 - INFO - Episode 17 ended: steps=512, reward=199.60
+2026-11-03 00:37:19,558 - INFO - Episode 18 started
+2026-11-03 00:37:19,680 - INFO - Rollout  4 | Steps:   8192 | FPS:  4 | EpRewMean: 180.5 | EpLenMean: 512 | Entropy: 0.38 | KL: 0.035
+2026-11-03 00:37:32,194 - INFO - Stage 1 (Deep Corners) model saved to: models/ppo_cs16_phase7_corners
+2026-11-03 00:37:32,194 - INFO - =================================================================
+2026-11-03 00:37:32,194 - INFO - >>> STAGE 2/2: Phase 6 Dynamic Strafe Refresh (15000 steps) <<<
+2026-11-03 00:37:32,195 - INFO - =================================================================
+2026-11-03 00:37:32,213 - INFO - Switched bridge curriculum mode to 'phase6_strafe' (phase=6): {'status': 'ok', 'mode': 'phase6_strafe'}
+2026-11-03 00:38:23,313 - INFO - Episode 18 ended: steps=512, reward=426.31
+2026-11-03 00:38:25,579 - INFO - Episode 19 started
+2026-11-03 00:39:14,467 - INFO - Episode 19 ended: steps=512, reward=462.16
+2026-11-03 00:39:16,649 - INFO - Episode 20 started
+2026-11-03 00:40:05,928 - INFO - Episode 20 ended: steps=512, reward=518.29
+2026-11-03 00:40:08,028 - INFO - Episode 21 started
+2026-11-03 00:40:56,508 - INFO - Episode 21 ended: steps=512, reward=375.58
+2026-11-03 00:40:58,522 - INFO - Episode 22 started
+2026-11-03 00:40:58,580 - INFO - Rollout  5 | Steps:  10240 | FPS:  4 | EpRewMean: 233.5 | EpLenMean: 512 | Entropy: 1.85 | KL: 0.025
+2026-11-03 00:41:58,583 - INFO - Episode 22 ended: steps=512, reward=452.87
+2026-11-03 00:42:00,714 - INFO - Episode 23 started
+2026-11-03 00:42:49,812 - INFO - Episode 23 ended: steps=512, reward=593.34
+2026-11-03 00:42:51,871 - INFO - Episode 24 started
+2026-11-03 00:43:40,813 - INFO - Episode 24 ended: steps=512, reward=524.18
+2026-11-03 00:43:43,012 - INFO - Episode 25 started
+2026-11-03 00:44:30,115 - INFO - Episode 25 ended: steps=512, reward=515.98
+2026-11-03 00:44:32,461 - INFO - Episode 26 started
+2026-11-03 00:44:32,602 - INFO - Rollout  6 | Steps:  12288 | FPS:  5 | EpRewMean: 281.5 | EpLenMean: 512 | Entropy: 0.37 | KL: 0.021
+2026-11-03 00:45:32,087 - INFO - Episode 26 ended: steps=512, reward=383.32
+2026-11-03 00:45:34,096 - INFO - Episode 27 started
+2026-11-03 00:46:23,450 - INFO - Episode 27 ended: steps=512, reward=545.27
+2026-11-03 00:46:25,562 - INFO - Episode 28 started
+2026-11-03 00:47:14,180 - INFO - Episode 28 ended: steps=512, reward=572.85
+2026-11-03 00:47:16,421 - INFO - Episode 29 started
+2026-11-03 00:48:04,831 - INFO - Episode 29 ended: steps=512, reward=684.12
+2026-11-03 00:48:07,021 - INFO - Episode 30 started
+2026-11-03 00:48:07,064 - INFO - Rollout  7 | Steps:  14336 | FPS:  5 | EpRewMean: 319.3 | EpLenMean: 512 | Entropy: 0.36 | KL: 0.021
+2026-11-03 00:49:06,842 - INFO - Episode 30 ended: steps=512, reward=455.57
+2026-11-03 00:49:09,020 - INFO - Episode 31 started
+2026-11-03 00:49:57,354 - INFO - Episode 31 ended: steps=512, reward=399.79
+2026-11-03 00:49:59,579 - INFO - Episode 32 started
+2026-11-03 00:50:47,545 - INFO - Episode 32 ended: steps=512, reward=455.34
+2026-11-03 00:50:50,411 - INFO - Episode 33 started
+2026-11-03 00:51:37,663 - INFO - Episode 33 ended: steps=512, reward=427.74
+2026-11-03 00:51:39,689 - INFO - Episode 34 started
+2026-11-03 00:51:39,846 - INFO - Rollout  8 | Steps:  16384 | FPS:  6 | EpRewMean: 333.8 | EpLenMean: 512 | Entropy: 0.33 | KL: 0.018
+2026-11-03 00:52:40,072 - INFO - Episode 34 ended: steps=512, reward=541.24
+2026-11-03 00:52:42,204 - INFO - Episode 35 started
+2026-11-03 00:53:30,119 - INFO - Episode 35 ended: steps=512, reward=430.80
+2026-11-03 00:53:32,269 - INFO - Episode 36 started
+2026-11-03 00:54:19,990 - INFO - Episode 36 ended: steps=512, reward=533.52
+2026-11-03 00:54:22,159 - INFO - Episode 37 started
+2026-11-03 00:55:10,360 - INFO - Episode 37 ended: steps=512, reward=460.17
+2026-11-03 00:55:12,415 - INFO - Episode 38 started
+2026-11-03 00:55:12,463 - INFO - Rollout  9 | Steps:  18432 | FPS:  6 | EpRewMean: 351.3 | EpLenMean: 512 | Entropy: 0.32 | KL: 0.019
+2026-11-03 00:56:17,581 - INFO - Episode 38 ended: steps=512, reward=597.69
+2026-11-03 00:56:20,016 - INFO - Episode 39 started
+2026-11-03 00:57:08,588 - INFO - Episode 39 ended: steps=512, reward=549.50
+2026-11-03 00:57:10,729 - INFO - Episode 40 started
+2026-11-03 00:57:58,883 - INFO - Episode 40 ended: steps=512, reward=557.49
+2026-11-03 00:58:01,066 - INFO - Episode 41 started
+2026-11-03 00:58:48,899 - INFO - Episode 41 ended: steps=512, reward=650.47
+2026-11-03 00:58:51,068 - INFO - Episode 42 started
+2026-11-03 00:58:51,212 - INFO - Rollout 10 | Steps:  20480 | FPS:  6 | EpRewMean: 375.0 | EpLenMean: 512 | Entropy: 0.32 | KL: 0.024
+2026-11-03 00:59:53,211 - INFO - Episode 42 ended: steps=512, reward=609.12
+2026-11-03 00:59:55,418 - INFO - Episode 43 started
+2026-11-03 01:00:43,354 - INFO - Episode 43 ended: steps=512, reward=578.11
+2026-11-03 01:00:45,415 - INFO - Episode 44 started
+2026-11-03 01:01:35,197 - INFO - Episode 44 ended: steps=512, reward=562.62
+2026-11-03 01:01:37,437 - INFO - Episode 45 started
+2026-11-03 01:02:26,946 - INFO - Episode 45 ended: steps=512, reward=710.36
+2026-11-03 01:02:29,137 - INFO - Episode 46 started
+2026-11-03 01:02:29,189 - INFO - Rollout 11 | Steps:  22528 | FPS:  6 | EpRewMean: 396.8 | EpLenMean: 512 | Entropy: 0.30 | KL: 0.020
+2026-11-03 01:03:28,655 - INFO - Episode 46 ended: steps=512, reward=415.69
+2026-11-03 01:03:30,783 - INFO - Episode 47 started
+2026-11-03 01:04:18,666 - INFO - Episode 47 ended: steps=512, reward=482.29
+2026-11-03 01:04:20,783 - INFO - Episode 48 started
+2026-11-03 01:05:12,434 - INFO - Episode 48 ended: steps=512, reward=559.55
+2026-11-03 01:05:15,022 - INFO - Episode 49 started
+2026-11-03 01:06:04,114 - INFO - Episode 49 ended: steps=512, reward=744.10
+2026-11-03 01:06:06,362 - INFO - Episode 50 started
+2026-11-03 01:06:06,467 - INFO - Rollout 12 | Steps:  24576 | FPS:  6 | EpRewMean: 409.6 | EpLenMean: 512 | Entropy: 0.29 | KL: 0.020
+2026-11-03 01:06:20,340 - INFO - Switched bridge curriculum mode to 'phase7_corners' (phase=7): {'status': 'ok', 'mode': 'phase7_corners'}
+2026-11-03 01:06:20,395 - INFO - Phase 7 model successfully saved to: models/ppo_cs16_phase7_final
+2026-11-03 01:06:22,480 - INFO - Environment closed

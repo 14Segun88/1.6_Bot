@@ -1,0 +1,16 @@
+2026-10-30 22:14:28,142 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase3_20261030_221428.log
+2026-10-30 22:14:28,142 - INFO - === Selected: Phase 3: Moving Target Tracking (Standing Aim & Fire on Moving Bots) ===
+2026-10-30 22:14:28,160 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-30 22:14:28,180 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-30 22:14:28,186 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-30 22:14:29,648 - INFO - Episode 1 started
+2026-10-30 22:14:29,650 - INFO - Resuming model from models/ppo_cs16_phase2_final.zip...
+2026-10-30 22:14:29,654 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase3.pkl
+2026-10-30 22:14:33,391 - INFO - Starting training run: PPO_CS16_Phase3_20261030_221428
+2026-10-30 22:14:33,391 - INFO - Target Timesteps: 100000
+2026-10-30 22:14:33,391 - INFO - Device: cuda
+2026-10-30 22:14:33,695 - INFO - Episode 2 started
+2026-10-30 22:14:53,287 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-30 22:37:20,247 - INFO - Training manually interrupted by user
+2026-10-30 22:37:20,461 - INFO - Phase 3 model successfully saved to: models/ppo_cs16_phase3_final
+2026-10-30 22:37:20,864 - INFO - Environment closed

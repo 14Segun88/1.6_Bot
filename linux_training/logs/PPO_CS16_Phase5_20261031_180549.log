@@ -1,0 +1,39 @@
+2026-10-31 18:05:49,049 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase5_20261031_180549.log
+2026-10-31 18:05:49,050 - INFO - === Selected: Phase 5: Dynamic Footwork & Burst-to-Spray (WASD Strafes, Headshot Tap to Crouch Spray) ===
+2026-10-31 18:05:49,057 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-31 18:05:49,069 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-31 18:05:49,075 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-31 18:05:51,480 - INFO - Episode 1 started
+2026-10-31 18:05:51,481 - INFO - Resuming model from models/ppo_cs16_phase4_final.zip...
+2026-10-31 18:05:51,484 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase4.pkl
+2026-10-31 18:05:51,485 - INFO - Clamping low variance in VecNormalize obs_rms['velocity'] for Phase 5 movement safety.
+2026-10-31 18:05:51,485 - INFO - Clamping low variance in VecNormalize obs_rms['origin'] for Phase 5 movement safety.
+2026-10-31 18:05:54,479 - INFO - Model learning rate configured to: 0.0001
+2026-10-31 18:05:54,480 - INFO - Starting training run: PPO_CS16_Phase5_20261031_180549
+2026-10-31 18:05:54,480 - INFO - Target Timesteps: 100000
+2026-10-31 18:05:54,480 - INFO - Device: cuda
+2026-10-31 18:05:54,481 - INFO - ============================================================
+2026-10-31 18:05:54,481 - INFO - >>> ПЕРЕКЛЮЧИТЕСЬ В ОКНО CS 1.6 (кликните внутрь игры)! Старт через 5 секунд...
+2026-10-31 18:05:54,481 - INFO - ============================================================
+2026-10-31 18:05:54,482 - INFO - Старт через 5 сек...
+2026-10-31 18:05:55,484 - INFO - Старт через 4 сек...
+2026-10-31 18:05:56,487 - INFO - Старт через 3 сек...
+2026-10-31 18:05:57,492 - INFO - Старт через 2 сек...
+2026-10-31 18:05:58,494 - INFO - Старт через 1 сек...
+2026-10-31 18:05:59,497 - INFO - >>> СТАРТ ТРЕНИРОВКИ! <<<
+2026-10-31 18:05:59,847 - INFO - Episode 2 started
+2026-10-31 18:06:53,796 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-31 18:08:42,791 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-10-31 18:09:21,092 - INFO - Episode 2 ended: steps=512, reward=381.77
+2026-10-31 18:09:21,449 - INFO - Episode 3 started
+2026-10-31 18:10:54,770 - INFO - Episode 3 ended: steps=512, reward=426.34
+2026-10-31 18:10:55,132 - INFO - Episode 4 started
+2026-10-31 18:12:30,043 - INFO - Episode 4 ended: steps=512, reward=514.19
+2026-10-31 18:12:30,411 - INFO - Episode 5 started
+2026-10-31 18:14:06,668 - INFO - Episode 5 ended: steps=512, reward=466.89
+2026-10-31 18:14:07,043 - INFO - Episode 6 started
+2026-10-31 18:14:07,112 - INFO - Rollout  1 | Steps:   2048 | FPS:  4 | EpRewMean: 447.3 | EpLenMean: 512 | Entropy: 1.85 | KL: 0.025
+2026-10-31 18:14:46,422 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-31 18:21:53,230 - INFO - Training manually interrupted by user
+2026-10-31 18:21:53,316 - INFO - Phase 5 model successfully saved to: models/ppo_cs16_phase5_final
+2026-10-31 18:21:53,476 - INFO - Environment closed

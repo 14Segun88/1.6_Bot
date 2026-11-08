@@ -1,0 +1,11 @@
+2026-11-03 05:49:03,200 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase8_20261103_054903.log
+2026-11-03 05:49:03,200 - INFO - === Selected: Phase 8: Live 1v5 Combat vs Expert Bots & Humans (360° Threat Priority, Headshot First, Unpatched Native Bot AI) ===
+2026-11-03 05:49:03,201 - INFO - Phase 8 auto-selected model from Phase 8 rolling checkpoint: models/ppo_cs16_phase8_latest.zip
+2026-11-03 05:49:03,201 - INFO - Phase 8 auto-selected VecNormalize from Phase 8 rolling checkpoint: models/vecnormalize_phase8_latest.pkl
+2026-11-03 05:49:03,210 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-11-03 05:49:03,219 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-03 05:49:03,223 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-03 05:49:04,249 - INFO - Episode 1 started
+2026-11-03 05:49:04,250 - INFO - Resuming model from models/ppo_cs16_phase8_latest.zip...
+2026-11-03 05:49:04,252 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase8_latest.pkl
+2026-11-03 05:49:05,602 - INFO - Environment closed

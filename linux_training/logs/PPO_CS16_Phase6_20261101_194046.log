@@ -1,0 +1,67 @@
+2026-11-01 19:40:46,581 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase6_20261101_194046.log
+2026-11-01 19:40:46,582 - INFO - === Selected: Phase 6: Tactical Multi-Role Assault & Counter-Fire Survival (1 Peeker + 2 Rushers, Evasive Strafe, Pure AI) ===
+2026-11-01 19:40:46,591 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-11-01 19:40:46,606 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-01 19:40:46,645 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-01 19:40:49,030 - INFO - Episode 1 started
+2026-11-01 19:40:49,031 - INFO - Resuming model from models/ppo_cs16_phase5_final.zip...
+2026-11-01 19:40:49,035 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase6.pkl
+2026-11-01 19:40:53,041 - INFO - Model learning rate configured to: 0.0001
+2026-11-01 19:40:53,041 - INFO - Starting training run: PPO_CS16_Phase6_20261101_194046
+2026-11-01 19:40:53,041 - INFO - Target Timesteps: 100000
+2026-11-01 19:40:53,042 - INFO - Device: cuda
+2026-11-01 19:40:53,042 - INFO - ============================================================
+2026-11-01 19:40:53,042 - INFO - >>> ПЕРЕКЛЮЧИТЕСЬ В ОКНО CS 1.6 (кликните внутрь игры)! Старт через 5 секунд...
+2026-11-01 19:40:53,043 - INFO - ============================================================
+2026-11-01 19:40:53,043 - INFO - Старт через 5 сек...
+2026-11-01 19:40:54,112 - INFO - Старт через 4 сек...
+2026-11-01 19:40:55,121 - INFO - Старт через 3 сек...
+2026-11-01 19:40:56,130 - INFO - Старт через 2 сек...
+2026-11-01 19:40:57,146 - INFO - Старт через 1 сек...
+2026-11-01 19:40:58,192 - INFO - >>> СТАРТ ТРЕНИРОВКИ! <<<
+2026-11-01 19:40:58,770 - INFO - Episode 2 started
+2026-11-01 19:41:19,444 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-01 19:42:24,892 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-01 19:42:50,314 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-01 19:43:18,221 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-01 19:44:19,480 - INFO - Episode 2 ended: steps=512, reward=56.16
+2026-11-01 19:44:22,320 - INFO - Episode 3 started
+2026-11-01 19:46:33,533 - INFO - Episode 3 ended: steps=512, reward=-11.11
+2026-11-01 19:46:36,976 - INFO - Episode 4 started
+2026-11-01 19:47:45,724 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-01 19:47:50,474 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-01 19:48:12,195 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-01 19:48:35,986 - ERROR - Timeout waiting for bridge server response
+2026-11-01 19:48:36,488 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:36,992 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:37,497 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:38,001 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:38,505 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:39,007 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:39,513 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:40,015 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:40,519 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:41,021 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:41,523 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:42,024 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:42,528 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:43,030 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:43,539 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:44,045 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:44,548 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:45,050 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:45,552 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:46,056 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:46,558 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:47,060 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:47,563 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:48,066 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:48,570 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:49,072 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:49,580 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:50,088 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:50,589 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:51,091 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:51,592 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-11-01 19:48:52,086 - INFO - Training manually interrupted by user
+2026-11-01 19:48:52,207 - INFO - Phase 6 model successfully saved to: models/ppo_cs16_phase6_final

@@ -1,0 +1,35 @@
+2026-11-05 05:55:25,663 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase8_20261105_055525.log
+2026-11-05 05:55:25,663 - INFO - === Selected: Phase 8: Live 1v5 Combat vs Expert Bots & Humans (360° Threat Priority, Headshot First, Unpatched Native Bot AI) ===
+2026-11-05 05:55:25,663 - INFO - Phase 8 auto-selected model from Phase 8 final model: models/ppo_cs16_phase8_final.zip
+2026-11-05 05:55:25,664 - INFO - Phase 8 auto-selected VecNormalize from Phase 8 final model: models/vecnormalize_phase8.pkl
+2026-11-05 05:55:25,698 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-11-05 05:55:25,737 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-05 05:55:25,750 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-05 05:55:26,260 - INFO - Episode 1 started
+2026-11-05 05:55:26,262 - INFO - Resuming model from models/ppo_cs16_phase8_final.zip...
+2026-11-05 05:55:26,266 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase8.pkl
+2026-11-05 05:55:26,267 - INFO - Clamping low variance in VecNormalize obs_rms['velocity'] (>= 0.25) for Phase 8 safety.
+2026-11-05 05:55:26,268 - INFO - Clamping low variance in VecNormalize obs_rms['origin'] (>= 0.25) for Phase 8 safety.
+2026-11-05 05:55:26,268 - INFO - Clamping low variance in VecNormalize obs_rms['enemy_health'] (>= 0.25) for Phase 8 safety.
+2026-11-05 05:55:26,269 - INFO - Clamping low variance in VecNormalize obs_rms['health'] (>= 0.25) for Phase 8 safety.
+2026-11-05 05:55:26,269 - INFO - Clamping low variance in VecNormalize obs_rms['enemy_distance'] (>= 0.25) for Phase 8 safety.
+2026-11-05 05:55:31,016 - INFO - Model learning rate configured to: 3e-05 (target_kl=0.03)
+2026-11-05 05:55:31,016 - INFO - Starting training run: PPO_CS16_Phase8_20261105_055525
+2026-11-05 05:55:31,016 - INFO - Target Timesteps: 20000
+2026-11-05 05:55:31,016 - INFO - Device: cuda
+2026-11-05 05:55:31,017 - INFO - ============================================================
+2026-11-05 05:55:31,017 - INFO - >>> ПЕРЕКЛЮЧИТЕСЬ В ОКНО CS 1.6 (кликните внутрь игры)! Старт через 5 секунд...
+2026-11-05 05:55:31,017 - INFO - ============================================================
+2026-11-05 05:55:31,018 - INFO - Старт через 5 сек...
+2026-11-05 05:55:32,020 - INFO - Старт через 4 сек...
+2026-11-05 05:55:33,024 - INFO - Старт через 3 сек...
+2026-11-05 05:55:34,038 - INFO - Старт через 2 сек...
+2026-11-05 05:55:35,052 - INFO - Старт через 1 сек...
+2026-11-05 05:55:36,059 - INFO - >>> СТАРТ ТРЕНИРОВКИ! <<<
+2026-11-05 05:55:36,061 - INFO - Switched bridge curriculum mode to 'phase8_combat_1v5' (phase=8): {'status': 'ok', 'mode': 'phase8_combat_1v5'}
+2026-11-05 05:55:36,414 - INFO - Episode 2 started
+2026-11-05 05:57:01,416 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-05 06:01:37,216 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-05 06:01:40,304 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-05 06:01:43,558 - INFO - Training manually interrupted by user
+2026-11-05 06:01:44,077 - INFO - Environment closed

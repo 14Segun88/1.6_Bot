@@ -1,0 +1,28 @@
+2026-10-30 16:14:05,711 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase2_20261030_161405.log
+2026-10-30 16:14:05,712 - INFO - === Selected: Phase 2: Navigation & Search (Multi-Dummy Corridor Sweeps) ===
+2026-10-30 16:14:05,732 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-30 16:14:05,749 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-30 16:14:05,754 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-30 16:14:05,802 - INFO - Episode 1 started
+2026-10-30 16:14:05,804 - INFO - Resuming model from models/ppo_cs16_phase1_final.zip...
+2026-10-30 16:14:05,810 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase1.pkl
+2026-10-30 16:14:08,699 - INFO - Starting training run: PPO_CS16_Phase2_20261030_161405
+2026-10-30 16:14:08,699 - INFO - Target Timesteps: 100000
+2026-10-30 16:14:08,700 - INFO - Device: cuda
+2026-10-30 16:14:08,775 - INFO - Episode 2 started
+2026-10-30 16:14:30,667 - INFO - Episode 2 ended: steps=512, reward=130.29
+2026-10-30 16:14:30,705 - INFO - Episode 3 started
+2026-10-30 16:14:49,772 - INFO - Episode 3 ended: steps=512, reward=79.87
+2026-10-30 16:14:49,810 - INFO - Episode 4 started
+2026-10-30 16:15:09,209 - INFO - Episode 4 ended: steps=512, reward=62.87
+2026-10-30 16:15:09,283 - INFO - Episode 5 started
+2026-10-30 16:15:13,147 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-30 16:18:22,744 - ERROR - Timeout waiting for bridge server response
+2026-10-30 16:18:23,246 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 16:18:23,753 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 16:18:24,257 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 16:18:24,765 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 16:18:25,267 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 16:18:25,317 - INFO - Training manually interrupted by user
+2026-10-30 16:18:25,405 - INFO - Phase 2 model successfully saved to: models/ppo_cs16_phase2_final
+2026-10-30 16:18:25,611 - INFO - Environment closed

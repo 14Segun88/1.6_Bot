@@ -1,0 +1,72 @@
+2026-10-31 17:34:04,373 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase5_20261031_173404.log
+2026-10-31 17:34:04,373 - INFO - === Selected: Phase 5: Dynamic Footwork & Burst-to-Spray (WASD Strafes, Headshot Tap to Crouch Spray) ===
+2026-10-31 17:34:04,391 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-31 17:34:04,404 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-31 17:34:04,408 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-31 17:34:04,780 - INFO - Episode 1 started
+2026-10-31 17:34:04,782 - INFO - Resuming model from /home/segun/CascadeProjects/Cs 1.6_Bot/linux_training/models/ppo_cs16_phase4_final.zip...
+2026-10-31 17:34:04,787 - INFO - Loaded VecNormalize statistics from /home/segun/CascadeProjects/Cs 1.6_Bot/linux_training/models/vecnormalize_phase4.pkl
+2026-10-31 17:34:04,788 - INFO - Clamping low variance in VecNormalize obs_rms['velocity'] for Phase 5 movement safety.
+2026-10-31 17:34:04,789 - INFO - Clamping low variance in VecNormalize obs_rms['origin'] for Phase 5 movement safety.
+2026-10-31 17:34:07,723 - INFO - Model learning rate configured to: 0.0001
+2026-10-31 17:34:07,723 - INFO - Starting training run: PPO_CS16_Phase5_20261031_173404
+2026-10-31 17:34:07,724 - INFO - Target Timesteps: 100000
+2026-10-31 17:34:07,724 - INFO - Device: cuda
+2026-10-31 17:34:07,724 - INFO - ============================================================
+2026-10-31 17:34:07,724 - INFO - >>> ПЕРЕКЛЮЧИТЕСЬ В ОКНО CS 1.6 (кликните внутрь игры)! Старт через 5 секунд...
+2026-10-31 17:34:07,725 - INFO - ============================================================
+2026-10-31 17:34:07,726 - INFO - Старт через 5 сек...
+2026-10-31 17:34:08,728 - INFO - Старт через 4 сек...
+2026-10-31 17:34:09,729 - INFO - Старт через 3 сек...
+2026-10-31 17:34:10,732 - INFO - Старт через 2 сек...
+2026-10-31 17:34:11,736 - INFO - Старт через 1 сек...
+2026-10-31 17:34:12,738 - INFO - >>> СТАРТ ТРЕНИРОВКИ! <<<
+2026-10-31 17:34:13,161 - INFO - Episode 2 started
+2026-10-31 17:34:59,240 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-31 17:38:11,080 - ERROR - Timeout waiting for bridge server response
+2026-10-31 17:38:11,582 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:12,085 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:12,586 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:13,087 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:13,590 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:14,091 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:14,592 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:15,094 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:15,595 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:16,098 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:16,599 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:17,101 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:17,603 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:18,106 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:18,610 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:19,111 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:19,613 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:20,115 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:20,616 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:21,117 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:21,618 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:22,120 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:22,621 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:23,124 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:23,625 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:24,127 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:24,629 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:25,131 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:25,633 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:26,134 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:26,635 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:27,137 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:27,638 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:28,140 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:28,642 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:29,144 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:29,647 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:30,150 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:30,652 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:31,153 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:31,654 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:32,156 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:32,658 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:33,160 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:33,661 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-31 17:38:34,163 - ERROR - Communication error: Operation cannot be accomplished in current state

@@ -1,34 +1,4 @@
-# Counter-Strike 1.6 Game files and binaries
-CS 1.6 GoldClient/
-cstrike/
-*.dll
-*.exe
-*.asi
-*.wad
-*.bsp
-*.mdl
-!cstrike_downloads/**/*.bsp
-!cstrike_downloads/**/*.mdl
-*.wav
-*.mp3
-extract_demo
-
-# Large Datasets & Demos
-dataset/
-*.dem
-*.jsonl
-backup_poisoned_*/
-
-# Debug & Temporary
-debug_visuals/
-debug_*.png
-*.png
-!assets/*.png
-*.log
-*.tmp
-*.tmp.npz
-
-# Python
+# Python cache & virtual environments
 __pycache__/
 *.py[cod]
 *$py.class
@@ -36,5 +6,9 @@ __pycache__/
 .env
 venv/
 .venv/
-demos/
-*.avi
+
+# Intermediate checkpoint folders & large trajectory dumps
+linux_training/models/phase*_checkpoints/
+linux_training/logs/*.npz
+*.tmp
+*.tmp.npz

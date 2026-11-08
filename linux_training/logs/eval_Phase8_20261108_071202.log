@@ -1,0 +1,44 @@
+
+============================================================
+EVALUATION RESULTS [EASY]
+============================================================
+Model:             models/ppo_cs16_phase8_final.zip
+Aim Control Mode:  PURE AI (100% Neural Network)
+Episodes:          10
+Reward (mean±std): 4.03 ± 33.25
+Reward range:      [-49.46, 78.96]
+Length (mean±std): 512.0 ± 0.0
+Kills (total):     1 (mean: 0.10)
+Hits (total):      8 (mean: 0.80)
+Hits / Kills:      8.00
+Deaths (total):    4 (mean: 0.40)
+K/D Ratio:         0.25
+------------------------------------------------------------
+Action Distribution:
+  move_forward   : mean=-0.238, std=0.287
+  move_strafe    : mean=+0.646, std=0.598
+  delta_yaw      : mean=+0.370, std=0.652
+  delta_pitch    : mean=+0.027, std=0.499
+  fire_rate      : 0.367
+------------------------------------------------------------
+Firing Mode Choice (3 Mechanics: 1-Tap | 2-Tap Standing | 2-Tap+Crouch-Spray):
+  long  > 550u [decisions]: 1-tap  36 (66.7%) | 2-tap   5 ( 9.3%) | 2tap+crouch-spray  13 (24.1%)
+  long  > 550u [ticks/hit]: 1-tap  36 (hits  6) | 2-tap  13 (hits  0) | 2tap+crouch-spray  96 (hits  0)
+  close <= 550u [decisions]: 1-tap   4 (40.0%) | 2-tap   1 (10.0%) | 2tap+crouch-spray   5 (50.0%)
+  close <= 550u [ticks/hit]: 1-tap   4 (hits  2) | 2-tap   2 (hits  0) | 2tap+crouch-spray  39 (hits  0)
+  crouch-spray (+duck held):  100 ticks (hits   0)
+------------------------------------------------------------
+Duel Telemetry (1v1 Benchmark):
+  survival_rate (0 deaths) : 6/10 (60.0%)
+  shots_fired / accuracy   : 190 ticks (4.2% hits)
+  reaction_to_1st_shot     : 17.62 ticks (~705 ms)
+  time_to_1st_hit          : 79.33 ticks (~3173 ms)
+  aim_error_at_fire        : 84.06 deg
+  cover_retreats           : 6
+------------------------------------------------------------
+Gameplay Metrics:
+  enemy_visible_rate       : 0.196
+  avg_enemy_distance       : 0.682
+  avg_health               : 0.896
+  min_health               : 0.000
+============================================================

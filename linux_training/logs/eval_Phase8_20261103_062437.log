@@ -1,0 +1,36 @@
+
+============================================================
+EVALUATION RESULTS
+============================================================
+Model:             models/ppo_cs16_phase7_final.zip
+Aim Control Mode:  PURE AI (100% Neural Network)
+Episodes:          10
+Reward (mean±std): -81.00 ± 46.24
+Reward range:      [-157.63, 6.94]
+Length (mean±std): 512.0 ± 0.0
+Kills (total):     6 (mean: 0.60)
+Hits (total):      6 (mean: 0.60)
+Hits / Kills:      1.00
+Deaths (total):    5119 (mean: 511.90)
+K/D Ratio:         0.00
+------------------------------------------------------------
+Action Distribution:
+  move_forward   : mean=-0.101, std=0.191
+  move_strafe    : mean=+0.428, std=0.820
+  delta_yaw      : mean=+0.328, std=0.735
+  delta_pitch    : mean=-0.281, std=0.461
+  fire_rate      : 0.395
+------------------------------------------------------------
+Firing Mode Choice (decisions & ticks fired / hits, from bridge ground truth):
+  long  > 360u [decisions]: tap  25 ( 23.6%) | spray bursts  81 ( 76.4%)
+  long  > 360u [ticks/hit]: tap   25 (  7.7%, hits   0) | spray ticks   301 ( 92.3%, hits   1)
+  close <= 360u [decisions]: tap  19 ( 86.4%) | spray bursts   3 ( 13.6%)
+  close <= 360u [ticks/hit]: tap   19 ( 79.2%, hits   0) | spray ticks     5 ( 20.8%, hits   0)
+  crouch-spray [ticks/hit]:  136 ticks (hits   0)
+------------------------------------------------------------
+Gameplay Metrics:
+  enemy_visible_rate       : 0.237
+  avg_enemy_distance       : 0.728
+  avg_health               : 0.002
+  min_health               : 0.000
+============================================================

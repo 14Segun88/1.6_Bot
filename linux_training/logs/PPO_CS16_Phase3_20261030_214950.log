@@ -1,0 +1,26 @@
+2026-10-30 21:49:50,783 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase3_20261030_214950.log
+2026-10-30 21:49:50,783 - INFO - === Selected: Phase 3: Active 1v1 Combat ===
+2026-10-30 21:49:50,793 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-30 21:49:50,806 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-30 21:49:50,813 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-30 21:49:51,026 - INFO - Episode 1 started
+2026-10-30 21:49:51,027 - INFO - Resuming model from models/ppo_cs16_phase2_final.zip...
+2026-10-30 21:49:51,030 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase3.pkl
+2026-10-30 21:49:54,297 - INFO - Starting training run: PPO_CS16_Phase3_20261030_214950
+2026-10-30 21:49:54,297 - INFO - Target Timesteps: 150000
+2026-10-30 21:49:54,297 - INFO - Device: cuda
+2026-10-30 21:49:54,407 - INFO - Episode 2 started
+2026-10-30 21:50:14,518 - INFO - Episode 2 ended: steps=512, reward=-86.01
+2026-10-30 21:50:14,822 - INFO - Episode 3 started
+2026-10-30 21:50:36,924 - INFO - Episode 3 ended: steps=512, reward=-126.79
+2026-10-30 21:50:37,239 - INFO - Episode 4 started
+2026-10-30 21:50:57,026 - INFO - Episode 4 ended: steps=512, reward=-78.32
+2026-10-30 21:50:57,142 - INFO - Episode 5 started
+2026-10-30 21:51:04,252 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-30 21:59:06,031 - ERROR - Timeout waiting for bridge server response
+2026-10-30 21:59:06,538 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 21:59:07,039 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 21:59:07,546 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 21:59:08,049 - ERROR - Communication error: Operation cannot be accomplished in current state
+2026-10-30 21:59:08,299 - INFO - Training manually interrupted by user
+2026-10-30 21:59:08,425 - INFO - Phase 3 model successfully saved to: models/ppo_cs16_phase3_final

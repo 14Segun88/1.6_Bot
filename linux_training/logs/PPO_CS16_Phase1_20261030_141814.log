@@ -1,0 +1,11 @@
+2026-10-30 14:18:14,427 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase1_20261030_141814.log
+2026-10-30 14:18:14,428 - INFO - === Selected: Phase 1: Aim & Trigger (Bullseye Aim & Fire calibration) ===
+2026-10-30 14:18:14,529 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-30 14:18:14,566 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-30 14:18:19,591 - ERROR - Timeout waiting for bridge server response
+2026-10-30 14:18:19,592 - ERROR - Failed to communicate with bridge server at 172.31.128.1:5555: Bridge server timeout
+2026-10-30 14:18:19,592 - ERROR - Troubleshooting steps:
+2026-10-30 14:18:19,592 - ERROR -   1. Make sure bridge_server.py is running on Windows (in PowerShell)
+2026-10-30 14:18:19,592 - ERROR -   2. If 172.31.128.1 is unreachable, specify Windows host IP via --host <IP>
+2026-10-30 14:18:19,592 - ERROR -   3. Allow port 5555 in Windows Defender Firewall (Run PowerShell as Admin):
+2026-10-30 14:18:19,593 - ERROR -      New-NetFirewallRule -DisplayName "CS16 Bridge 5555" -Direction Inbound -LocalPort 5555 -Protocol TCP -Action Allow

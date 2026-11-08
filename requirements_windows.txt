@@ -1,0 +1,6 @@
+# Windows Bridge Dependencies
+# ctypes is built-in, no pymem needed (using play_agent.py approach)
+pynput>=1.7.0
+pyzmq>=25.0.0
+msgpack>=1.0.0
+psutil>=5.9.0

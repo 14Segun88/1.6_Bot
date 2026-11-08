@@ -1,0 +1,53 @@
+
+============================================================
+EVALUATION RESULTS [DIAG]
+============================================================
+Model:             models/ppo_cs16_phase8_final.zip
+Aim Control Mode:  PURE AI (100% Neural Network)
+Episodes:          10
+Reward (mean±std): -4.85 ± 21.97
+Reward range:      [-43.68, 32.26]
+Length (mean±std): 512.0 ± 0.0
+Kills (total):     0 (mean: 0.00)
+Hits (total):      8 (mean: 0.80)
+Hits / Kills:      8.00
+Deaths (total):    8 (mean: 0.80)
+K/D Ratio:         0.00
+------------------------------------------------------------
+Action Distribution:
+  move_forward   : mean=-0.353, std=0.340
+  move_strafe    : mean=+0.569, std=0.690
+  delta_yaw      : mean=+0.377, std=0.649
+  delta_pitch    : mean=+0.035, std=0.612
+  fire_rate      : 0.393
+------------------------------------------------------------
+Firing Mode Choice (3 Mechanics: 1-Tap | 2-Tap Standing | 2-Tap+Crouch-Spray):
+  long  > 550u [decisions]: 1-tap  36 (60.0%) | 2-tap   2 ( 3.3%) | 2tap+crouch-spray  22 (36.7%)
+  long  > 550u [ticks/hit]: 1-tap  36 (hits  7) | 2-tap   6 (hits  0) | 2tap+crouch-spray 122 (hits  0)
+  close <= 550u [decisions]: 1-tap   0 ( 0.0%) | 2-tap   1 (14.3%) | 2tap+crouch-spray   6 (85.7%)
+  close <= 550u [ticks/hit]: 1-tap   0 (hits  0) | 2-tap   3 (hits  0) | 2tap+crouch-spray  53 (hits  0)
+  crouch-spray (+duck held):  122 ticks (hits   0)
+------------------------------------------------------------
+Duel Telemetry (1v1 Benchmark):
+  survival_rate (0 deaths) : 2/10 (20.0%)
+  shots_fired / accuracy   : 220 ticks (3.6% hits)
+  reaction_to_1st_shot     : 5.33 ticks (~213 ms)
+  time_to_1st_hit          : 20.00 ticks (~800 ms)
+  aim_error_at_fire        : 25.56 deg
+  cover_retreats           : 5
+  shots_err <=5/<=14/>30 deg: 24% / 46% / 40% (median 19.6 deg, n=220)
+  shots_while_moving(>0.30): 34% (median speed 0.12)
+  hits by mode             : tap 7/36 | 2tap 0/9 | spray 0/175
+------------------------------------------------------------
+Active-Episode View (excluding dead_wait episodes):
+  dead_wait episodes       : 0/10
+  active / no-contact      : 10 / 1
+  active K/D               : 0/8 = 0.00
+  origin span median/max   : 0 / 0 units (≈0 => bot not moving or origin sensor frozen)
+------------------------------------------------------------
+Gameplay Metrics:
+  enemy_visible_rate       : 0.126
+  avg_enemy_distance       : 0.787
+  avg_health               : 0.812
+  min_health               : 0.000
+============================================================

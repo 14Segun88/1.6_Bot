@@ -1,0 +1,43 @@
+environment:
+  host: "127.0.0.1"  # Localhost connects to Windows host in WSL2
+  port: 5555
+  config_path: "configs/training_config.yaml"
+
+training:
+  total_timesteps: 1000000
+  n_envs: 1
+  seed: 42
+  device: "auto"  # "cuda" or "cpu"
+  eval_freq: 50000
+  n_eval_episodes: 5
+  save_freq: 4096
+  log_dir: "./logs"
+  model_dir: "./models"
+  norm_obs: true
+  norm_reward: true
+  clip_obs: 10.0
+
+ppo:
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  clip_range_vf: null
+  ent_coef: 0.001
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  use_sde: false
+  policy_kwargs:
+    net_arch: [256, 256]  # Shared network
+    log_std_init: -0.35
+    # For separate pi/vf:
+    # net_arch: {pi: [256, 256], vf: [256, 256]}
+
+curriculum:
+  enabled: true
+  thresholds:
+    phase1_to_2: 50    # Mean reward to advance from Phase 1 to 2
+    phase2_to_3: 150   # Mean reward to advance from Phase 2 to 3

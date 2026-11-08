@@ -1,0 +1,112 @@
+{
+  "n_episodes": 30,
+  "reward": {
+    "mean": 8.962411945949619,
+    "std": 27.62780783974399,
+    "min": -52.24142284877598,
+    "max": 100.58420606702566,
+    "median": 6.44261072576046
+  },
+  "length": {
+    "mean": 512.0,
+    "std": 0.0,
+    "min": 512,
+    "max": 512
+  },
+  "kills": {
+    "mean": 0.1,
+    "std": 0.3,
+    "total": 3
+  },
+  "deaths": {
+    "mean": 0.6,
+    "std": 0.5537749241945383,
+    "total": 18
+  },
+  "hits": {
+    "mean": 0.5,
+    "std": 1.118033988749895,
+    "total": 15
+  },
+  "kd_ratio": 0.16666666666666666,
+  "hits_per_kill": 5.0,
+  "action_distribution": {
+    "move_forward": {
+      "mean": -0.13771289587020874,
+      "std": 0.40061044692993164
+    },
+    "move_strafe": {
+      "mean": 0.56468665599823,
+      "std": 0.6307145953178406
+    },
+    "delta_yaw": {
+      "mean": 0.37411487102508545,
+      "std": 0.6484216451644897
+    },
+    "delta_pitch": {
+      "mean": -0.06941676139831543,
+      "std": 0.5441716909408569
+    },
+    "fire_rate": 0.4732421875
+  },
+  "gameplay": {
+    "enemy_visible_rate": 0.15572916666666667,
+    "avg_enemy_distance": 0.7506536105889002,
+    "avg_health": 0.7284570311669085,
+    "min_health": 0.0
+  },
+  "duel_telemetry": {
+    "zero_death_episodes": 13,
+    "survival_rate_pct": 43.333333333333336,
+    "total_shots_fired": 612,
+    "shot_hit_accuracy_pct": 2.450980392156863,
+    "reaction_ticks_to_fire_mean": 6.0,
+    "reaction_ms_to_fire_mean": 240.0,
+    "reaction_ticks_to_hit_mean": 32.888888888888886,
+    "reaction_ms_to_hit_mean": 1315.5555555555554,
+    "aim_error_at_fire_deg_mean": 31.059501081471407,
+    "cover_retreats": 10,
+    "visible_shots": 612,
+    "shots_err_le5_pct": 19.77124183006536,
+    "shots_err_le14_pct": 29.08496732026144,
+    "shots_err_gt30_pct": 38.39869281045752,
+    "aim_error_median_deg": 17.68059730529785,
+    "shots_moving_pct": 58.00653594771242,
+    "fire_speed_median": 0.4308184087276459,
+    "tap_shots": 70,
+    "tap_hits": 12,
+    "two_tap_shots": 12,
+    "two_tap_hits": 0,
+    "spray_shots": 530,
+    "spray_hits": 3
+  },
+  "fire_mode_stats": {
+    "spray_close": 130,
+    "spray_close_decisions": 22,
+    "crouch_spray_ticks": 383,
+    "tap_close": 4,
+    "tap_close_decisions": 4,
+    "two_tap_close": 3,
+    "two_tap_close_decisions": 1,
+    "spray_close_hit": 2,
+    "spray_long": 400,
+    "spray_long_decisions": 52,
+    "tap_long": 66,
+    "tap_long_decisions": 66,
+    "tap_long_hit": 12,
+    "two_tap_long": 9,
+    "two_tap_long_decisions": 3,
+    "spray_long_hit": 1,
+    "crouch_spray_hits": 1
+  },
+  "active_view": {
+    "dead_wait_episodes": 1,
+    "active_episodes": 29,
+    "no_contact_active_episodes": 3,
+    "kills": 3,
+    "deaths": 17,
+    "kd_ratio": 0.17647058823529413,
+    "origin_span_median_units": 0.0,
+    "origin_span_max_units": 1203.7545430859234
+  }
+}

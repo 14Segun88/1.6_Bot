@@ -1,0 +1,18 @@
+{
+  "origin": {
+    "module": "hw.dll",
+    "offset": "0x288034"
+  },
+  "pitch": {
+    "module": "hw.dll",
+    "offset": "0x288040"
+  },
+  "yaw": {
+    "module": "hw.dll",
+    "offset": "0x288044"
+  },
+  "angles_unit": "degrees",
+  "eye_z_offset": 17.03,
+  "exclude_dummy_slots": [],
+  "note": "verified by verify_offsets.py, walk/yaw error 0.0 deg"
+}

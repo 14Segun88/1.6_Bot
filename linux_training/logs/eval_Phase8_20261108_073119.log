@@ -1,0 +1,47 @@
+
+============================================================
+EVALUATION RESULTS [EASY]
+============================================================
+Model:             models/ppo_cs16_phase8_final.zip
+Aim Control Mode:  PURE AI (100% Neural Network)
+Episodes:          30
+Reward (mean±std): 14.96 ± 25.24
+Reward range:      [-48.53, 68.16]
+Length (mean±std): 512.0 ± 0.0
+Kills (total):     6 (mean: 0.20)
+Hits (total):      26 (mean: 0.87)
+Hits / Kills:      4.33
+Deaths (total):    10 (mean: 0.33)
+K/D Ratio:         0.60
+------------------------------------------------------------
+Action Distribution:
+  move_forward   : mean=-0.290, std=0.351
+  move_strafe    : mean=+0.617, std=0.604
+  delta_yaw      : mean=+0.476, std=0.576
+  delta_pitch    : mean=+0.084, std=0.507
+  fire_rate      : 0.390
+------------------------------------------------------------
+Firing Mode Choice (3 Mechanics: 1-Tap | 2-Tap Standing | 2-Tap+Crouch-Spray):
+  long  > 550u [decisions]: 1-tap  60 (55.0%) | 2-tap  14 (12.8%) | 2tap+crouch-spray  35 (32.1%)
+  long  > 550u [ticks/hit]: 1-tap  60 (hits  5) | 2-tap  41 (hits  5) | 2tap+crouch-spray 219 (hits  1)
+  close <= 550u [decisions]: 1-tap  43 (63.2%) | 2-tap   4 ( 5.9%) | 2tap+crouch-spray  21 (30.9%)
+  close <= 550u [ticks/hit]: 1-tap  43 (hits  9) | 2-tap  12 (hits  2) | 2tap+crouch-spray 106 (hits  3)
+  crouch-spray (+duck held):  216 ticks (hits   0)
+------------------------------------------------------------
+Duel Telemetry (1v1 Benchmark):
+  survival_rate (0 deaths) : 20/30 (66.7%)
+  shots_fired / accuracy   : 481 ticks (5.4% hits)
+  reaction_to_1st_shot     : 13.31 ticks (~532 ms)
+  time_to_1st_hit          : 40.50 ticks (~1620 ms)
+  aim_error_at_fire        : 22.49 deg
+  cover_retreats           : 10
+  shots_err <=5/<=14/>30 deg: 48% / 64% / 31% (median 5.3 deg, n=481)
+  shots_while_moving(>0.30): 39% (median speed 0.18)
+  hits by mode             : tap 14/103 | 2tap 7/53 | spray 4/325
+------------------------------------------------------------
+Gameplay Metrics:
+  enemy_visible_rate       : 0.151
+  avg_enemy_distance       : 0.757
+  avg_health               : 0.918
+  min_health               : 0.000
+============================================================

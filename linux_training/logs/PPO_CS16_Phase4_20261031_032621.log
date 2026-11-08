@@ -1,0 +1,462 @@
+2026-10-31 03:26:21,051 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase4_20261031_032621.log
+2026-10-31 03:26:21,055 - INFO - === Selected: Phase 4: Target Switching & Trigger Discipline (Fast Spray & Flick with Progressive Miss Penalty) ===
+2026-10-31 03:26:21,077 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-31 03:26:21,097 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-31 03:26:21,103 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-31 03:26:21,360 - INFO - Episode 1 started
+2026-10-31 03:26:21,362 - INFO - Resuming model from models/ppo_cs16_phase3_final.zip...
+2026-10-31 03:26:21,364 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase3.pkl
+2026-10-31 03:26:21,365 - INFO - Resetting VecNormalize enemy_visible obs_rms to mean=0.5, var=0.25 for FOV transition safety.
+2026-10-31 03:26:26,229 - INFO - Starting training run: PPO_CS16_Phase4_20261031_032621
+2026-10-31 03:26:26,230 - INFO - Target Timesteps: 100000
+2026-10-31 03:26:26,230 - INFO - Device: cuda
+2026-10-31 03:26:26,474 - INFO - Episode 2 started
+2026-10-31 03:27:00,902 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-31 03:27:15,044 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-10-31 03:27:41,350 - INFO - Episode 2 ended: steps=512, reward=562.01
+2026-10-31 03:27:41,610 - INFO - Episode 3 started
+2026-10-31 03:28:38,016 - INFO - Episode 3 ended: steps=512, reward=442.29
+2026-10-31 03:28:38,259 - INFO - Episode 4 started
+2026-10-31 03:29:33,923 - INFO - Episode 4 ended: steps=512, reward=333.56
+2026-10-31 03:29:34,244 - INFO - Episode 5 started
+2026-10-31 03:30:31,180 - INFO - Episode 5 ended: steps=512, reward=459.51
+2026-10-31 03:30:31,386 - INFO - Episode 6 started
+2026-10-31 03:30:31,431 - INFO - Rollout  1 | Steps:   2048 | FPS:  8 | EpRewMean: 449.3 | EpLenMean: 512 | Entropy: 1.85 | KL: 0.025
+2026-10-31 03:31:41,968 - INFO - Episode 6 ended: steps=512, reward=397.98
+2026-10-31 03:31:42,188 - INFO - Episode 7 started
+2026-10-31 03:32:39,997 - INFO - Episode 7 ended: steps=512, reward=342.87
+2026-10-31 03:32:40,385 - INFO - Episode 8 started
+2026-10-31 03:33:39,397 - INFO - Episode 8 ended: steps=512, reward=446.30
+2026-10-31 03:33:39,597 - INFO - Episode 9 started
+2026-10-31 03:34:18,588 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-31 03:34:32,121 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-10-31 03:34:48,669 - INFO - Episode 9 ended: steps=512, reward=390.16
+2026-10-31 03:34:48,917 - INFO - Episode 10 started
+2026-10-31 03:34:48,988 - INFO - Rollout  2 | Steps:   4096 | FPS:  8 | EpRewMean: 421.8 | EpLenMean: 512 | Entropy: 3.12 | KL: 0.022
+2026-10-31 03:35:56,768 - INFO - Episode 10 ended: steps=512, reward=372.82
+2026-10-31 03:35:57,194 - INFO - Episode 11 started
+2026-10-31 03:36:51,072 - INFO - Episode 11 ended: steps=512, reward=365.82
+2026-10-31 03:36:51,282 - INFO - Episode 12 started
+2026-10-31 03:37:44,761 - INFO - Episode 12 ended: steps=512, reward=334.63
+2026-10-31 03:37:44,996 - INFO - Episode 13 started
+2026-10-31 03:38:40,869 - INFO - Episode 13 ended: steps=512, reward=358.43
+2026-10-31 03:38:41,096 - INFO - Episode 14 started
+2026-10-31 03:38:41,177 - INFO - Rollout  3 | Steps:   6144 | FPS:  8 | EpRewMean: 400.5 | EpLenMean: 512 | Entropy: 3.15 | KL: 0.022
+2026-10-31 03:39:57,473 - INFO - Episode 14 ended: steps=512, reward=392.74
+2026-10-31 03:39:57,880 - INFO - Episode 15 started
+2026-10-31 03:40:52,182 - INFO - Episode 15 ended: steps=512, reward=425.80
+2026-10-31 03:40:52,398 - INFO - Episode 16 started
+2026-10-31 03:41:48,207 - INFO - Episode 16 ended: steps=512, reward=419.77
+2026-10-31 03:41:48,476 - INFO - Episode 17 started
+2026-10-31 03:42:43,945 - INFO - Episode 17 ended: steps=512, reward=412.71
+2026-10-31 03:42:44,177 - INFO - Episode 18 started
+2026-10-31 03:42:44,243 - INFO - Rollout  4 | Steps:   8192 | FPS:  8 | EpRewMean: 403.6 | EpLenMean: 512 | Entropy: 3.16 | KL: 0.022
+2026-10-31 03:43:53,278 - INFO - Episode 18 ended: steps=512, reward=480.30
+2026-10-31 03:43:53,516 - INFO - Episode 19 started
+2026-10-31 03:44:51,535 - INFO - Episode 19 ended: steps=512, reward=386.03
+2026-10-31 03:44:51,880 - INFO - Episode 20 started
+2026-10-31 03:45:45,709 - INFO - Episode 20 ended: steps=512, reward=369.65
+2026-10-31 03:45:45,927 - INFO - Episode 21 started
+2026-10-31 03:46:42,004 - INFO - Episode 21 ended: steps=512, reward=483.52
+2026-10-31 03:46:42,221 - INFO - Episode 22 started
+2026-10-31 03:46:42,273 - INFO - Rollout  5 | Steps:  10240 | FPS:  8 | EpRewMean: 408.8 | EpLenMean: 512 | Entropy: 3.14 | KL: 0.022
+2026-10-31 03:47:49,903 - INFO - Episode 22 ended: steps=512, reward=476.86
+2026-10-31 03:47:50,087 - INFO - Episode 23 started
+2026-10-31 03:48:46,221 - INFO - Episode 23 ended: steps=512, reward=404.05
+2026-10-31 03:48:46,507 - INFO - Episode 24 started
+2026-10-31 03:49:43,865 - INFO - Episode 24 ended: steps=512, reward=420.09
+2026-10-31 03:49:44,068 - INFO - Episode 25 started
+2026-10-31 03:50:41,146 - INFO - Episode 25 ended: steps=512, reward=449.50
+2026-10-31 03:50:41,384 - INFO - Episode 26 started
+2026-10-31 03:50:41,474 - INFO - Rollout  6 | Steps:  12288 | FPS:  8 | EpRewMean: 413.6 | EpLenMean: 512 | Entropy: 3.11 | KL: 0.027
+2026-10-31 03:51:49,487 - INFO - Episode 26 ended: steps=512, reward=458.95
+2026-10-31 03:51:49,757 - INFO - Episode 27 started
+2026-10-31 03:52:43,357 - INFO - Episode 27 ended: steps=512, reward=442.01
+2026-10-31 03:52:43,566 - INFO - Episode 28 started
+2026-10-31 03:53:39,823 - INFO - Episode 28 ended: steps=512, reward=566.34
+2026-10-31 03:53:40,037 - INFO - Episode 29 started
+2026-10-31 03:54:37,303 - INFO - Episode 29 ended: steps=512, reward=437.20
+2026-10-31 03:54:37,709 - INFO - Episode 30 started
+2026-10-31 03:54:37,762 - INFO - Rollout  7 | Steps:  14336 | FPS:  8 | EpRewMean: 422.6 | EpLenMean: 512 | Entropy: 3.11 | KL: 0.025
+2026-10-31 03:55:46,405 - INFO - Episode 30 ended: steps=512, reward=423.08
+2026-10-31 03:55:46,611 - INFO - Episode 31 started
+2026-10-31 03:56:41,331 - INFO - Episode 31 ended: steps=512, reward=442.55
+2026-10-31 03:56:41,527 - INFO - Episode 32 started
+2026-10-31 03:57:35,361 - INFO - Episode 32 ended: steps=512, reward=456.42
+2026-10-31 03:57:35,582 - INFO - Episode 33 started
+2026-10-31 03:58:30,182 - INFO - Episode 33 ended: steps=512, reward=431.60
+2026-10-31 03:58:30,568 - INFO - Episode 34 started
+2026-10-31 03:58:30,619 - INFO - Rollout  8 | Steps:  16384 | FPS:  8 | EpRewMean: 424.5 | EpLenMean: 512 | Entropy: 3.12 | KL: 0.022
+2026-10-31 03:59:44,633 - INFO - Episode 34 ended: steps=512, reward=411.82
+2026-10-31 03:59:44,865 - INFO - Episode 35 started
+2026-10-31 04:00:39,004 - INFO - Episode 35 ended: steps=512, reward=392.38
+2026-10-31 04:00:39,286 - INFO - Episode 36 started
+2026-10-31 04:01:32,965 - INFO - Episode 36 ended: steps=512, reward=384.17
+2026-10-31 04:01:33,176 - INFO - Episode 37 started
+2026-10-31 04:02:27,890 - INFO - Episode 37 ended: steps=512, reward=360.47
+2026-10-31 04:02:28,089 - INFO - Episode 38 started
+2026-10-31 04:02:28,146 - INFO - Rollout  9 | Steps:  18432 | FPS:  8 | EpRewMean: 420.4 | EpLenMean: 512 | Entropy: 3.09 | KL: 0.021
+2026-10-31 04:03:38,539 - INFO - Episode 38 ended: steps=512, reward=420.10
+2026-10-31 04:03:38,814 - INFO - Episode 39 started
+2026-10-31 04:04:34,682 - INFO - Episode 39 ended: steps=512, reward=486.47
+2026-10-31 04:04:34,885 - INFO - Episode 40 started
+2026-10-31 04:05:30,680 - INFO - Episode 40 ended: steps=512, reward=331.09
+2026-10-31 04:05:31,089 - INFO - Episode 41 started
+2026-10-31 04:06:26,127 - INFO - Episode 41 ended: steps=512, reward=465.43
+2026-10-31 04:06:26,334 - INFO - Episode 42 started
+2026-10-31 04:06:26,389 - INFO - Rollout 10 | Steps:  20480 | FPS:  8 | EpRewMean: 420.9 | EpLenMean: 512 | Entropy: 3.07 | KL: 0.022
+2026-10-31 04:07:34,517 - INFO - Episode 42 ended: steps=512, reward=495.09
+2026-10-31 04:07:34,805 - INFO - Episode 43 started
+2026-10-31 04:08:27,940 - INFO - Episode 43 ended: steps=512, reward=393.01
+2026-10-31 04:08:28,367 - INFO - Episode 44 started
+2026-10-31 04:09:23,685 - INFO - Episode 44 ended: steps=512, reward=432.25
+2026-10-31 04:09:23,933 - INFO - Episode 45 started
+2026-10-31 04:10:21,407 - INFO - Episode 45 ended: steps=512, reward=575.72
+2026-10-31 04:10:21,932 - INFO - Episode 46 started
+2026-10-31 04:10:21,989 - INFO - Rollout 11 | Steps:  22528 | FPS:  8 | EpRewMean: 425.8 | EpLenMean: 512 | Entropy: 3.04 | KL: 0.035
+2026-10-31 04:11:29,437 - INFO - Episode 46 ended: steps=512, reward=386.51
+2026-10-31 04:11:29,665 - INFO - Episode 47 started
+2026-10-31 04:12:25,123 - INFO - Episode 47 ended: steps=512, reward=328.66
+2026-10-31 04:12:25,522 - INFO - Episode 48 started
+2026-10-31 04:13:28,897 - INFO - Episode 48 ended: steps=512, reward=423.25
+2026-10-31 04:13:29,273 - INFO - Episode 49 started
+2026-10-31 04:14:30,528 - INFO - Episode 49 ended: steps=512, reward=472.56
+2026-10-31 04:14:30,810 - INFO - Episode 50 started
+2026-10-31 04:14:30,915 - INFO - Rollout 12 | Steps:  24576 | FPS:  8 | EpRewMean: 423.8 | EpLenMean: 512 | Entropy: 2.99 | KL: 0.022
+2026-10-31 04:15:50,302 - INFO - Episode 50 ended: steps=512, reward=349.15
+2026-10-31 04:15:51,317 - INFO - Episode 51 started
+2026-10-31 04:16:53,221 - INFO - Episode 51 ended: steps=512, reward=348.94
+2026-10-31 04:16:53,503 - INFO - Episode 52 started
+2026-10-31 04:18:00,227 - INFO - Episode 52 ended: steps=512, reward=402.30
+2026-10-31 04:18:00,477 - INFO - Episode 53 started
+2026-10-31 04:19:04,783 - INFO - Episode 53 ended: steps=512, reward=377.28
+2026-10-31 04:19:05,319 - INFO - Episode 54 started
+2026-10-31 04:19:05,408 - INFO - Rollout 13 | Steps:  26624 | FPS:  8 | EpRewMean: 419.7 | EpLenMean: 512 | Entropy: 2.98 | KL: 0.030
+2026-10-31 04:20:43,711 - INFO - Episode 54 ended: steps=512, reward=330.11
+2026-10-31 04:20:43,893 - INFO - Episode 55 started
+2026-10-31 04:21:46,538 - INFO - Episode 55 ended: steps=512, reward=420.18
+2026-10-31 04:21:46,952 - INFO - Episode 56 started
+2026-10-31 04:22:41,813 - INFO - Episode 56 ended: steps=512, reward=451.03
+2026-10-31 04:22:42,476 - INFO - Episode 57 started
+2026-10-31 04:23:36,787 - INFO - Episode 57 ended: steps=512, reward=429.66
+2026-10-31 04:23:36,980 - INFO - Episode 58 started
+2026-10-31 04:23:37,034 - INFO - Rollout 14 | Steps:  28672 | FPS:  8 | EpRewMean: 418.8 | EpLenMean: 512 | Entropy: 2.96 | KL: 0.027
+2026-10-31 04:24:45,453 - INFO - Episode 58 ended: steps=512, reward=430.96
+2026-10-31 04:24:45,649 - INFO - Episode 59 started
+2026-10-31 04:25:41,890 - INFO - Episode 59 ended: steps=512, reward=429.05
+2026-10-31 04:25:42,164 - INFO - Episode 60 started
+2026-10-31 04:26:37,358 - INFO - Episode 60 ended: steps=512, reward=416.82
+2026-10-31 04:26:37,627 - INFO - Episode 61 started
+2026-10-31 04:27:33,360 - INFO - Episode 61 ended: steps=512, reward=490.24
+2026-10-31 04:27:33,611 - INFO - Episode 62 started
+2026-10-31 04:27:33,708 - INFO - Rollout 15 | Steps:  30720 | FPS:  8 | EpRewMean: 420.3 | EpLenMean: 512 | Entropy: 2.93 | KL: 0.029
+2026-10-31 04:28:42,059 - INFO - Episode 62 ended: steps=512, reward=419.01
+2026-10-31 04:28:42,710 - INFO - Episode 63 started
+2026-10-31 04:29:39,200 - INFO - Episode 63 ended: steps=512, reward=306.78
+2026-10-31 04:29:39,441 - INFO - Episode 64 started
+2026-10-31 04:30:35,642 - INFO - Episode 64 ended: steps=512, reward=482.89
+2026-10-31 04:30:35,990 - INFO - Episode 65 started
+2026-10-31 04:31:30,751 - INFO - Episode 65 ended: steps=512, reward=442.96
+2026-10-31 04:31:31,262 - INFO - Episode 66 started
+2026-10-31 04:31:31,346 - INFO - Rollout 16 | Steps:  32768 | FPS:  8 | EpRewMean: 419.9 | EpLenMean: 512 | Entropy: 2.90 | KL: 0.029
+2026-10-31 04:32:41,182 - INFO - Episode 66 ended: steps=512, reward=508.23
+2026-10-31 04:32:41,928 - INFO - Episode 67 started
+2026-10-31 04:33:41,314 - INFO - Episode 67 ended: steps=512, reward=433.49
+2026-10-31 04:33:41,562 - INFO - Episode 68 started
+2026-10-31 04:34:38,474 - INFO - Episode 68 ended: steps=512, reward=456.75
+2026-10-31 04:34:38,655 - INFO - Episode 69 started
+2026-10-31 04:35:31,540 - INFO - Episode 69 ended: steps=512, reward=479.47
+2026-10-31 04:35:31,745 - INFO - Episode 70 started
+2026-10-31 04:35:31,795 - INFO - Rollout 17 | Steps:  34816 | FPS:  8 | EpRewMean: 422.8 | EpLenMean: 512 | Entropy: 2.89 | KL: 0.026
+2026-10-31 04:36:38,170 - INFO - Episode 70 ended: steps=512, reward=360.40
+2026-10-31 04:36:38,890 - INFO - Episode 71 started
+2026-10-31 04:37:35,451 - INFO - Episode 71 ended: steps=512, reward=356.81
+2026-10-31 04:37:36,118 - INFO - Episode 72 started
+2026-10-31 04:38:30,424 - INFO - Episode 72 ended: steps=512, reward=530.07
+2026-10-31 04:38:30,640 - INFO - Episode 73 started
+2026-10-31 04:39:30,415 - INFO - Episode 73 ended: steps=512, reward=465.53
+2026-10-31 04:39:30,635 - INFO - Episode 74 started
+2026-10-31 04:39:30,718 - INFO - Rollout 18 | Steps:  36864 | FPS:  8 | EpRewMean: 423.1 | EpLenMean: 512 | Entropy: 2.87 | KL: 0.029
+2026-10-31 04:40:42,407 - INFO - Episode 74 ended: steps=512, reward=504.38
+2026-10-31 04:40:42,651 - INFO - Episode 75 started
+2026-10-31 04:41:37,502 - INFO - Episode 75 ended: steps=512, reward=343.34
+2026-10-31 04:41:38,057 - INFO - Episode 76 started
+2026-10-31 04:42:30,571 - INFO - Episode 76 ended: steps=512, reward=380.04
+2026-10-31 04:42:31,520 - INFO - Episode 77 started
+2026-10-31 04:43:30,359 - INFO - Episode 77 ended: steps=512, reward=415.78
+2026-10-31 04:43:30,557 - INFO - Episode 78 started
+2026-10-31 04:43:30,608 - INFO - Rollout 19 | Steps:  38912 | FPS:  8 | EpRewMean: 422.4 | EpLenMean: 512 | Entropy: 2.83 | KL: 0.031
+2026-10-31 04:44:40,114 - INFO - Episode 78 ended: steps=512, reward=370.90
+2026-10-31 04:44:40,367 - INFO - Episode 79 started
+2026-10-31 04:45:35,327 - INFO - Episode 79 ended: steps=512, reward=513.99
+2026-10-31 04:45:35,740 - INFO - Episode 80 started
+2026-10-31 04:46:28,330 - INFO - Episode 80 ended: steps=512, reward=475.57
+2026-10-31 04:46:28,567 - INFO - Episode 81 started
+2026-10-31 04:47:26,104 - INFO - Episode 81 ended: steps=512, reward=383.17
+2026-10-31 04:47:26,316 - INFO - Episode 82 started
+2026-10-31 04:47:26,373 - INFO - Rollout 20 | Steps:  40960 | FPS:  8 | EpRewMean: 423.1 | EpLenMean: 512 | Entropy: 2.81 | KL: 0.031
+2026-10-31 04:48:35,377 - INFO - Episode 82 ended: steps=512, reward=536.69
+2026-10-31 04:48:35,637 - INFO - Episode 83 started
+2026-10-31 04:49:29,645 - INFO - Episode 83 ended: steps=512, reward=463.46
+2026-10-31 04:49:30,169 - INFO - Episode 84 started
+2026-10-31 04:50:27,752 - INFO - Episode 84 ended: steps=512, reward=422.03
+2026-10-31 04:50:27,998 - INFO - Episode 85 started
+2026-10-31 04:51:24,378 - INFO - Episode 85 ended: steps=512, reward=493.35
+2026-10-31 04:51:24,585 - INFO - Episode 86 started
+2026-10-31 04:51:24,638 - INFO - Rollout 21 | Steps:  43008 | FPS:  8 | EpRewMean: 425.8 | EpLenMean: 512 | Entropy: 2.78 | KL: 0.027
+2026-10-31 04:52:32,495 - INFO - Episode 86 ended: steps=512, reward=338.81
+2026-10-31 04:52:32,787 - INFO - Episode 87 started
+2026-10-31 04:53:27,585 - INFO - Episode 87 ended: steps=512, reward=515.08
+2026-10-31 04:53:27,788 - INFO - Episode 88 started
+2026-10-31 04:54:24,709 - INFO - Episode 88 ended: steps=512, reward=442.65
+2026-10-31 04:54:24,942 - INFO - Episode 89 started
+2026-10-31 04:55:22,279 - INFO - Episode 89 ended: steps=512, reward=538.44
+2026-10-31 04:55:23,138 - INFO - Episode 90 started
+2026-10-31 04:55:23,232 - INFO - Rollout 22 | Steps:  45056 | FPS:  8 | EpRewMean: 427.3 | EpLenMean: 512 | Entropy: 2.76 | KL: 0.031
+2026-10-31 04:56:32,779 - INFO - Episode 90 ended: steps=512, reward=388.18
+2026-10-31 04:56:33,020 - INFO - Episode 91 started
+2026-10-31 04:57:27,731 - INFO - Episode 91 ended: steps=512, reward=503.42
+2026-10-31 04:57:27,991 - INFO - Episode 92 started
+2026-10-31 04:58:23,431 - INFO - Episode 92 ended: steps=512, reward=499.68
+2026-10-31 04:58:23,706 - INFO - Episode 93 started
+2026-10-31 04:59:18,461 - INFO - Episode 93 ended: steps=512, reward=396.61
+2026-10-31 04:59:18,654 - INFO - Episode 94 started
+2026-10-31 04:59:18,723 - INFO - Rollout 23 | Steps:  47104 | FPS:  8 | EpRewMean: 428.1 | EpLenMean: 512 | Entropy: 2.77 | KL: 0.029
+2026-10-31 05:00:29,914 - INFO - Episode 94 ended: steps=512, reward=454.65
+2026-10-31 05:00:30,173 - INFO - Episode 95 started
+2026-10-31 05:01:27,439 - INFO - Episode 95 ended: steps=512, reward=458.78
+2026-10-31 05:01:27,648 - INFO - Episode 96 started
+2026-10-31 05:02:22,726 - INFO - Episode 96 ended: steps=512, reward=490.08
+2026-10-31 05:02:23,106 - INFO - Episode 97 started
+2026-10-31 05:03:19,386 - INFO - Episode 97 ended: steps=512, reward=440.85
+2026-10-31 05:03:20,246 - INFO - Episode 98 started
+2026-10-31 05:03:20,332 - INFO - Rollout 24 | Steps:  49152 | FPS:  8 | EpRewMean: 429.5 | EpLenMean: 512 | Entropy: 2.75 | KL: 0.029
+2026-10-31 05:04:32,756 - INFO - Episode 98 ended: steps=512, reward=389.82
+2026-10-31 05:04:32,987 - INFO - Episode 99 started
+2026-10-31 05:05:27,116 - INFO - Episode 99 ended: steps=512, reward=428.06
+2026-10-31 05:05:27,483 - INFO - Episode 100 started
+2026-10-31 05:06:25,135 - INFO - Episode 100 ended: steps=512, reward=552.05
+2026-10-31 05:06:25,409 - INFO - Episode 101 started
+2026-10-31 05:07:20,094 - INFO - Episode 101 ended: steps=512, reward=389.54
+2026-10-31 05:07:20,302 - INFO - Episode 102 started
+2026-10-31 05:07:20,358 - INFO - Rollout 25 | Steps:  51200 | FPS:  8 | EpRewMean: 429.9 | EpLenMean: 512 | Entropy: 2.74 | KL: 0.034
+2026-10-31 05:08:30,468 - INFO - Episode 102 ended: steps=512, reward=375.76
+2026-10-31 05:08:30,816 - INFO - Episode 103 started
+2026-10-31 05:09:16,170 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-31 05:15:23,271 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-10-31 05:15:31,310 - INFO - Episode 103 ended: steps=512, reward=368.90
+2026-10-31 05:15:31,847 - INFO - Episode 104 started
+2026-10-31 05:16:24,151 - INFO - Episode 104 ended: steps=512, reward=445.19
+2026-10-31 05:16:24,595 - INFO - Episode 105 started
+2026-10-31 05:17:22,951 - INFO - Episode 105 ended: steps=512, reward=476.89
+2026-10-31 05:17:23,224 - INFO - Episode 106 started
+2026-10-31 05:17:23,317 - INFO - Rollout 26 | Steps:  53248 | FPS:  7 | EpRewMean: 428.6 | EpLenMean: 512 | Entropy: 2.74 | KL: 0.028
+2026-10-31 05:18:31,187 - INFO - Episode 106 ended: steps=512, reward=409.03
+2026-10-31 05:18:31,402 - INFO - Episode 107 started
+2026-10-31 05:19:26,849 - INFO - Episode 107 ended: steps=512, reward=381.42
+2026-10-31 05:19:27,220 - INFO - Episode 108 started
+2026-10-31 05:20:22,102 - INFO - Episode 108 ended: steps=512, reward=374.59
+2026-10-31 05:20:22,352 - INFO - Episode 109 started
+2026-10-31 05:21:17,862 - INFO - Episode 109 ended: steps=512, reward=485.77
+2026-10-31 05:21:18,094 - INFO - Episode 110 started
+2026-10-31 05:21:18,185 - INFO - Rollout 27 | Steps:  55296 | FPS:  8 | EpRewMean: 429.3 | EpLenMean: 512 | Entropy: 2.72 | KL: 0.030
+2026-10-31 05:22:23,081 - INFO - Episode 110 ended: steps=512, reward=397.73
+2026-10-31 05:22:23,345 - INFO - Episode 111 started
+2026-10-31 05:23:17,792 - INFO - Episode 111 ended: steps=512, reward=321.27
+2026-10-31 05:23:15,227 - INFO - Episode 112 started
+2026-10-31 05:24:10,122 - INFO - Episode 112 ended: steps=512, reward=405.67
+2026-10-31 05:24:10,368 - INFO - Episode 113 started
+2026-10-31 05:25:03,151 - INFO - Episode 113 ended: steps=512, reward=426.04
+2026-10-31 05:25:03,402 - INFO - Episode 114 started
+2026-10-31 05:25:03,501 - INFO - Rollout 28 | Steps:  57344 | FPS:  8 | EpRewMean: 430.5 | EpLenMean: 512 | Entropy: 2.69 | KL: 0.027
+2026-10-31 05:26:07,694 - INFO - Episode 114 ended: steps=512, reward=467.38
+2026-10-31 05:26:07,932 - INFO - Episode 115 started
+2026-10-31 05:27:01,731 - INFO - Episode 115 ended: steps=512, reward=433.74
+2026-10-31 05:27:02,089 - INFO - Episode 116 started
+2026-10-31 05:27:56,429 - INFO - Episode 116 ended: steps=512, reward=521.25
+2026-10-31 05:27:56,657 - INFO - Episode 117 started
+2026-10-31 05:28:48,094 - INFO - Episode 117 ended: steps=512, reward=440.43
+2026-10-31 05:28:48,314 - INFO - Episode 118 started
+2026-10-31 05:28:48,383 - INFO - Rollout 29 | Steps:  59392 | FPS:  8 | EpRewMean: 432.7 | EpLenMean: 512 | Entropy: 2.67 | KL: 0.030
+2026-10-31 05:29:57,736 - INFO - Episode 118 ended: steps=512, reward=441.48
+2026-10-31 05:29:57,982 - INFO - Episode 119 started
+2026-10-31 05:30:50,413 - INFO - Episode 119 ended: steps=512, reward=463.69
+2026-10-31 05:30:50,828 - INFO - Episode 120 started
+2026-10-31 05:31:42,616 - INFO - Episode 120 ended: steps=512, reward=461.52
+2026-10-31 05:31:42,853 - INFO - Episode 121 started
+2026-10-31 05:32:37,264 - INFO - Episode 121 ended: steps=512, reward=444.64
+2026-10-31 05:32:37,947 - INFO - Episode 122 started
+2026-10-31 05:32:38,119 - INFO - Rollout 30 | Steps:  61440 | FPS:  8 | EpRewMean: 433.6 | EpLenMean: 512 | Entropy: 2.64 | KL: 0.032
+2026-10-31 05:33:42,993 - INFO - Episode 122 ended: steps=512, reward=477.79
+2026-10-31 05:33:43,234 - INFO - Episode 123 started
+2026-10-31 05:34:35,359 - INFO - Episode 123 ended: steps=512, reward=314.91
+2026-10-31 05:34:35,850 - INFO - Episode 124 started
+2026-10-31 05:35:29,582 - INFO - Episode 124 ended: steps=512, reward=383.77
+2026-10-31 05:35:29,948 - INFO - Episode 125 started
+2026-10-31 05:36:23,181 - INFO - Episode 125 ended: steps=512, reward=425.79
+2026-10-31 05:36:23,391 - INFO - Episode 126 started
+2026-10-31 05:36:23,462 - INFO - Rollout 31 | Steps:  63488 | FPS:  8 | EpRewMean: 432.1 | EpLenMean: 512 | Entropy: 2.60 | KL: 0.029
+2026-10-31 05:37:30,347 - INFO - Episode 126 ended: steps=512, reward=448.07
+2026-10-31 05:37:27,782 - INFO - Episode 127 started
+2026-10-31 05:38:22,689 - INFO - Episode 127 ended: steps=512, reward=409.77
+2026-10-31 05:38:23,036 - INFO - Episode 128 started
+2026-10-31 05:39:18,057 - INFO - Episode 128 ended: steps=512, reward=428.68
+2026-10-31 05:39:18,300 - INFO - Episode 129 started
+2026-10-31 05:40:13,149 - INFO - Episode 129 ended: steps=512, reward=388.06
+2026-10-31 05:40:13,395 - INFO - Episode 130 started
+2026-10-31 05:40:13,465 - INFO - Rollout 32 | Steps:  65536 | FPS:  8 | EpRewMean: 429.8 | EpLenMean: 512 | Entropy: 2.58 | KL: 0.025
+2026-10-31 05:41:19,264 - INFO - Episode 130 ended: steps=512, reward=509.04
+2026-10-31 05:41:19,471 - INFO - Episode 131 started
+2026-10-31 05:42:13,212 - INFO - Episode 131 ended: steps=512, reward=416.67
+2026-10-31 05:42:13,445 - INFO - Episode 132 started
+2026-10-31 05:43:06,283 - INFO - Episode 132 ended: steps=512, reward=388.24
+2026-10-31 05:43:06,724 - INFO - Episode 133 started
+2026-10-31 05:44:00,064 - INFO - Episode 133 ended: steps=512, reward=517.43
+2026-10-31 05:44:00,294 - INFO - Episode 134 started
+2026-10-31 05:44:00,367 - INFO - Rollout 33 | Steps:  67584 | FPS:  8 | EpRewMean: 430.6 | EpLenMean: 512 | Entropy: 2.57 | KL: 0.036
+2026-10-31 05:45:07,617 - INFO - Episode 134 ended: steps=512, reward=434.85
+2026-10-31 05:45:07,875 - INFO - Episode 135 started
+2026-10-31 05:46:01,508 - INFO - Episode 135 ended: steps=512, reward=408.77
+2026-10-31 05:46:02,213 - INFO - Episode 136 started
+2026-10-31 05:46:54,179 - INFO - Episode 136 ended: steps=512, reward=430.12
+2026-10-31 05:46:54,455 - INFO - Episode 137 started
+2026-10-31 05:47:45,195 - INFO - Episode 137 ended: steps=512, reward=334.86
+2026-10-31 05:47:45,444 - INFO - Episode 138 started
+2026-10-31 05:47:45,540 - INFO - Rollout 34 | Steps:  69632 | FPS:  8 | EpRewMean: 431.2 | EpLenMean: 512 | Entropy: 2.55 | KL: 0.026
+2026-10-31 05:48:53,315 - INFO - Episode 138 ended: steps=512, reward=468.49
+2026-10-31 05:48:53,644 - INFO - Episode 139 started
+2026-10-31 05:49:48,189 - INFO - Episode 139 ended: steps=512, reward=388.59
+2026-10-31 05:49:48,609 - INFO - Episode 140 started
+2026-10-31 05:50:40,882 - INFO - Episode 140 ended: steps=512, reward=312.39
+2026-10-31 05:50:41,116 - INFO - Episode 141 started
+2026-10-31 05:51:36,821 - INFO - Episode 141 ended: steps=512, reward=389.23
+2026-10-31 05:51:37,135 - INFO - Episode 142 started
+2026-10-31 05:51:37,212 - INFO - Rollout 35 | Steps:  71680 | FPS:  8 | EpRewMean: 429.7 | EpLenMean: 512 | Entropy: 2.53 | KL: 0.031
+2026-10-31 05:52:41,469 - INFO - Episode 142 ended: steps=512, reward=461.67
+2026-10-31 05:52:41,798 - INFO - Episode 143 started
+2026-10-31 05:53:37,539 - INFO - Episode 143 ended: steps=512, reward=421.28
+2026-10-31 05:53:37,784 - INFO - Episode 144 started
+2026-10-31 05:54:30,836 - INFO - Episode 144 ended: steps=512, reward=468.40
+2026-10-31 05:54:31,072 - INFO - Episode 145 started
+2026-10-31 05:55:23,971 - INFO - Episode 145 ended: steps=512, reward=394.15
+2026-10-31 05:55:24,334 - INFO - Episode 146 started
+2026-10-31 05:55:24,390 - INFO - Rollout 36 | Steps:  73728 | FPS:  8 | EpRewMean: 428.2 | EpLenMean: 512 | Entropy: 2.51 | KL: 0.035
+2026-10-31 05:56:28,386 - INFO - Episode 146 ended: steps=512, reward=312.90
+2026-10-31 05:56:28,909 - INFO - Episode 147 started
+2026-10-31 05:57:20,855 - INFO - Episode 147 ended: steps=512, reward=438.65
+2026-10-31 05:57:21,096 - INFO - Episode 148 started
+2026-10-31 05:58:12,672 - INFO - Episode 148 ended: steps=512, reward=425.31
+2026-10-31 05:58:13,254 - INFO - Episode 149 started
+2026-10-31 05:59:05,099 - INFO - Episode 149 ended: steps=512, reward=381.12
+2026-10-31 05:59:05,741 - INFO - Episode 150 started
+2026-10-31 05:59:05,848 - INFO - Rollout 37 | Steps:  75776 | FPS:  8 | EpRewMean: 427.7 | EpLenMean: 512 | Entropy: 2.48 | KL: 0.030
+2026-10-31 06:00:14,493 - INFO - Episode 150 ended: steps=512, reward=339.75
+2026-10-31 06:00:14,745 - INFO - Episode 151 started
+2026-10-31 06:01:07,089 - INFO - Episode 151 ended: steps=512, reward=374.53
+2026-10-31 06:01:07,628 - INFO - Episode 152 started
+2026-10-31 06:01:59,046 - INFO - Episode 152 ended: steps=512, reward=490.29
+2026-10-31 06:01:59,294 - INFO - Episode 153 started
+2026-10-31 06:02:55,500 - INFO - Episode 153 ended: steps=512, reward=523.00
+2026-10-31 06:02:55,903 - INFO - Episode 154 started
+2026-10-31 06:02:55,957 - INFO - Rollout 38 | Steps:  77824 | FPS:  8 | EpRewMean: 430.2 | EpLenMean: 512 | Entropy: 2.48 | KL: 0.035
+2026-10-31 06:03:59,255 - INFO - Episode 154 ended: steps=512, reward=383.47
+2026-10-31 06:03:59,636 - INFO - Episode 155 started
+2026-10-31 06:04:53,652 - INFO - Episode 155 ended: steps=512, reward=340.68
+2026-10-31 06:04:54,015 - INFO - Episode 156 started
+2026-10-31 06:05:46,901 - INFO - Episode 156 ended: steps=512, reward=325.07
+2026-10-31 06:05:47,118 - INFO - Episode 157 started
+2026-10-31 06:06:40,826 - INFO - Episode 157 ended: steps=512, reward=410.95
+2026-10-31 06:06:41,071 - INFO - Episode 158 started
+2026-10-31 06:06:41,281 - INFO - Rollout 39 | Steps:  79872 | FPS:  8 | EpRewMean: 428.5 | EpLenMean: 512 | Entropy: 2.50 | KL: 0.036
+2026-10-31 06:07:46,518 - INFO - Episode 158 ended: steps=512, reward=225.65
+2026-10-31 06:07:47,336 - INFO - Episode 159 started
+2026-10-31 06:08:43,852 - INFO - Episode 159 ended: steps=512, reward=382.06
+2026-10-31 06:08:44,053 - INFO - Episode 160 started
+2026-10-31 06:09:38,987 - INFO - Episode 160 ended: steps=512, reward=399.79
+2026-10-31 06:09:39,977 - INFO - Episode 161 started
+2026-10-31 06:10:32,321 - INFO - Episode 161 ended: steps=512, reward=409.16
+2026-10-31 06:10:32,796 - INFO - Episode 162 started
+2026-10-31 06:10:32,873 - INFO - Rollout 40 | Steps:  81920 | FPS:  8 | EpRewMean: 425.0 | EpLenMean: 512 | Entropy: 2.50 | KL: 0.034
+2026-10-31 06:11:39,422 - INFO - Episode 162 ended: steps=512, reward=386.09
+2026-10-31 06:11:39,706 - INFO - Episode 163 started
+2026-10-31 06:12:31,741 - INFO - Episode 163 ended: steps=512, reward=351.62
+2026-10-31 06:12:31,936 - INFO - Episode 164 started
+2026-10-31 06:13:25,811 - INFO - Episode 164 ended: steps=512, reward=437.83
+2026-10-31 06:13:26,156 - INFO - Episode 165 started
+2026-10-31 06:14:17,643 - INFO - Episode 165 ended: steps=512, reward=331.56
+2026-10-31 06:14:17,859 - INFO - Episode 166 started
+2026-10-31 06:14:17,919 - INFO - Rollout 41 | Steps:  83968 | FPS:  8 | EpRewMean: 423.5 | EpLenMean: 512 | Entropy: 2.45 | KL: 0.043
+2026-10-31 06:15:22,427 - INFO - Episode 166 ended: steps=512, reward=261.21
+2026-10-31 06:15:22,627 - INFO - Episode 167 started
+2026-10-31 06:16:14,326 - INFO - Episode 167 ended: steps=512, reward=410.37
+2026-10-31 06:16:14,725 - INFO - Episode 168 started
+2026-10-31 06:17:07,822 - INFO - Episode 168 ended: steps=512, reward=392.74
+2026-10-31 06:17:08,234 - INFO - Episode 169 started
+2026-10-31 06:18:03,993 - INFO - Episode 169 ended: steps=512, reward=373.76
+2026-10-31 06:18:04,191 - INFO - Episode 170 started
+2026-10-31 06:18:04,263 - INFO - Rollout 42 | Steps:  86016 | FPS:  8 | EpRewMean: 419.1 | EpLenMean: 512 | Entropy: 2.41 | KL: 0.038
+2026-10-31 06:19:08,278 - INFO - Episode 170 ended: steps=512, reward=441.16
+2026-10-31 06:19:08,502 - INFO - Episode 171 started
+2026-10-31 06:20:03,769 - INFO - Episode 171 ended: steps=512, reward=319.40
+2026-10-31 06:20:04,461 - INFO - Episode 172 started
+2026-10-31 06:20:59,990 - INFO - Episode 172 ended: steps=512, reward=500.39
+2026-10-31 06:21:00,416 - INFO - Episode 173 started
+2026-10-31 06:21:53,153 - INFO - Episode 173 ended: steps=512, reward=285.50
+2026-10-31 06:21:53,362 - INFO - Episode 174 started
+2026-10-31 06:21:53,448 - INFO - Rollout 43 | Steps:  88064 | FPS:  8 | EpRewMean: 417.5 | EpLenMean: 512 | Entropy: 2.40 | KL: 0.036
+2026-10-31 06:22:59,293 - INFO - Episode 174 ended: steps=512, reward=405.22
+2026-10-31 06:22:59,571 - INFO - Episode 175 started
+2026-10-31 06:23:51,660 - INFO - Episode 175 ended: steps=512, reward=309.08
+2026-10-31 06:23:51,889 - INFO - Episode 176 started
+2026-10-31 06:24:46,001 - INFO - Episode 176 ended: steps=512, reward=417.14
+2026-10-31 06:24:46,200 - INFO - Episode 177 started
+2026-10-31 06:25:37,854 - INFO - Episode 177 ended: steps=512, reward=431.64
+2026-10-31 06:25:38,067 - INFO - Episode 178 started
+2026-10-31 06:25:38,124 - INFO - Rollout 44 | Steps:  90112 | FPS:  8 | EpRewMean: 416.7 | EpLenMean: 512 | Entropy: 2.42 | KL: 0.036
+2026-10-31 06:26:44,495 - INFO - Episode 178 ended: steps=512, reward=381.83
+2026-10-31 06:26:44,818 - INFO - Episode 179 started
+2026-10-31 06:27:35,939 - INFO - Episode 179 ended: steps=512, reward=431.59
+2026-10-31 06:27:36,788 - INFO - Episode 180 started
+2026-10-31 06:28:28,946 - INFO - Episode 180 ended: steps=512, reward=383.50
+2026-10-31 06:28:29,145 - INFO - Episode 181 started
+2026-10-31 06:29:25,996 - INFO - Episode 181 ended: steps=512, reward=386.72
+2026-10-31 06:29:26,222 - INFO - Episode 182 started
+2026-10-31 06:29:26,307 - INFO - Rollout 45 | Steps:  92160 | FPS:  8 | EpRewMean: 415.1 | EpLenMean: 512 | Entropy: 2.40 | KL: 0.032
+2026-10-31 06:30:35,813 - INFO - Episode 182 ended: steps=512, reward=388.74
+2026-10-31 06:30:35,998 - INFO - Episode 183 started
+2026-10-31 06:31:27,805 - INFO - Episode 183 ended: steps=512, reward=345.56
+2026-10-31 06:31:28,011 - INFO - Episode 184 started
+2026-10-31 06:32:22,211 - INFO - Episode 184 ended: steps=512, reward=345.32
+2026-10-31 06:32:22,730 - INFO - Episode 185 started
+2026-10-31 06:33:16,848 - INFO - Episode 185 ended: steps=512, reward=516.25
+2026-10-31 06:33:18,028 - INFO - Episode 186 started
+2026-10-31 06:33:18,104 - INFO - Rollout 46 | Steps:  94208 | FPS:  8 | EpRewMean: 411.9 | EpLenMean: 512 | Entropy: 2.37 | KL: 0.045
+2026-10-31 06:34:21,579 - INFO - Episode 186 ended: steps=512, reward=336.97
+2026-10-31 06:34:22,168 - INFO - Episode 187 started
+2026-10-31 06:35:13,751 - INFO - Episode 187 ended: steps=512, reward=454.51
+2026-10-31 06:35:14,020 - INFO - Episode 188 started
+2026-10-31 06:36:09,162 - INFO - Episode 188 ended: steps=512, reward=347.20
+2026-10-31 06:36:09,380 - INFO - Episode 189 started
+2026-10-31 06:37:00,568 - INFO - Episode 189 ended: steps=512, reward=433.66
+2026-10-31 06:37:01,070 - INFO - Episode 190 started
+2026-10-31 06:37:01,167 - INFO - Rollout 47 | Steps:  96256 | FPS:  8 | EpRewMean: 409.2 | EpLenMean: 512 | Entropy: 2.37 | KL: 0.038
+2026-10-31 06:38:06,452 - INFO - Episode 190 ended: steps=512, reward=428.40
+2026-10-31 06:38:06,718 - INFO - Episode 191 started
+2026-10-31 06:38:57,733 - INFO - Episode 191 ended: steps=512, reward=413.83
+2026-10-31 06:38:57,945 - INFO - Episode 192 started
+2026-10-31 06:39:57,716 - INFO - Episode 192 ended: steps=512, reward=483.69
+2026-10-31 06:39:57,992 - INFO - Episode 193 started
+2026-10-31 06:40:51,108 - INFO - Episode 193 ended: steps=512, reward=484.72
+2026-10-31 06:40:51,300 - INFO - Episode 194 started
+2026-10-31 06:40:51,351 - INFO - Rollout 48 | Steps:  98304 | FPS:  8 | EpRewMean: 409.5 | EpLenMean: 512 | Entropy: 2.34 | KL: 0.039
+2026-10-31 06:41:56,315 - INFO - Episode 194 ended: steps=512, reward=448.85
+2026-10-31 06:41:56,622 - INFO - Episode 195 started
+2026-10-31 06:42:48,759 - INFO - Episode 195 ended: steps=512, reward=502.79
+2026-10-31 06:42:49,103 - INFO - Episode 196 started
+2026-10-31 06:43:41,627 - INFO - Episode 196 ended: steps=512, reward=430.44
+2026-10-31 06:43:41,821 - INFO - Episode 197 started
+2026-10-31 06:44:34,347 - INFO - Episode 197 ended: steps=512, reward=411.32
+2026-10-31 06:44:34,533 - INFO - Episode 198 started
+2026-10-31 06:44:34,581 - INFO - Rollout 49 | Steps: 100352 | FPS:  8 | EpRewMean: 409.0 | EpLenMean: 512 | Entropy: 2.31 | KL: 0.037
+2026-10-31 06:44:48,140 - INFO - Phase 4 model successfully saved to: models/ppo_cs16_phase4_final
+2026-10-31 06:44:50,992 - INFO - Environment closed

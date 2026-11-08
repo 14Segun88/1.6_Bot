@@ -1,0 +1,40 @@
+2026-10-30 21:42:56,349 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase3_20261030_214256.log
+2026-10-30 21:42:56,349 - INFO - === Selected: Phase 3: Active 1v1 Combat ===
+2026-10-30 21:42:56,386 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-30 21:42:56,407 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-30 21:42:56,414 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-30 21:42:56,674 - INFO - Episode 1 started
+2026-10-30 21:42:56,675 - INFO - Resuming model from models/ppo_cs16_phase2_final.zip...
+2026-10-30 21:42:56,679 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase2.pkl
+2026-10-30 21:43:02,271 - INFO - Starting training run: PPO_CS16_Phase3_20261030_214256
+2026-10-30 21:43:02,271 - INFO - Target Timesteps: 150000
+2026-10-30 21:43:02,272 - INFO - Device: cuda
+2026-10-30 21:43:02,384 - INFO - Episode 2 started
+2026-10-30 21:43:22,878 - INFO - Episode 2 ended: steps=512, reward=19.94
+2026-10-30 21:43:23,025 - INFO - Episode 3 started
+2026-10-30 21:43:42,583 - INFO - Episode 3 ended: steps=512, reward=3.60
+2026-10-30 21:43:42,748 - INFO - Episode 4 started
+2026-10-30 21:44:06,494 - INFO - Episode 4 ended: steps=512, reward=-17.05
+2026-10-30 21:44:06,657 - INFO - Episode 5 started
+2026-10-30 21:44:12,941 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-30 21:45:30,261 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-10-30 21:45:44,880 - INFO - Episode 5 ended: steps=512, reward=-1.87
+2026-10-30 21:45:44,974 - INFO - Episode 6 started
+2026-10-30 21:45:45,064 - INFO - Rollout  1 | Steps:   2048 | FPS: 12 | EpRewMean:   1.2 | EpLenMean: 512 | Entropy: 1.85 | KL: 0.025
+2026-10-30 21:46:34,673 - INFO - Episode 6 ended: steps=512, reward=36.37
+2026-10-30 21:46:34,860 - INFO - Episode 7 started
+2026-10-30 21:47:00,271 - INFO - Episode 7 ended: steps=512, reward=3.04
+2026-10-30 21:47:00,370 - INFO - Episode 8 started
+2026-10-30 21:47:25,675 - INFO - Episode 8 ended: steps=512, reward=26.20
+2026-10-30 21:47:25,993 - INFO - Episode 9 started
+2026-10-30 21:47:50,608 - INFO - Episode 9 ended: steps=512, reward=54.57
+2026-10-30 21:47:50,747 - INFO - Episode 10 started
+2026-10-30 21:47:50,858 - INFO - Rollout  2 | Steps:   4096 | FPS: 13 | EpRewMean:  15.6 | EpLenMean: 512 | Entropy: 4.28 | KL: 2.578
+2026-10-30 21:48:40,789 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-30 21:48:47,253 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-10-30 21:48:47,444 - INFO - Episode 10 ended: steps=512, reward=4.74
+2026-10-30 21:48:47,768 - INFO - Episode 11 started
+2026-10-30 21:48:52,791 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-10-30 21:49:10,392 - INFO - Training manually interrupted by user
+2026-10-30 21:49:10,492 - INFO - Phase 3 model successfully saved to: models/ppo_cs16_phase3_final
+2026-10-30 21:49:10,682 - INFO - Environment closed

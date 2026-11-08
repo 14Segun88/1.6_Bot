@@ -1,0 +1,46 @@
+2026-11-04 01:20:53,372 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase8_20261104_012053.log
+2026-11-04 01:20:53,373 - INFO - === Selected: Phase 8: Live 1v5 Combat vs Expert Bots & Humans (360° Threat Priority, Headshot First, Unpatched Native Bot AI) ===
+2026-11-04 01:20:53,373 - INFO - Phase 8 auto-selected model from Phase 8 final model: models/ppo_cs16_phase8_final.zip
+2026-11-04 01:20:53,374 - INFO - Phase 8 auto-selected VecNormalize from Phase 8 final model: models/vecnormalize_phase8.pkl
+2026-11-04 01:20:53,384 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-11-04 01:20:53,400 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-04 01:20:53,405 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-04 01:20:53,520 - INFO - Episode 1 started
+2026-11-04 01:20:53,522 - INFO - Resuming model from models/ppo_cs16_phase8_final.zip...
+2026-11-04 01:20:53,524 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase8.pkl
+2026-11-04 01:20:53,525 - INFO - Clamping low variance in VecNormalize obs_rms['velocity'] (>= 0.25) for Phase 8 safety.
+2026-11-04 01:20:53,525 - INFO - Clamping low variance in VecNormalize obs_rms['origin'] (>= 0.25) for Phase 8 safety.
+2026-11-04 01:20:53,526 - INFO - Clamping low variance in VecNormalize obs_rms['health'] (>= 0.25) for Phase 8 safety.
+2026-11-04 01:20:53,526 - INFO - Clamping low variance in VecNormalize obs_rms['enemy_rel_angles'] (>= 0.5) for Phase 8 safety.
+2026-11-04 01:20:53,527 - INFO - Clamping low variance in VecNormalize obs_rms['view_angles'] (>= 0.5) for Phase 8 safety.
+2026-11-04 01:20:56,703 - INFO - Model learning rate configured to: 0.0001
+2026-11-04 01:20:56,703 - INFO - Starting training run: PPO_CS16_Phase8_20261104_012053
+2026-11-04 01:20:56,703 - INFO - Target Timesteps: 50000
+2026-11-04 01:20:56,703 - INFO - Device: cuda
+2026-11-04 01:20:56,704 - INFO - ============================================================
+2026-11-04 01:20:56,704 - INFO - >>> ПЕРЕКЛЮЧИТЕСЬ В ОКНО CS 1.6 (кликните внутрь игры)! Старт через 5 секунд...
+2026-11-04 01:20:56,704 - INFO - ============================================================
+2026-11-04 01:20:56,704 - INFO - Старт через 5 сек...
+2026-11-04 01:20:57,705 - INFO - Старт через 4 сек...
+2026-11-04 01:20:58,707 - INFO - Старт через 3 сек...
+2026-11-04 01:20:59,708 - INFO - Старт через 2 сек...
+2026-11-04 01:21:00,710 - INFO - Старт через 1 сек...
+2026-11-04 01:21:01,711 - INFO - >>> СТАРТ ТРЕНИРОВКИ! <<<
+2026-11-04 01:21:01,713 - INFO - Switched bridge curriculum mode to 'phase8_combat_1v5' (phase=8): {'status': 'ok', 'mode': 'phase8_combat_1v5'}
+2026-11-04 01:21:02,072 - INFO - Episode 2 started
+2026-11-04 01:21:17,255 - INFO - Episode 2 ended: steps=512, reward=3.50
+2026-11-04 01:21:17,259 - INFO - Episode 3 started
+2026-11-04 01:21:34,209 - INFO - Episode 3 ended: steps=512, reward=19.30
+2026-11-04 01:21:34,212 - INFO - Episode 4 started
+2026-11-04 01:21:48,340 - INFO - Episode 4 ended: steps=512, reward=35.70
+2026-11-04 01:21:48,344 - INFO - Episode 5 started
+2026-11-04 01:22:05,522 - INFO - Episode 5 ended: steps=512, reward=80.30
+2026-11-04 01:22:05,526 - INFO - Episode 6 started
+2026-11-04 01:22:05,578 - INFO - Rollout  1 | Steps:   2048 | FPS: 28 | EpRewMean:  34.7 | EpLenMean: 512 | Entropy: 1.85 | KL: 0.025
+2026-11-04 01:22:34,614 - INFO - Episode 6 ended: steps=512, reward=-45.89
+2026-11-04 01:22:34,618 - INFO - Episode 7 started
+2026-11-04 01:22:48,537 - INFO - Episode 7 ended: steps=512, reward=-8.07
+2026-11-04 01:22:48,541 - INFO - Episode 8 started
+2026-11-04 01:23:03,171 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-04 01:23:04,285 - INFO - Training manually interrupted by user
+2026-11-04 01:23:04,408 - INFO - Phase 8 model successfully saved to: models/ppo_cs16_phase8_final

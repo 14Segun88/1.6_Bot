@@ -1,0 +1,48 @@
+2026-11-04 02:20:37,732 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase8_20261104_022037.log
+2026-11-04 02:20:37,732 - INFO - === Selected: Phase 8: Live 1v5 Combat vs Expert Bots & Humans (360° Threat Priority, Headshot First, Unpatched Native Bot AI) ===
+2026-11-04 02:20:37,732 - INFO - Phase 8 auto-selected model from Phase 8 final model: models/ppo_cs16_phase8_final.zip
+2026-11-04 02:20:37,732 - INFO - Phase 8 auto-selected VecNormalize from Phase 8 final model: models/vecnormalize_phase8.pkl
+2026-11-04 02:20:37,744 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-11-04 02:20:37,757 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-11-04 02:20:37,761 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-11-04 02:20:38,260 - INFO - Episode 1 started
+2026-11-04 02:20:38,261 - INFO - Resuming model from models/ppo_cs16_phase8_final.zip...
+2026-11-04 02:20:38,262 - INFO - Loaded VecNormalize statistics from models/vecnormalize_phase8.pkl
+2026-11-04 02:20:38,262 - INFO - Clamping low variance in VecNormalize obs_rms['velocity'] (>= 0.25) for Phase 8 safety.
+2026-11-04 02:20:38,263 - INFO - Clamping low variance in VecNormalize obs_rms['origin'] (>= 0.25) for Phase 8 safety.
+2026-11-04 02:20:38,263 - INFO - Clamping low variance in VecNormalize obs_rms['health'] (>= 0.25) for Phase 8 safety.
+2026-11-04 02:20:38,263 - INFO - Clamping low variance in VecNormalize obs_rms['enemy_rel_angles'] (>= 0.5) for Phase 8 safety.
+2026-11-04 02:20:38,263 - INFO - Clamping low variance in VecNormalize obs_rms['view_angles'] (>= 0.5) for Phase 8 safety.
+2026-11-04 02:20:40,904 - INFO - Model learning rate configured to: 0.0001
+2026-11-04 02:20:40,905 - INFO - Starting training run: PPO_CS16_Phase8_20261104_022037
+2026-11-04 02:20:40,905 - INFO - Target Timesteps: 50000
+2026-11-04 02:20:40,905 - INFO - Device: cuda
+2026-11-04 02:20:40,905 - INFO - ============================================================
+2026-11-04 02:20:40,906 - INFO - >>> ПЕРЕКЛЮЧИТЕСЬ В ОКНО CS 1.6 (кликните внутрь игры)! Старт через 5 секунд...
+2026-11-04 02:20:40,906 - INFO - ============================================================
+2026-11-04 02:20:40,906 - INFO - Старт через 5 сек...
+2026-11-04 02:20:41,908 - INFO - Старт через 4 сек...
+2026-11-04 02:20:42,908 - INFO - Старт через 3 сек...
+2026-11-04 02:20:44,398 - INFO - Старт через 2 сек...
+2026-11-04 02:20:45,399 - INFO - Старт через 1 сек...
+2026-11-04 02:20:46,400 - INFO - >>> СТАРТ ТРЕНИРОВКИ! <<<
+2026-11-04 02:20:46,402 - INFO - Switched bridge curriculum mode to 'phase8_combat_1v5' (phase=8): {'status': 'ok', 'mode': 'phase8_combat_1v5'}
+2026-11-04 02:20:46,611 - INFO - Episode 2 started
+2026-11-04 02:21:05,590 - INFO - Episode 2 ended: steps=512, reward=582.25
+2026-11-04 02:21:05,595 - INFO - Episode 3 started
+2026-11-04 02:21:25,437 - INFO - Episode 3 ended: steps=512, reward=300.89
+2026-11-04 02:21:25,443 - INFO - Episode 4 started
+2026-11-04 02:21:44,766 - INFO - Episode 4 ended: steps=512, reward=251.73
+2026-11-04 02:21:44,770 - INFO - Episode 5 started
+2026-11-04 02:22:05,674 - INFO - Episode 5 ended: steps=512, reward=372.81
+2026-11-04 02:22:05,680 - INFO - Episode 6 started
+2026-11-04 02:22:05,753 - INFO - Rollout  1 | Steps:   2048 | FPS: 23 | EpRewMean: 376.9 | EpLenMean: 512 | Entropy: 1.85 | KL: 0.025
+2026-11-04 02:22:34,000 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...
+2026-11-04 02:22:41,133 - INFO - [СТАРТ] Обучение возобновлено! Управление передано нейросети.
+2026-11-04 02:23:29,737 - INFO - Episode 6 ended: steps=512, reward=522.18
+2026-11-04 02:23:29,747 - INFO - Episode 7 started
+2026-11-04 02:24:01,776 - INFO - Episode 7 ended: steps=512, reward=341.91
+2026-11-04 02:24:01,780 - INFO - Episode 8 started
+2026-11-04 02:24:23,971 - INFO - Episode 8 ended: steps=512, reward=242.25
+2026-11-04 02:24:23,980 - INFO - Episode 9 started
+2026-11-04 02:24:34,597 - INFO - [ПАУЗА] Бот заморожен. Вы можете свободно управлять игрой! Нажмите F9 на Windows для возобновления...

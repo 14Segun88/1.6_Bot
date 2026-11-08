@@ -1,0 +1,111 @@
+2026-10-29 09:48:24,240 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase1_20261029_094824.log
+2026-10-29 09:48:24,241 - INFO - === Selected: Phase 1: Aim & Trigger (Bullseye Aim & Fire calibration) ===
+2026-10-29 09:48:24,268 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-29 09:48:24,280 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-29 09:48:24,283 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-29 09:48:24,800 - INFO - Episode 1 started
+2026-10-29 09:48:28,404 - INFO - Starting training run: PPO_CS16_Phase1_20261029_094824
+2026-10-29 09:48:28,404 - INFO - Target Timesteps: 50000
+2026-10-29 09:48:28,404 - INFO - Device: cuda
+2026-10-29 09:48:28,909 - INFO - Episode 2 started
+2026-10-29 09:48:29,789 - INFO - Episode 2 ended: steps=1, reward=-5.60
+2026-10-29 09:48:30,286 - INFO - Episode 3 started
+2026-10-29 09:48:30,330 - INFO - Episode 3 ended: steps=1, reward=-5.60
+2026-10-29 09:48:30,827 - INFO - Episode 4 started
+2026-10-29 09:48:30,856 - INFO - Episode 4 ended: steps=1, reward=-5.80
+2026-10-29 09:48:31,356 - INFO - Episode 5 started
+2026-10-29 09:48:31,385 - INFO - Episode 5 ended: steps=1, reward=-5.60
+2026-10-29 09:48:31,885 - INFO - Episode 6 started
+2026-10-29 09:48:31,917 - INFO - Episode 6 ended: steps=1, reward=-5.60
+2026-10-29 09:48:32,416 - INFO - Episode 7 started
+2026-10-29 09:48:32,446 - INFO - Episode 7 ended: steps=1, reward=-5.60
+2026-10-29 09:48:32,945 - INFO - Episode 8 started
+2026-10-29 09:48:32,975 - INFO - Episode 8 ended: steps=1, reward=-5.60
+2026-10-29 09:48:33,478 - INFO - Episode 9 started
+2026-10-29 09:48:33,512 - INFO - Episode 9 ended: steps=1, reward=-5.60
+2026-10-29 09:48:34,012 - INFO - Episode 10 started
+2026-10-29 09:48:34,046 - INFO - Episode 10 ended: steps=1, reward=-5.60
+2026-10-29 09:48:34,547 - INFO - Episode 11 started
+2026-10-29 09:48:34,578 - INFO - Episode 11 ended: steps=1, reward=-5.80
+2026-10-29 09:48:35,080 - INFO - Episode 12 started
+2026-10-29 09:48:35,113 - INFO - Episode 12 ended: steps=1, reward=-5.80
+2026-10-29 09:48:35,614 - INFO - Episode 13 started
+2026-10-29 09:48:35,648 - INFO - Episode 13 ended: steps=1, reward=-5.60
+2026-10-29 09:48:36,150 - INFO - Episode 14 started
+2026-10-29 09:48:36,202 - INFO - Episode 14 ended: steps=1, reward=-5.80
+2026-10-29 09:48:36,704 - INFO - Episode 15 started
+2026-10-29 09:48:36,743 - INFO - Episode 15 ended: steps=1, reward=-5.80
+2026-10-29 09:48:37,246 - INFO - Episode 16 started
+2026-10-29 09:48:37,288 - INFO - Episode 16 ended: steps=1, reward=-5.80
+2026-10-29 09:48:37,792 - INFO - Episode 17 started
+2026-10-29 09:48:37,829 - INFO - Episode 17 ended: steps=1, reward=-5.60
+2026-10-29 09:48:38,333 - INFO - Episode 18 started
+2026-10-29 09:48:38,362 - INFO - Episode 18 ended: steps=1, reward=-5.80
+2026-10-29 09:48:38,864 - INFO - Episode 19 started
+2026-10-29 09:48:38,914 - INFO - Episode 19 ended: steps=1, reward=-5.60
+2026-10-29 09:48:39,417 - INFO - Episode 20 started
+2026-10-29 09:48:39,449 - INFO - Episode 20 ended: steps=1, reward=-5.80
+2026-10-29 09:48:39,954 - INFO - Episode 21 started
+2026-10-29 09:48:39,987 - INFO - Episode 21 ended: steps=1, reward=-5.60
+2026-10-29 09:48:40,497 - INFO - Episode 22 started
+2026-10-29 09:48:40,575 - INFO - Episode 22 ended: steps=1, reward=-5.60
+2026-10-29 09:48:41,079 - INFO - Episode 23 started
+2026-10-29 09:48:41,110 - INFO - Episode 23 ended: steps=1, reward=-5.60
+2026-10-29 09:48:41,614 - INFO - Episode 24 started
+2026-10-29 09:48:41,650 - INFO - Episode 24 ended: steps=1, reward=-5.80
+2026-10-29 09:48:42,154 - INFO - Episode 25 started
+2026-10-29 09:48:42,206 - INFO - Episode 25 ended: steps=1, reward=-5.60
+2026-10-29 09:48:42,711 - INFO - Episode 26 started
+2026-10-29 09:48:42,758 - INFO - Episode 26 ended: steps=1, reward=-5.80
+2026-10-29 09:48:43,266 - INFO - Episode 27 started
+2026-10-29 09:48:43,313 - INFO - Episode 27 ended: steps=1, reward=-5.60
+2026-10-29 09:48:43,820 - INFO - Episode 28 started
+2026-10-29 09:48:43,865 - INFO - Episode 28 ended: steps=1, reward=-5.60
+2026-10-29 09:48:44,371 - INFO - Episode 29 started
+2026-10-29 09:48:44,409 - INFO - Episode 29 ended: steps=1, reward=-5.60
+2026-10-29 09:48:44,915 - INFO - Episode 30 started
+2026-10-29 09:48:44,961 - INFO - Episode 30 ended: steps=1, reward=-5.80
+2026-10-29 09:48:45,467 - INFO - Episode 31 started
+2026-10-29 09:48:45,502 - INFO - Episode 31 ended: steps=1, reward=-5.60
+2026-10-29 09:48:46,009 - INFO - Episode 32 started
+2026-10-29 09:48:46,052 - INFO - Episode 32 ended: steps=1, reward=-5.60
+2026-10-29 09:48:46,561 - INFO - Episode 33 started
+2026-10-29 09:48:46,603 - INFO - Episode 33 ended: steps=1, reward=-5.80
+2026-10-29 09:48:47,131 - INFO - Episode 34 started
+2026-10-29 09:48:47,230 - INFO - Episode 34 ended: steps=1, reward=-5.80
+2026-10-29 09:48:47,746 - INFO - Episode 35 started
+2026-10-29 09:48:47,797 - INFO - Episode 35 ended: steps=1, reward=-5.60
+2026-10-29 09:48:48,313 - INFO - Episode 36 started
+2026-10-29 09:48:48,351 - INFO - Episode 36 ended: steps=1, reward=-5.60
+2026-10-29 09:48:48,861 - INFO - Episode 37 started
+2026-10-29 09:48:48,903 - INFO - Episode 37 ended: steps=1, reward=-5.60
+2026-10-29 09:48:49,412 - INFO - Episode 38 started
+2026-10-29 09:48:49,457 - INFO - Episode 38 ended: steps=1, reward=-5.60
+2026-10-29 09:48:49,965 - INFO - Episode 39 started
+2026-10-29 09:48:50,006 - INFO - Episode 39 ended: steps=1, reward=-5.60
+2026-10-29 09:48:50,515 - INFO - Episode 40 started
+2026-10-29 09:48:50,550 - INFO - Episode 40 ended: steps=1, reward=-5.80
+2026-10-29 09:48:51,057 - INFO - Episode 41 started
+2026-10-29 09:48:51,093 - INFO - Episode 41 ended: steps=1, reward=-5.60
+2026-10-29 09:48:51,600 - INFO - Episode 42 started
+2026-10-29 09:48:51,638 - INFO - Episode 42 ended: steps=1, reward=-5.60
+2026-10-29 09:48:52,147 - INFO - Episode 43 started
+2026-10-29 09:48:52,179 - INFO - Episode 43 ended: steps=1, reward=-5.80
+2026-10-29 09:48:52,686 - INFO - Episode 44 started
+2026-10-29 09:48:52,718 - INFO - Episode 44 ended: steps=1, reward=-5.60
+2026-10-29 09:48:53,225 - INFO - Episode 45 started
+2026-10-29 09:48:53,263 - INFO - Episode 45 ended: steps=1, reward=-5.80
+2026-10-29 09:48:53,771 - INFO - Episode 46 started
+2026-10-29 09:48:53,801 - INFO - Episode 46 ended: steps=1, reward=-5.80
+2026-10-29 09:48:54,313 - INFO - Episode 47 started
+2026-10-29 09:48:54,353 - INFO - Episode 47 ended: steps=1, reward=-5.60
+2026-10-29 09:48:54,861 - INFO - Episode 48 started
+2026-10-29 09:48:54,904 - INFO - Episode 48 ended: steps=1, reward=-5.80
+2026-10-29 09:48:55,414 - INFO - Episode 49 started
+2026-10-29 09:48:55,448 - INFO - Episode 49 ended: steps=1, reward=-5.60
+2026-10-29 09:48:55,958 - INFO - Episode 50 started
+2026-10-29 09:48:55,988 - INFO - Episode 50 ended: steps=1, reward=-5.60
+2026-10-29 09:49:00,994 - ERROR - Timeout waiting for bridge server response
+2026-10-29 09:49:00,995 - ERROR - Training error: Bridge server timeout
+2026-10-29 09:49:01,029 - INFO - Phase 1 model successfully saved to: models/ppo_cs16_phase1_final
+2026-10-29 09:49:01,479 - INFO - Environment closed

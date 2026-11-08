@@ -1,0 +1,36 @@
+
+============================================================
+EVALUATION RESULTS
+============================================================
+Model:             models/ppo_cs16_phase8_final.zip
+Aim Control Mode:  PURE AI (100% Neural Network)
+Episodes:          10
+Reward (mean±std): -21.00 ± 55.55
+Reward range:      [-129.38, 105.83]
+Length (mean±std): 512.0 ± 0.0
+Kills (total):     1 (mean: 0.10)
+Hits (total):      9 (mean: 0.90)
+Hits / Kills:      9.00
+Deaths (total):    0 (mean: 0.00)
+K/D Ratio:         1.00
+------------------------------------------------------------
+Action Distribution:
+  move_forward   : mean=-0.160, std=0.241
+  move_strafe    : mean=+0.648, std=0.617
+  delta_yaw      : mean=+0.215, std=0.534
+  delta_pitch    : mean=+0.009, std=0.506
+  fire_rate      : 0.523
+------------------------------------------------------------
+Firing Mode Choice (3 Mechanics: 1-Tap | 2-Tap Standing | 2-Tap+Crouch-Spray):
+  long  > 550u [decisions]: 1-tap   0 ( 0.0%) | 2-tap   0 ( 0.0%) | 2tap+crouch-spray  14 (100.0%)
+  long  > 550u [ticks/hit]: 1-tap   0 (hits  0) | 2-tap   0 (hits  0) | 2tap+crouch-spray 102 (hits  0)
+  close <= 550u [decisions]: 1-tap   0 ( 0.0%) | 2-tap   0 ( 0.0%) | 2tap+crouch-spray  39 (100.0%)
+  close <= 550u [ticks/hit]: 1-tap   0 (hits  0) | 2-tap   0 (hits  0) | 2tap+crouch-spray 311 (hits  8)
+  crouch-spray (+duck held):  255 ticks (hits   5)
+------------------------------------------------------------
+Gameplay Metrics:
+  enemy_visible_rate       : 0.104
+  avg_enemy_distance       : 0.838
+  avg_health               : 1.000
+  min_health               : 1.000
+============================================================

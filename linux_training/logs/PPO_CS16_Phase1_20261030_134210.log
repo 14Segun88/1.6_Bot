@@ -1,0 +1,76 @@
+2026-10-30 13:42:10,472 - INFO - Writing detailed run log to: logs/PPO_CS16_Phase1_20261030_134210.log
+2026-10-30 13:42:10,472 - INFO - === Selected: Phase 1: Aim & Trigger (Bullseye Aim & Fire calibration) ===
+2026-10-30 13:42:10,487 - INFO - WSL2 detected: auto-selected Windows host IP 172.31.128.1
+2026-10-30 13:42:10,501 - INFO - Connecting to bridge server at tcp://172.31.128.1:5555...
+2026-10-30 13:42:10,507 - INFO - Connected and verified communication with bridge server at 172.31.128.1:5555
+2026-10-30 13:42:10,569 - INFO - Episode 1 started
+2026-10-30 13:42:13,569 - INFO - Starting training run: PPO_CS16_Phase1_20261030_134210
+2026-10-30 13:42:13,569 - INFO - Target Timesteps: 50000
+2026-10-30 13:42:13,569 - INFO - Device: cuda
+2026-10-30 13:42:13,625 - INFO - Episode 2 started
+2026-10-30 13:42:14,630 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:18,244 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=101). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:21,854 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=201). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:24,282 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=301). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:28,190 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=401). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:31,961 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=501). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:32,393 - INFO - Episode 2 ended: steps=512, reward=0.00
+2026-10-30 13:42:32,452 - INFO - Episode 3 started
+2026-10-30 13:42:35,856 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=601). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:39,728 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=701). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:43,358 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=801). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:47,055 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=901). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:51,004 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1001). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:51,891 - INFO - Episode 3 ended: steps=512, reward=0.00
+2026-10-30 13:42:51,955 - INFO - Episode 4 started
+2026-10-30 13:42:54,712 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1101). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:42:57,187 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1201). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:01,062 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1301). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:04,824 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1401). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:08,577 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1501). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:09,853 - INFO - Episode 4 ended: steps=512, reward=0.00
+2026-10-30 13:43:09,913 - INFO - Episode 5 started
+2026-10-30 13:43:12,322 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1601). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:15,928 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1701). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:19,704 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1801). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:23,615 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=1901). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:25,937 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2001). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:27,768 - INFO - Episode 5 ended: steps=512, reward=0.00
+2026-10-30 13:43:27,826 - INFO - Episode 6 started
+2026-10-30 13:43:27,896 - INFO - Rollout  1 | Steps:   2048 | FPS: 26 | EpRewMean:   0.0 | EpLenMean: 512 | Entropy: 1.85 | KL: 0.025
+2026-10-30 13:43:41,871 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2101). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:45,762 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2201). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:49,584 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2301). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:53,338 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2401). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:57,855 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2501). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:43:59,229 - INFO - Episode 6 ended: steps=512, reward=0.00
+2026-10-30 13:43:59,288 - INFO - Episode 7 started
+2026-10-30 13:44:01,081 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2601). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:05,382 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2701). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:09,744 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2801). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:13,863 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=2901). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:17,702 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3001). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:20,475 - INFO - Episode 7 ended: steps=512, reward=0.00
+2026-10-30 13:44:20,534 - INFO - Episode 8 started
+2026-10-30 13:44:21,881 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3101). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:25,835 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3201). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:28,331 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3301). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:32,212 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3401). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:36,033 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3501). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:39,079 - INFO - Episode 8 ended: steps=512, reward=0.00
+2026-10-30 13:44:39,137 - INFO - Episode 9 started
+2026-10-30 13:44:39,788 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3601). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:43,588 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3701). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:47,479 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3801). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:51,321 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=3901). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:55,092 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=4001). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:44:58,870 - INFO - Episode 9 ended: steps=512, reward=0.00
+2026-10-30 13:44:58,933 - INFO - Episode 10 started
+2026-10-30 13:44:58,997 - INFO - Rollout  2 | Steps:   4096 | FPS: 24 | EpRewMean:   0.0 | EpLenMean: 512 | Entropy: 7.10 | KL: 0.002
+2026-10-30 13:45:08,114 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=4101). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:45:12,018 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=4201). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:45:16,350 - WARNING - [WARN] Bridge server returning invalid/zero observations (count=4301). Make sure CS 1.6 is loaded into aim_ai_sandbox match!
+2026-10-30 13:45:22,601 - ERROR - Timeout waiting for bridge server response
+2026-10-30 13:45:22,601 - ERROR - Training error: Bridge server timeout
+2026-10-30 13:45:22,651 - INFO - Phase 1 model successfully saved to: models/ppo_cs16_phase1_final
+2026-10-30 13:45:23,183 - INFO - Environment closed

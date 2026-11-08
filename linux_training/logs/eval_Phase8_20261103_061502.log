@@ -1,0 +1,29 @@
+
+============================================================
+EVALUATION RESULTS
+============================================================
+Model:             models/ppo_cs16_phase7_final.zip
+Aim Control Mode:  PURE AI (100% Neural Network)
+Episodes:          10
+Reward (mean±std): 13.36 ± 39.54
+Reward range:      [0.14, 131.97]
+Length (mean±std): 1.1 ± 0.3
+Kills (total):     0 (mean: 0.00)
+Hits (total):      1 (mean: 0.10)
+Hits / Kills:      1.00
+Deaths (total):    9 (mean: 0.90)
+K/D Ratio:         0.00
+------------------------------------------------------------
+Action Distribution:
+  move_forward   : mean=-0.096, std=0.251
+  move_strafe    : mean=+0.817, std=0.328
+  delta_yaw      : mean=+0.942, std=0.077
+  delta_pitch    : mean=-0.287, std=0.543
+  fire_rate      : 0.182
+------------------------------------------------------------
+Gameplay Metrics:
+  enemy_visible_rate       : 0.273
+  avg_enemy_distance       : 0.765
+  avg_health               : 1.000
+  min_health               : 1.000
+============================================================
