@@ -473,25 +473,37 @@ class BridgeServer:
                 self._stuck_ticks = 0
 
             if in_patrol_phase:
-                # Smoothly align camera yaw down the active corridor (POSITIVE yaw_err turns toward target_yaw!)
-                target_yaw = leg_yaw + 0.06 * float(np.sin(time.time() * 2.0))
+                # Phase 10: Tactical PUSH / DEF Navigation + Diagonal Pie-Slicing ("Нарезка углов" без танковых остановок!)
+                tactical_mode = str(self.current_observation.get("tactical_mode", "PUSH_PILLARS"))
+                nn_fwd = float(action[0])
+                nn_str = float(action[1])
+                if tactical_mode == "DEF_POCKET" and nn_fwd > 0.28:
+                    tactical_mode = "PUSH_PILLARS"
+
+                # Smoothly pre-aim camera onto the threat corner (leg_yaw / threat_yaw) with natural micro-scan
+                scan_amp = 0.03 if tactical_mode == "DEF_POCKET" else 0.05
+                target_yaw = leg_yaw + scan_amp * float(np.sin(time.time() * 2.4))
                 yaw_err = (target_yaw - cur_yaw + np.pi) % (2.0 * np.pi) - np.pi
-                action_dict["delta_yaw"] = float(np.clip(yaw_err * 2.2, -0.90, 0.90))
+                action_dict["delta_yaw"] = float(np.clip(yaw_err * 2.35, -0.95, 0.95))
                 pitch_err = 0.0 - cur_pitch
                 action_dict["delta_pitch"] = float(np.clip(pitch_err * 2.0, -0.35, 0.35))
 
-                # Turn to face down the corridor FIRST (|yaw_err| <= 0.38 rad ~ 22 deg) before walking forward,
-                # so the AI NEVER walks backward ('S') with its back to the bots!
-                if abs(yaw_err) > 0.38:
-                    action_dict["move_forward"] = 0.0
-                    action_dict["move_strafe"] = 0.0
+                # NEVER stop legs like a tank when turning!
+                # Project world velocity toward tactical waypoint onto current camera frame (allows simultaneous diagonal strafe + turn!)
+                to_wx, to_wy = wp_x - px, wp_y - py
+                dist_wp = float(np.hypot(to_wx, to_wy))
+                if tactical_mode == "DEF_POCKET" and dist_wp < 28.0:
+                    action_dict["move_forward"] = float(np.clip(0.35 * nn_fwd, -0.45, 0.45))
+                    action_dict["move_strafe"] = float(np.clip(nn_str if abs(nn_str) > 0.22 else 0.70 * float(np.sin(time.time() * 4.8)), -1.0, 1.0))
                 else:
-                    to_wx, to_wy = wp_x - px, wp_y - py
-                    norm_w = max(1.0, float(np.hypot(to_wx, to_wy)))
-                    vx = 0.85 * (to_wx / norm_w)
-                    vy = 0.85 * (to_wy / norm_w)
-                    action_dict["move_forward"] = float(np.clip(vx * cos_y + vy * sin_y, 0.0, 1.0))
-                    action_dict["move_strafe"] = float(np.clip(-vx * sin_y + vy * cos_y, -1.0, 1.0))
+                    norm_w = max(1.0, dist_wp)
+                    move_spd = 0.88 if "PUSH" in tactical_mode else 0.80
+                    vx = move_spd * (to_wx / norm_w)
+                    vy = move_spd * (to_wy / norm_w)
+                    proj_fwd = vx * cos_y + vy * sin_y
+                    proj_str = -vx * sin_y + vy * cos_y
+                    action_dict["move_forward"] = float(np.clip(proj_fwd, -0.65, 1.0))
+                    action_dict["move_strafe"] = float(np.clip(proj_str + 0.25 * nn_str, -1.0, 1.0))
             elif cmd_mag < 1e-4:
                 action_dict["move_forward"] = 0.0
                 action_dict["move_strafe"] = 0.0
@@ -576,11 +588,11 @@ class BridgeServer:
                     action_dict["move_forward"] = float(np.clip(vx * cos_y + vy * sin_y, -1.0, 1.0))
                     action_dict["move_strafe"] = float(np.clip(-vx * sin_y + vy * cos_y, -1.0, 1.0))
 
-            # In Phase 8 (real_combat_mode), allow full 360-degree camera rotation when enemy_visible or in_cover_combat is True
-            # so the AI can hold pre-aim on corners behind cover and snap 180° onto flankers!
+            # In Phase 8+ (real_combat_mode), always allow full 360-degree camera rotation so diagonal pie-slicing
+            # across spawn / mid (Магазин) and 180° turns onto flankers are never clamped!
             is_real_combat = bool(getattr(self.memory_reader, "real_combat_mode", False))
             yaw_diff = (cur_yaw - leg_yaw + np.pi) % (2.0 * np.pi) - np.pi
-            max_corridor_yaw = (3.15 if is_real_combat else 1.88) if (enemy_visible or in_cover_combat) else 1.30
+            max_corridor_yaw = 3.15 if is_real_combat else (1.88 if (enemy_visible or in_cover_combat) else 1.30)
             if abs(yaw_diff) > max_corridor_yaw and yaw_diff * action_dict["delta_yaw"] > 0.0:
                 action_dict["delta_yaw"] = -0.55 * float(np.sign(yaw_diff))
 
@@ -589,6 +601,7 @@ class BridgeServer:
             if loop_leg != prev_log_leg or (self.episode_step % 40 == 0):
                 self._last_logged_leg = loop_leg
                 leg_names = {0: "Corridor1(+Y)", 1: "EnemySpawn(+X)", 2: "Corridor2(-Y)", 3: "OwnSpawn(-X)"}
+                tactic_str = str(self.current_observation.get("tactical_mode", "PUSH_PILLARS"))
                 rel_pre = self.current_observation.get("enemy", {}).get("relative_angles", [0.0, 0.0])
                 lap_el = time.time() - getattr(self, "lap_start_time", time.time())
                 lap_rem = max(0.0, 115.0 - lap_el)
@@ -597,7 +610,7 @@ class BridgeServer:
                 lap_total_corners = len(getattr(self.memory_reader, "AMBUSH_CORNERS", ())) or 16
                 logger.info(
                     f"[LOOP TELEMETRY] Timer={t_mm}:{t_ss:02d}/1:55 | Targets={lap_k}/{lap_total_corners} | "
-                    f"leg={loop_leg}({leg_names.get(loop_leg, '?')}) mode={fire_mode} "
+                    f"leg={loop_leg}({leg_names.get(loop_leg, '?')}) tactic={tactic_str} mode={fire_mode} "
                     f"pos=({px:.0f},{py:.0f}) yaw={np.degrees(cur_yaw):.1f}° leg_yaw={np.degrees(leg_yaw):.1f}° | "
                     f"enemy_vis={enemy_visible} rel_yaw={np.degrees(float(rel_pre[0])):+.1f}° dist={dist_u:.0f}u"
                 )

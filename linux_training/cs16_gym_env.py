@@ -200,6 +200,7 @@ class CS16GymEnv(gym.Env):
         lidar_info = obs_dict.get('lidar', [1.0, 1.0, 1.0])
 
         raw_origin = to_vec(self_info.get('origin', [0.0, 0.0, 0.0]), 3)
+        self.last_world_origin = to_vec(self_info.get('world_origin', raw_origin), 3)
         norm_origin = np.clip(raw_origin / 4096.0, -1.0, 1.0)
 
         return {
@@ -279,9 +280,9 @@ class CS16GymEnv(gym.Env):
                 action[0] = 0.0
                 action[1] = 0.0
         elif self.phase >= 8:
-            # Phase 8 (Live Combat vs Native CS 1.6 Bots): NEVER zero out WASD in the env wrapper!
-            # The agent retains full lateral strafe mobility between bursts, and bridge_server.py
-            # executes hardware counter-strafing on the exact ticks of active firing.
+            # Phase 8-10 (Live Combat & Tactical PUSH/DEF vs Native CS 1.6 Bots):
+            # Scale combat W/S by 0.35 so shots_while_moving(>0.30) stays near 0% during duels (while bridge_server.py
+            # drives full-speed 0.95 diagonal pie-slicing during PUSH/DEF navigation when no enemy is in LOS).
             action[0] = float(action[0]) * 0.35
         
         # Send step request

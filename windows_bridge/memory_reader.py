@@ -207,9 +207,9 @@ class MemoryReader:
         jumped = prev_xy is not None and math.hypot(px - prev_xy[0], py - prev_xy[1]) > 220.0
         if leg is None or jumped:
             if py < 310.0:
-                leg = 0 if px <= -1140.0 else 3
+                leg = 0 if px <= -1020.0 else (2 if px >= -520.0 else 3)
             elif py > 1210.0:
-                leg = 2 if px >= -380.0 else 1
+                leg = 2 if px >= -520.0 else (0 if px <= -1020.0 else 1)
             else:
                 leg = 0 if px < -770.0 else 2
         else:
@@ -217,17 +217,17 @@ class MemoryReader:
                 leg = 1
             elif leg == 0 and py <= 195.0 and getattr(self, "_patrol_dir_sign", 1) < 0:
                 leg = 3
-            elif leg == 1 and px >= -320.0:
+            elif leg == 1 and px >= -500.0:
                 leg = 2
-            elif leg == 1 and px <= -1220.0 and getattr(self, "_patrol_dir_sign", 1) < 0:
+            elif leg == 1 and px <= -1040.0 and getattr(self, "_patrol_dir_sign", 1) < 0:
                 leg = 0
             elif leg == 2 and py <= 195.0:
                 leg = 3
             elif leg == 2 and py >= 1330.0 and getattr(self, "_patrol_dir_sign", 1) < 0:
                 leg = 1
-            elif leg == 3 and px <= -1220.0:
+            elif leg == 3 and px <= -1040.0:
                 leg = 0
-            elif leg == 3 and px >= -320.0 and getattr(self, "_patrol_dir_sign", 1) < 0:
+            elif leg == 3 and px >= -500.0 and getattr(self, "_patrol_dir_sign", 1) < 0:
                 leg = 2
             # Re-sync if player spawned or moved outside the current leg's corridor
             elif leg == 0 and px > -980.0:
@@ -1919,6 +1919,8 @@ class MemoryReader:
         # whip around 180° if flanked from behind!
         max_vis_yaw_deg = 180.0 if real_combat else 135.0
         in_cover_combat = False
+        tactical_mode = getattr(self, "_last_tactical_mode", "PUSH_PILLARS")
+        threat_yaw = leg_yaw
         if closest_enemy is not None and abs(rel_yaw) <= math.radians(max_vis_yaw_deg) and abs(rel_pitch) <= math.radians(40.0):
             visible = 1.0
             self._last_seen_enemy_t = now
@@ -1950,32 +1952,140 @@ class MemoryReader:
                     rel_yaw = (tyaw_c - local.view_angles.y + math.pi) % (2.0 * math.pi) - math.pi
                     rel_pitch = tpitch_c - local.view_angles.x
 
-            # In real_combat_mode, when no enemy has direct LOS yet, hunt the nearest alive enemy along the shortest
-            # perimeter direction (clockwise vs counter-clockwise around the 4-leg loop) so the enemy bot can NEVER
-            # walk in circles ahead of our AI!
-            if real_combat and enemies:
-                nearest_any = min(enemies, key=lambda e: local.origin.distance_to(e.origin))
-                if not in_cover_combat:
-                    min_dist = local.origin.distance_to(nearest_any.origin)
-                ex_n, ey_n = nearest_any.origin.x, nearest_any.origin.y
-                s_self = self._perimeter_param(px, py)
-                s_enemy = self._perimeter_param(ex_n, ey_n)
-                cw_dist = (s_enemy - s_self) % 4380.0
-                ccw_dist = (s_self - s_enemy) % 4380.0
-                # Use 120u hysteresis so direction never rapidly oscillates when enemy is at the antipode (~2190u)
-                prev_dir = int(getattr(self, "_patrol_dir_sign", 1))
-                if cw_dist + 120.0 < ccw_dist:
-                    dir_sign = 1
-                elif ccw_dist + 120.0 < cw_dist:
-                    dir_sign = -1
+            # Phase 10: Autonomous PUSH / DEF Tactical Intelligence & Diagonal Spawn Awareness on $2000$
+            tactical_mode = "PUSH_PILLARS"
+            threat_yaw = leg_yaw
+            if real_combat:
+                prev_t_xy = getattr(self, "_prev_tactical_xy", None)
+                self._prev_tactical_xy = (px, py)
+                respawned_now = (
+                    prev_t_xy is None
+                    or math.hypot(px - prev_t_xy[0], py - prev_t_xy[1]) > 240.0
+                    or (now - getattr(self, "_round_spawn_t", 0.0) > 28.0 and (py < 310.0 or py > 1210.0))
+                )
+                if respawned_now:
+                    self._round_spawn_t = now
+                    self._spawn_is_bottom = py < 763.0
+                    self._spawn_is_left = px < -770.0
+                    self._round_id = getattr(self, "_round_id", 0) + 1
+                    self._initial_tactic = ("DEF_POCKET", "PUSH_PILLARS", "DEF_POCKET", "PUSH_FLANK_OPP")[self._round_id % 4]
+
+                prev_edist = float(getattr(self, "_prev_any_enemy_dist", min_dist))
+                prev_edist_t = float(getattr(self, "_prev_any_enemy_t", now - 0.04))
+                dt_e = max(0.02, min(0.5, now - prev_edist_t))
+                if enemies:
+                    nearest_any = min(enemies, key=lambda e: local.origin.distance_to(e.origin))
+                    cur_any_dist = local.origin.distance_to(nearest_any.origin)
+                    if not in_cover_combat:
+                        min_dist = cur_any_dist
+                    ex_n, ey_n = nearest_any.origin.x, nearest_any.origin.y
                 else:
-                    dir_sign = prev_dir
-                self._patrol_dir_sign = dir_sign
-                wp_x, wp_y, leg_yaw = self.get_leg_waypoint(cur_leg, px, py, dir_sign=dir_sign)
+                    cur_any_dist = min_dist
+                    ex_n = -320.0 if getattr(self, "_spawn_is_left", True) else -1220.0
+                    ey_n = 1365.0 if getattr(self, "_spawn_is_bottom", True) else 165.0
+
+                approach_vel = (prev_edist - cur_any_dist) / dt_e if math.isfinite(cur_any_dist) and math.isfinite(prev_edist) else 0.0
+                self._prev_any_enemy_dist = cur_any_dist
+                self._prev_any_enemy_t = now
+
+                time_since_spawn = now - float(getattr(self, "_round_spawn_t", now))
+                self_hp_frac = float(np.clip(getattr(self, "local_real_hp", 100.0) / 100.0, 0.0, 1.0))
+                init_tac = getattr(self, "_initial_tactic", "DEF_POCKET")
+
+                enemy_rushing_us = (approach_vel > 110.0 and cur_any_dist < 1150.0)
+                multi_threat_in_los = len(corridor_enemies) >= 2
+                if multi_threat_in_los or self_hp_frac < 0.65 or enemy_rushing_us or (init_tac == "DEF_POCKET" and time_since_spawn < 2.2):
+                    tactical_mode = "DEF_POCKET"
+                elif init_tac == "PUSH_FLANK_OPP" and time_since_spawn < 4.5 and (py < 340.0 or py > 1180.0):
+                    tactical_mode = "PUSH_FLANK_OPP"
+                else:
+                    tactical_mode = "PUSH_PILLARS"
+                self._last_tactical_mode = tactical_mode
+
+                if tactical_mode == "DEF_POCKET":
+                    on_left = px < -770.0
+                    on_bot = py < 763.0
+                    jiggle_phase = math.sin(now * 4.8)
+                    if py < 360.0 or py > 1160.0:
+                        pocket_y = 188.0 if on_bot else 1352.0
+                        if on_left:
+                            wp_x = -1262.0 if jiggle_phase > 0.15 else -1375.0
+                            wp_y = pocket_y
+                        else:
+                            wp_x = -278.0 if jiggle_phase > 0.15 else -165.0
+                            wp_y = pocket_y
+                        threat_yaw = (math.pi / 2.0) if on_bot else (-math.pi / 2.0)
+                        leg_yaw = threat_yaw
+                    else:
+                        alcove_ys = (188.0, 520.0, 840.0, 1200.0) if on_bot else (1352.0, 995.0, 675.0, 315.0)
+                        nearest_ay = min(alcove_ys, key=lambda ay: abs(py - ay))
+                        if on_left:
+                            wp_x = -1255.0 if jiggle_phase > 0.20 else -1365.0
+                        else:
+                            wp_x = -285.0 if jiggle_phase > 0.20 else -175.0
+                        wp_y = nearest_ay
+                        threat_yaw = math.atan2(ey_n - py, ex_n - px)
+                        leg_yaw = (math.pi / 2.0) if ey_n > py else (-math.pi / 2.0)
+                elif tactical_mode == "PUSH_FLANK_OPP":
+                    on_bot = py < 763.0
+                    target_corridor_x = -285.0 if getattr(self, "_spawn_is_left", True) else -1255.0
+                    wp_x = target_corridor_x
+                    wp_y = 240.0 if on_bot else 1300.0
+                    if abs(px - target_corridor_x) < 290.0:
+                        wp_y = 520.0 if on_bot else 1010.0
+                        threat_yaw = (math.pi / 2.0) if on_bot else (-math.pi / 2.0)
+                    else:
+                        threat_yaw = math.atan2((520.0 if on_bot else 1010.0) - py, target_corridor_x - px)
+                    leg_yaw = threat_yaw
+                else:
+                    s_self = self._perimeter_param(px, py)
+                    s_enemy = self._perimeter_param(ex_n, ey_n)
+                    cw_dist = (s_enemy - s_self) % 4380.0
+                    ccw_dist = (s_self - s_enemy) % 4380.0
+                    prev_dir = int(getattr(self, "_patrol_dir_sign", 1))
+                    if cw_dist + 120.0 < ccw_dist:
+                        dir_sign = 1
+                    elif ccw_dist + 120.0 < cw_dist:
+                        dir_sign = -1
+                    else:
+                        dir_sign = prev_dir
+                    self._patrol_dir_sign = dir_sign
+                    wp_x, wp_y, leg_yaw = self.get_leg_waypoint(cur_leg, px, py, dir_sign=dir_sign)
+
+                    if cur_leg in (0, 2) and 540.0 <= py <= 960.0 and abs(ex_n - px) > 650.0 and 450.0 <= ey_n <= 1080.0:
+                        tactical_mode = "PUSH_MID_SHOP"
+                        wp_x = -770.0
+                        wp_y = 600.0 if abs(py - 600.0) < abs(py - 920.0) else 920.0
+                        threat_yaw = math.atan2(ey_n - py, ex_n - px)
+                        leg_yaw = threat_yaw
+                    elif cur_leg == 0:
+                        weave = 42.0 * math.sin(py / 140.0)
+                        wp_x = -1265.0 + weave
+                        look_ahead_y = min(1375.0, py + 320.0) if dir_sign >= 0 else max(155.0, py - 320.0)
+                        look_ahead_x = -1180.0 if (look_ahead_y > 1250.0 or look_ahead_y < 260.0) else -1255.0
+                        threat_yaw = math.atan2(look_ahead_y - py, look_ahead_x - px)
+                        leg_yaw = threat_yaw
+                    elif cur_leg == 2:
+                        weave = 42.0 * math.sin(py / 140.0)
+                        wp_x = -275.0 + weave
+                        look_ahead_y = max(155.0, py - 320.0) if dir_sign >= 0 else min(1375.0, py + 320.0)
+                        look_ahead_x = -360.0 if (look_ahead_y > 1250.0 or look_ahead_y < 260.0) else -285.0
+                        threat_yaw = math.atan2(look_ahead_y - py, look_ahead_x - px)
+                        leg_yaw = threat_yaw
+                    else:
+                        on_bot_sp = py < 763.0
+                        corridor_yaw = (math.pi / 2.0) if on_bot_sp else (-math.pi / 2.0)
+                        if px <= -960.0 or px >= -580.0:
+                            threat_yaw = corridor_yaw
+                        else:
+                            threat_yaw = math.atan2(ey_n - py, ex_n - px)
+                        leg_yaw = threat_yaw
+
                 if getattr(self, "local_missing_primary", False) and (py < 360.0 or py > 1160.0):
                     wp_x = -780.0
                     wp_y = 165.0 if py < 763.0 else 1365.0
                     leg_yaw = math.atan2(wp_y - py, wp_x - px)
+                    threat_yaw = leg_yaw
 
         # Compute real 3-ray wall clearance lidar [front, left, right] in [0, 1] across the full 2-corridor arena
         yaw = local.view_angles.y
@@ -2030,7 +2140,9 @@ class MemoryReader:
             },
             'lidar': lidar_rays,
             'loop_leg': int(cur_leg),
-            'patrol_waypoint': [float(wp_x), float(wp_y), float(leg_yaw)],
+            'patrol_waypoint': [float(wp_x), float(wp_y), float(threat_yaw)],
+            'tactical_mode': tactical_mode,
+            'visible_enemies_count': int(len(corridor_enemies)),
             'in_cover_combat': bool(in_cover_combat),
             'incoming_dmg': float(incoming_dmg),
             'valid': True,

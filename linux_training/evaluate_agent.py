@@ -180,7 +180,7 @@ class AgentEvaluator:
     
     def evaluate(
         self,
-        n_episodes: int = 10,
+        n_episodes: int = 20,
         max_steps: int = 10000,
         render: bool = False,
         save_video: bool = False
@@ -229,6 +229,12 @@ class AgentEvaluator:
         self.norm_obs_history = []
         self.raw_obs_history = []
         self.action_history = []
+        self.world_origin_history = []
+        self.spray_dpitch_deg = []
+        self.spray_recoil_pull_ok = []
+        self.turn_tank_count = 0
+        self.turn_slice_count = 0
+        self.zone_counts = {"spawn_def": 0, "corridor": 0, "mid_shop": 0}
         
         for episode in range(n_episodes):
             self._prev_fmode = "hold"
@@ -277,11 +283,20 @@ class AgentEvaluator:
                 except Exception:
                     pass
                 
-                # Extract current unnormalized state from raw_obs
-                cur_origin = raw_obs['origin'][0] * 4096.0
+                # Extract current unnormalized state from raw_obs (and true world_origin from base env if available)
+                cur_origin = getattr(self.env.envs[0].unwrapped, "last_world_origin", None) if hasattr(self.env, "envs") else None
+                if cur_origin is None:
+                    cur_origin = raw_obs['origin'][0] * 4096.0
                 px, py = float(cur_origin[0]), float(cur_origin[1])
+                self.world_origin_history.append([px, py, float(cur_origin[2]) if len(cur_origin) > 2 else 0.0])
                 ep_min_x, ep_max_x = min(ep_min_x, px), max(ep_max_x, px)
                 ep_min_y, ep_max_y = min(ep_min_y, py), max(ep_max_y, py)
+                if py < 260.0 or py > 1270.0:
+                    self.zone_counts["spawn_def"] += 1
+                elif -1150.0 <= px <= -390.0:
+                    self.zone_counts["mid_shop"] += 1
+                else:
+                    self.zone_counts["corridor"] += 1
                 cur_pitch, cur_yaw = float(raw_obs['view_angles'][0][0]), float(raw_obs['view_angles'][0][1])
                 rel_yaw, rel_pitch = float(raw_obs['enemy_rel_angles'][0][0]), float(raw_obs['enemy_rel_angles'][0][1])
                 enemy_dist = float(raw_obs['enemy_distance'][0][0])
@@ -292,7 +307,12 @@ class AgentEvaluator:
                 # enemy_rel_angles are stored in RADIANS
                 angle_err_deg = float(np.degrees(np.hypot(rel_yaw, rel_pitch)))
                 vel_vec = raw_obs['velocity'][0]
-                actual_speed = float(np.hypot(vel_vec[0], vel_vec[1]))
+                if len(self.world_origin_history) >= 2 and step > 0:
+                    prev_ox, prev_oy = self.world_origin_history[-2][0], self.world_origin_history[-2][1]
+                    step_dist_2d = float(np.hypot(px - prev_ox, py - prev_oy))
+                    actual_speed = float(np.clip(step_dist_2d / 10.0, 0.0, 1.5)) if step_dist_2d <= 150.0 else 0.0
+                else:
+                    actual_speed = float(np.hypot(vel_vec[0], vel_vec[1]))
                 dist_units = max(120.0, enemy_dist * 3000.0)
                 hit_radius = float(np.clip(14.0 / dist_units, 0.020, 0.055))
                 
@@ -383,6 +403,12 @@ class AgentEvaluator:
                             if sighting_start_step is not None and not hit_since_sighting:
                                 self.reaction_ticks_to_hit.append(step - sighting_start_step)
                                 hit_since_sighting = True
+                        # Track tank-turns vs smooth pie-slicing when rotating camera outside active firing:
+                        if not info_dict.get('shot_fired', False) and not info_dict.get('dead_wait', False) and abs(float(action[0, 2])) > 0.45:
+                            if actual_speed < 0.08:
+                                self.turn_tank_count += 1
+                            else:
+                                self.turn_slice_count += 1
                         # Which firing mode the AI actually used, split by distance (long > 550u, close <= 550u)
                         if info_dict.get('shot_fired', False):
                             self.total_shots_fired += 1
@@ -391,6 +417,11 @@ class AgentEvaluator:
                                 self.fire_speed_history.append(actual_speed)
                                 self.fire_mode_history.append(cur_fmode)
                                 self.fire_hit_history.append(bool(info_dict.get('hit', False)))
+                                if cur_fmode == 'spray':
+                                    dp_deg_cur = float(np.degrees(rel_pitch))
+                                    self.spray_dpitch_deg.append(dp_deg_cur)
+                                    if abs(dp_deg_cur) > 1.0:
+                                        self.spray_recoil_pull_ok.append(bool(dp_deg_cur * float(action[0, 3]) > 0.0))
                             if sighting_start_step is not None and not fired_since_sighting:
                                 self.reaction_ticks_to_fire.append(step - sighting_start_step)
                                 fired_since_sighting = True
@@ -667,6 +698,21 @@ class AgentEvaluator:
             if 'shots_moving_pct' in dt:
                 lines.append(f"  shots_while_moving(>0.30): {dt['shots_moving_pct']:.0f}% (median speed {dt['fire_speed_median']:.2f})")
             lines.append(f"  hits by mode             : tap {dt['tap_hits']}/{dt['tap_shots']} | 2tap {dt['two_tap_hits']}/{dt['two_tap_shots']} | spray {dt['spray_hits']}/{dt['spray_shots']}")
+            if getattr(self, "spray_dpitch_deg", None):
+                sdp = np.asarray(self.spray_dpitch_deg, dtype=np.float32)
+                pull_ok_pct = 100.0 * np.mean(self.spray_recoil_pull_ok) if self.spray_recoil_pull_ok else 100.0
+                lines.append(
+                    f"  spray recoil (dpitch)    : mean={np.mean(sdp):+.2f}° | over(>1.5°)={100*np.mean(sdp>1.5):.0f}% | under(<-1.5°)={100*np.mean(sdp<-1.5):.0f}% | pull_dir_ok={pull_ok_pct:.0f}%"
+                )
+            tot_turns = max(1, getattr(self, "turn_tank_count", 0) + getattr(self, "turn_slice_count", 0))
+            zc = getattr(self, "zone_counts", {"spawn_def": 0, "corridor": 0, "mid_shop": 0})
+            tot_z = max(1, sum(zc.values()))
+            lines.append(
+                f"  corner slicing vs tank   : smooth_slice={100.0 * getattr(self, 'turn_slice_count', 0) / tot_turns:.0f}% | tank_stop={100.0 * getattr(self, 'turn_tank_count', 0) / tot_turns:.0f}%"
+            )
+            lines.append(
+                f"  map zones (ДЕФ/Кор/Маг)  : spawn_def={100.0 * zc['spawn_def'] / tot_z:.0f}% | corridors={100.0 * zc['corridor'] / tot_z:.0f}% | mid_shop={100.0 * zc['mid_shop'] / tot_z:.0f}%"
+            )
             lines.append("-" * 60)
         if 'active_view' in metrics:
             av = metrics['active_view']
@@ -689,29 +735,30 @@ class AgentEvaluator:
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             (log_dir / f"eval_Phase{self.phase}_{ts}.log").write_text(report_text, encoding="utf-8")
             (log_dir / "eval_latest.log").write_text(report_text, encoding="utf-8")
+            def _to_py(obj):
+                if isinstance(obj, dict):
+                    return {k: _to_py(v) for k, v in obj.items()}
+                if isinstance(obj, (list, tuple)):
+                    return [_to_py(v) for v in obj]
+                if isinstance(obj, (np.integer,)):
+                    return int(obj)
+                if isinstance(obj, (np.floating,)):
+                    return float(obj)
+                return obj
+            save_tag = self.tag if self.tag else "latest"
+            json_path = log_dir / f"benchmark_{save_tag}.json"
+            json_path.write_text(json.dumps(_to_py(metrics), indent=2), encoding="utf-8")
+            if getattr(self, "norm_obs_history", None):
+                npz_path = log_dir / f"trajectory_{save_tag}.npz"
+                np.savez_compressed(
+                    npz_path,
+                    norm_obs=np.stack(self.norm_obs_history, axis=0),
+                    raw_obs=np.stack(self.raw_obs_history, axis=0),
+                    actions=np.stack(self.action_history, axis=0),
+                    world_origins=np.asarray(self.world_origin_history, dtype=np.float32),
+                )
+                logger.info(f"Saved recorded 19-sensor trajectory ({len(self.norm_obs_history)} ticks) to {npz_path}")
             if self.tag:
-                def _to_py(obj):
-                    if isinstance(obj, dict):
-                        return {k: _to_py(v) for k, v in obj.items()}
-                    if isinstance(obj, (list, tuple)):
-                        return [_to_py(v) for v in obj]
-                    if isinstance(obj, (np.integer,)):
-                        return int(obj)
-                    if isinstance(obj, (np.floating,)):
-                        return float(obj)
-                    return obj
-                json_path = log_dir / f"benchmark_{self.tag}.json"
-                json_path.write_text(json.dumps(_to_py(metrics), indent=2), encoding="utf-8")
-                logger.info(f"Saved benchmark telemetry to {json_path}")
-                if getattr(self, "norm_obs_history", None):
-                    npz_path = log_dir / f"trajectory_{self.tag}.npz"
-                    np.savez_compressed(
-                        npz_path,
-                        norm_obs=np.stack(self.norm_obs_history, axis=0),
-                        raw_obs=np.stack(self.raw_obs_history, axis=0),
-                        actions=np.stack(self.action_history, axis=0),
-                    )
-                    logger.info(f"Saved recorded 19-sensor trajectory ({len(self.norm_obs_history)} ticks) to {npz_path}")
                 # Automatically print comparison if both easy and expert exist
                 easy_p = log_dir / "benchmark_easy.json"
                 expert_p = log_dir / "benchmark_expert.json"
@@ -827,7 +874,7 @@ def main():
     parser.add_argument('--host', type=str, default='127.0.0.1', help='Windows bridge IP (default: 127.0.0.1, auto-detects WSL host)')
     parser.add_argument('--port', type=int, default=5555, help='Windows bridge port')
     parser.add_argument('--config', type=str, default='configs/training_config.yaml', help='Config path')
-    parser.add_argument('--episodes', type=int, default=10, help='Number of evaluation episodes')
+    parser.add_argument('--episodes', type=int, default=20, help='Number of evaluation episodes (default: 20)')
     parser.add_argument('--max-steps', type=int, default=10000, help='Max steps per episode')
     parser.add_argument('--stochastic', action='store_true', help='Use stochastic policy')
     parser.add_argument('--deterministic', action='store_true', help='Use deterministic policy (default)')

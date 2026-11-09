@@ -167,6 +167,24 @@ def main():
     vel_lead = math.sqrt(sum(J[a][i] ** 2 for a in (1, 2) for i in (14, 15)))
     surv_hp = math.sqrt(sum(J[a][7] ** 2 for a in range(5)) + (hp_retreat_drop * 1.9) ** 2)
 
+    # Probe Phase 10 Push/Def switch (vis=0 in DEF pocket vs PUSH corridor/diagonal spawn):
+    x_def = [0.0] * 19
+    x_def[2] = ((480.0 / 3000.0) - 0.186) / 0.50
+    x_def[3] = (1.0 - 0.8144) / math.sqrt(0.2846)
+    x_def[6] = (0.0 - 0.7496) / math.sqrt(0.1877)
+    x_def[7] = (1.0 - 0.9284) / math.sqrt(0.25)
+    x_def[11] = ((-1380.0 / 4096.0) - (-0.2965)) / 0.50
+    x_def[12] = ((188.0 / 4096.0) - 0.02633) / 0.50
+    x_push = list(x_def)
+    x_push[2] = ((1050.0 / 3000.0) - 0.186) / 0.50
+    x_push[3] = (0.35 - 0.8144) / math.sqrt(0.2846)
+    x_push[11] = ((-770.0 / 4096.0) - (-0.2965)) / 0.50
+    x_push[12] = ((600.0 / 4096.0) - 0.02633) / 0.50
+    push_def_delta = abs(forward_actor(x_push)[0] - forward_actor(x_def)[0])
+    phase10_pwr = math.sqrt(
+        J[0][2] ** 2 + J[0][3] ** 2 + J[0][6] ** 2 + J[0][11] ** 2 + J[0][12] ** 2 + (push_def_delta * 3.8) ** 2
+    )
+
     skills = [
         ("Фаза 1: Навигация и Лидар стен   (lidar/pos -> W/A/S/D)", nav_pwr, 2.5),
         ("Фаза 2: Горизонтальный флик      (enemy_dyaw -> Aim X) ", aim_x, 10.5),
@@ -177,6 +195,7 @@ def main():
         ("Фаза 7: Зачистка углов (Jiggle)  (lidar+dyaw -> Strafe)", abs(J[1][8]) + abs(J[1][9]) + abs(J[1][10]), 3.0),
         ("Фаза 8: Инстинкт выживания (HP)  (self_hp -> Укрытие)  ", surv_hp, 2.5),
         ("Фаза 9: Умный ADAD и Анти-стена  (LidarBounce -> A/D)  ", lidar_bounce_pwr, 3.2),
+        ("Фаза 10: Тактика ПУШ/ДЕФ и Спавн (pos/dist/hp -> ПУШ)  ", phase10_pwr, 2.4),
     ]
     print("\n4. НАВЫКИ ПО ФАЗАМ (Сформированные нейронные рефлексы Сенсор -> Мышца):")
     print("-" * 76)
