@@ -833,6 +833,28 @@ def main():
         storages[k_Wa] = list(Wa_c)
         storages[k_ba] = list(ba_c)
 
+        # Lock v1.4 Champion (ppo_cs16_phase8_champion_kd200.zip) AimX / AimY / Fire (action_net[2:5] + policy_net trunk)
+        # while blending in refined combat footwork (action_net[0:2]: move_forward, move_strafe):
+        champ_zip = model_path.parent / "ppo_cs16_phase8_champion_kd200.zip"
+        if champ_zip.exists():
+            _, _, ch_storages, ch_map = load_policy_storages(str(champ_zip))
+            storages[k_W0] = list(ch_storages[ch_map["mlp_extractor.policy_net.0.weight"][0]])
+            storages[k_b0] = list(ch_storages[ch_map["mlp_extractor.policy_net.0.bias"][0]])
+            storages[k_W1] = list(ch_storages[ch_map["mlp_extractor.policy_net.2.weight"][0]])
+            storages[k_b1] = list(ch_storages[ch_map["mlp_extractor.policy_net.2.bias"][0]])
+            ch_Wa = list(ch_storages[ch_map["action_net.weight"][0]])
+            ch_ba = list(ch_storages[ch_map["action_net.bias"][0]])
+            # Preserve newly trained combat footwork (rows 0..1) blended with v1.4 baseline, lock rows 2..4 (AimX, AimY, Fire) 100% to Champion!
+            new_Wa = list(ch_Wa)
+            new_ba = list(ch_ba)
+            for idx in range(2 * 256):
+                new_Wa[idx] = 0.65 * ch_Wa[idx] + 0.35 * Wa_c[idx]
+            for idx in range(2):
+                new_ba[idx] = 0.65 * ch_ba[idx] + 0.35 * ba_c[idx]
+            storages[k_Wa] = new_Wa
+            storages[k_ba] = new_ba
+            print("[Champion Aim Lock] Ветки прицеливания и стрельбы (AimX/AimY/Fire) на 100% зафиксированы по эталону v1.4 (K/D 2.00)!")
+
         # Calibrate exploration noise log_std for crisp micro-aim & trigger during stochastic rollouts
         log_std_list = list(storages[k_log_std])
         log_std_list[2] = -1.65  # delta_yaw std ~ 0.19

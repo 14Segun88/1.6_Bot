@@ -138,6 +138,15 @@ class CS16GymEnv(gym.Env):
         try:
             self._send_request({"type": "ping"})
             logger.info(f"Connected and verified communication with bridge server at {self.host}:{self.port}")
+            active_curr = getattr(self, "_active_curriculum", None)
+            if active_curr is not None:
+                c_mode, c_bots = active_curr
+                req_c = {"type": "set_mode", "mode": c_mode}
+                if c_bots is not None:
+                    req_c["max_bots"] = int(c_bots)
+                self.socket.send(msgpack.packb(req_c, use_bin_type=True))
+                self.socket.recv()
+                logger.info(f"Auto-restored curriculum mode '{c_mode}' (max_bots={c_bots}) after bridge reconnect!")
         except Exception as e:
             logger.error(f"Failed to communicate with bridge server at {self.host}:{self.port}: {e}")
             logger.error("Troubleshooting steps:")
@@ -217,13 +226,17 @@ class CS16GymEnv(gym.Env):
             'lidar': to_vec(lidar_info, 3),
         }
 
-    def set_curriculum_mode(self, mode: str, phase_num: Optional[int] = None):
-        """Switch bridge server between Stage 1 ('phase7_corners') and Stage 2 ('phase6_strafe') in a single training run."""
+    def set_curriculum_mode(self, mode: str, phase_num: Optional[int] = None, max_bots: Optional[int] = None):
+        """Switch bridge server between curriculum stages (e.g., 1v1 -> 1v3 -> 1v5 or phase7_corners -> phase6_strafe)."""
         if phase_num is not None:
             self.phase = int(phase_num)
+        self._active_curriculum = (mode, max_bots)
         try:
-            resp = self._send_request({"type": "set_mode", "mode": mode})
-            logger.info(f"Switched bridge curriculum mode to '{mode}' (phase={self.phase}): {resp}")
+            req = {"type": "set_mode", "mode": mode}
+            if max_bots is not None:
+                req["max_bots"] = int(max_bots)
+            resp = self._send_request(req)
+            logger.info(f"Switched bridge curriculum mode to '{mode}' (phase={self.phase}, max_bots={max_bots}): {resp}")
         except Exception as e:
             logger.warning(f"Failed to switch bridge curriculum mode to '{mode}': {e}")
     

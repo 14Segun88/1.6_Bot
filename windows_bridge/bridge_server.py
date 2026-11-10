@@ -117,7 +117,28 @@ class BridgeServer:
     
     def _main_loop(self):
         """Main server loop - handles requests from Linux client."""
+        import importlib
+        import os
+        import memory_reader as _mr_mod
+        _mr_path = getattr(_mr_mod, "__file__", None)
+        _last_mr_mtime = os.path.getmtime(_mr_path) if (_mr_path and os.path.exists(_mr_path)) else 0.0
+        _last_mr_check = time.time()
+
         while self.running:
+            now_t = time.time()
+            if _mr_path and (now_t - _last_mr_check) > 2.0:
+                _last_mr_check = now_t
+                try:
+                    cur_mtime = os.path.getmtime(_mr_path)
+                    if cur_mtime > _last_mr_mtime:
+                        _last_mr_mtime = cur_mtime
+                        importlib.reload(_mr_mod)
+                        self.memory_reader.__class__ = _mr_mod.MemoryReader
+                        self.memory_reader._entvars_Scanned = False
+                        logger.info("[HOT-RELOAD] Automatically reloaded updated memory_reader.py in-place!")
+                except Exception as e:
+                    logger.warning(f"[HOT-RELOAD] Failed to reload memory_reader.py: {e}")
+
             try:
                 # Wait for request from Linux
                 message = self.socket.recv()
@@ -165,10 +186,22 @@ class BridgeServer:
             return {"status": "unpaused"}
         elif req_type == "set_mode":
             mode = str(request.get("mode", "phase8_combat_1v5"))
+            max_bots = request.get("max_bots", None)
             is_dyn = mode == "phase6_strafe"
-            is_real_combat = mode == "phase8_combat_1v5"
+            is_real_combat = mode.startswith("phase8_combat")
             self.memory_reader.real_combat_mode = is_real_combat
             self.memory_reader.dynamic_strafe_mode = is_dyn
+            if max_bots is not None:
+                self.memory_reader.max_combat_bots = max(1, int(max_bots))
+            elif mode == "phase8_combat_1v1":
+                self.memory_reader.max_combat_bots = 1
+            elif mode == "phase8_combat_1v3":
+                self.memory_reader.max_combat_bots = 3
+            elif mode == "phase8_combat_1v5":
+                self.memory_reader.max_combat_bots = getattr(self.memory_reader, "max_combat_bots", 5) or 5
+            if getattr(self.memory_reader, "max_combat_bots", None) is not None:
+                self.memory_reader._set_mp_bot_quota(self.memory_reader.max_combat_bots)
+                self.memory_reader._entvars_Scanned = False
             self.memory_reader.reset_lap_to_spawn()
             now_m = time.time()
             self.lap_start_time = now_m
@@ -176,9 +209,9 @@ class BridgeServer:
             self.lap_kills = 0
             self._no_hit_fire_steps = 0
             logger.info(
-                f"=== [CURRICULUM MODE SWITCH] Mode set to '{mode}' (real_combat_1v5={is_real_combat}, dynamic_strafe={is_dyn})! ==="
+                f"=== [CURRICULUM MODE SWITCH] Mode set to '{mode}' (real_combat={is_real_combat}, max_bots={getattr(self.memory_reader, 'max_combat_bots', 'auto')}, dynamic_strafe={is_dyn})! ==="
             )
-            return {"status": "ok", "mode": mode}
+            return {"status": "ok", "mode": mode, "max_bots": getattr(self.memory_reader, "max_combat_bots", None)}
         else:
             return {"error": f"Unknown request type: {req_type}"}
     
@@ -695,8 +728,19 @@ class BridgeServer:
         # Wait for game to process (low-latency 8ms tick for fast reaction & counter-strafing)
         time.sleep(0.008)
 
-        # Auto-select primary rifle (slot 1) if the player ever switched to secondary pistol (USP/Glock)
-        if getattr(self.memory_reader, "local_holding_secondary", False):
+        # Auto-drop non-AK47 primary weapons (e.g. MP5 / M4A1 picked up on side spawn points) and auto-select AK-47 (slot 1):
+        if getattr(self.memory_reader, "local_wrong_primary", False):
+            now_s = time.time()
+            if now_s - getattr(self, "_last_drop_tap", 0.0) > 2.5:
+                self._last_drop_tap = now_s
+                try:
+                    if getattr(self.memory_reader, "local_holding_secondary", False):
+                        self.game_controller.tap_scancode('slot1', hold_sec=0.015)
+                    else:
+                        self.game_controller.tap_scancode('drop', hold_sec=0.015)
+                except Exception:
+                    pass
+        elif getattr(self.memory_reader, "local_holding_secondary", False):
             now_s = time.time()
             if now_s - getattr(self, "_last_slot1_tap", 0.0) > 1.0:
                 self._last_slot1_tap = now_s

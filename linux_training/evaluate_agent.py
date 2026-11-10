@@ -40,7 +40,8 @@ class AgentEvaluator:
         deterministic: bool = True,
         phase: int = None,
         servo_assist: bool = False,
-        tag: str = None
+        tag: str = None,
+        max_bots: int = None
     ):
         self.model_path = model_path
         self.vecnormalize_path = vecnormalize_path
@@ -51,6 +52,7 @@ class AgentEvaluator:
         self.deterministic = deterministic
         self.servo_assist = servo_assist
         self.tag = tag
+        self.max_bots = max_bots
         
         # Infer phase from model path if not explicitly provided (default Phase 7/8 models to Phase 8 Live 1v5 Combat)
         if phase is not None:
@@ -88,7 +90,7 @@ class AgentEvaluator:
             phase=self.phase
         )
         if self.phase == 8:
-            base_env.set_curriculum_mode("phase8_combat_1v5", phase_num=8)
+            base_env.set_curriculum_mode("phase8_combat_1v5", phase_num=8, max_bots=self.max_bots)
         elif self.phase == 7:
             base_env.set_curriculum_mode("phase7_corners", phase_num=7)
         elif self.phase == 6:
@@ -890,6 +892,7 @@ def main():
         help='Opt-in 50/50 proportional servo assist (default: False = 100%% Pure AI)'
     )
     parser.add_argument('--tag', type=str, default=None, help='Tag name to save benchmark (e.g. easy, expert)')
+    parser.add_argument('--bots', type=int, default=None, help='Set active native enemy bots count (e.g. 1, 3, 5)')
     parser.add_argument('--compare', nargs=2, metavar=('TAG1', 'TAG2'), default=None, help='Compare two saved benchmarks without running game')
     
     args = parser.parse_args()
@@ -908,7 +911,8 @@ def main():
         deterministic=not args.stochastic,
         phase=args.phase,
         servo_assist=args.servo_assist,
-        tag=args.tag
+        tag=args.tag,
+        max_bots=args.bots
     )
     
     try:

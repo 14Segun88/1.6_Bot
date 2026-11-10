@@ -31,6 +31,7 @@ SCAN_CODES = {
     'duck': 0x1D,      # Left Ctrl
     'buyammo1': 0x33,  # , (Б)
     'slot1': 0x02,     # 1 (Primary rifle)
+    'drop': 0x22,      # G (П) - Drop weapon
 }
 
 

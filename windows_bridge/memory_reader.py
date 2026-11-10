@@ -391,8 +391,21 @@ class MemoryReader:
         return chosen_idx, c_leg, hx, hy, pkx, pky, cname
 
     def pop_engine_telemetry(self) -> tuple:
-        """Return and clear (real_engine_kills, real_engine_hits) detected directly via pev->health drops."""
-        k, h = self._pending_engine_kills, self._pending_engine_hits
+        """Return and clear (real_engine_kills, real_engine_hits) detected directly via pev->health drops and scoreboard frags (+0x164)."""
+        sb_frags = int(getattr(self, "_pending_scoreboard_frags", 0))
+        self._pending_scoreboard_frags = 0
+        now_t = time.time()
+        if self._pending_engine_kills > 0:
+            self._last_eng_kill_pop_t = now_t
+            k = max(self._pending_engine_kills, sb_frags)
+        elif sb_frags > 0 and (now_t - float(getattr(self, "_last_eng_kill_pop_t", 0.0))) > 1.0:
+            self._last_eng_kill_pop_t = now_t
+            k = sb_frags
+            self._pending_engine_hits = max(1, self._pending_engine_hits)
+            logger.info(f"[SCOREBOARD FRAG DETECTED] +1 Kill verified via local_pev->frags (+0x164)!")
+        else:
+            k = 0
+        h = self._pending_engine_hits
         self._pending_engine_kills = 0
         self._pending_engine_hits = 0
         return k, h
@@ -435,7 +448,7 @@ class MemoryReader:
                     lp_buf = (ctypes.c_char * 4)()
                     if self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x160), lp_buf, 4, None):
                         lp_hp = struct.unpack("<f", lp_buf)[0]
-                        if not math.isfinite(lp_hp) or lp_hp > 100.5:
+                        if not math.isfinite(lp_hp) or lp_hp > 100.5 or (lp_hp > 0.5 and lp_hp < 100.0):
                             self.kernel32.WriteProcessMemory(
                                 self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x160), struct.pack("<f", 100.0), 4, None
                             )
@@ -803,6 +816,14 @@ class MemoryReader:
             is_local=True
         )
 
+    def _set_mp_bot_quota(self, target_bots: Optional[int]) -> None:
+        """
+        Keep max_combat_bots stored on MemoryReader without mutating mp.dll's internal bot_quota cvar_t,
+        because lowering bot_quota causes CCSBotManager::MaintainBotQuota() to free CCSBot heap objects mid-frame.
+        Surplus bots are safely parked in static sv.edicts (get_enemies) without freeing heap memory.
+        """
+        return
+
     def _patch_mp_dll_for_strafing(self):
         """
         Patch ReGameDLL_CS (mp.dll) in memory so enemy bots physically strafe left/right via
@@ -845,6 +866,7 @@ class MemoryReader:
             if getattr(self, "real_combat_mode", False):
                 # Phase 8: 100% NATIVE CS 1.6 GAME BOTS (CCSBot::Update, native vision, native pathfinding & shooting):
                 # Keep bot_stop = 0.0, bot_freeze = 0.0, bot_zombie = 0.0, and unconditionally restore original mp.dll bytes!
+                self._set_mp_bot_quota(getattr(self, "max_combat_bots", None))
                 self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(self.mp_base + 0x171D14), f_zero, 4, None)
                 self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(self.mp_base + 0x171AE4), f_zero, 4, None)
                 self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(self.mp_base + 0x1719B0), f_zero, 4, None)
@@ -1035,7 +1057,7 @@ class MemoryReader:
             addr = base + max(4096, size)
 
         self._server_origins = found_bots
-        if self.local_pev_addr is None and found_bots:
+        if found_bots:
             self._locate_local_pev_from_bots(found_bots, seen_pev)
         logger.info(
             f"[STRAFE ENGINE] Scan done: mp.dll=0x{(self.mp_base or 0):X}, CCSBot vtable=0x{(csbot_vtable or 0):X}, "
@@ -1065,8 +1087,9 @@ class MemoryReader:
         min_bot_pev = min(b[0] for b in bots_list)
         max_bot_pev = max(b[0] for b in bots_list)
         scan_base = max(0x10000, (min_bot_pev - 0x4000) & ~0x3FF)
-        scan_end = (max_bot_pev + 0x4000 + 0x3FF) & ~0x3FF
+        scan_end = (max_bot_pev + 0x18000 + 0x3FF) & ~0x3FF
         csbot_vtable = (self.mp_base + 0x13958C) if self.mp_base else None
+        ca_vtable = (self.mp_base + 0x1359FC) if self.mp_base else None
         ref_x = local_origin.x if local_origin is not None else getattr(self, "_last_player_x", None)
         ref_y = local_origin.y if local_origin is not None else getattr(self, "_last_player_y", None)
 
@@ -1112,10 +1135,15 @@ class MemoryReader:
                 flags = struct.unpack_from("<I", raw, off + 0x1A4)[0]
                 hp_val = struct.unpack_from("<f", raw, off + 0x160)[0]
                 max_hp = struct.unpack_from("<f", raw, off + 0x1B0)[0]
-                # Record spawn floor weapons (armoury_entity) so the AI never runs out of AK-47/M4A1 after dying
-                if (flags & 0x2008) == 0 and max_hp == 0.0 and cand_pev > max_bot_pev:
-                    if -1250.0 <= cx <= -280.0 and (70.0 <= cy <= 320.0 or 1200.0 <= cy <= 1460.0):
-                        armoury_list.append((cand_pev, c_priv, cx, cy, cz))
+                # Record verified spawn floor weapons (CArmoury / armoury_entity: exact vtable mp.dll + 0x1359FC)
+                if ca_vtable is not None and vt_ptr == ca_vtable and (flags & 0x2008) == 0 and max_hp == 0.0 and cand_pev > max_bot_pev:
+                    arm_buf = (ctypes.c_char * 12)()
+                    if self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(c_priv + 0x88), arm_buf, 12, None):
+                        m_item, m_cnt, m_init = struct.unpack("<3i", bytes(arm_buf))
+                        if m_item == 4 and 0 <= m_cnt <= 30 and 1 <= m_init <= 30:
+                            armoury_list.insert(0, (cand_pev, c_priv, cx, cy, cz))
+                        elif 0 <= m_item <= 13 and 0 <= m_cnt <= 30 and 1 <= m_init <= 30:
+                            armoury_list.append((cand_pev, c_priv, cx, cy, cz))
                     continue
                 # In GoldSrc (common/const.h): FL_CLIENT = 0x0008, FL_FAKECLIENT = 0x2000.
                 # Only the human host player (CBasePlayer, edict #1) has FL_CLIENT=1 and FL_FAKECLIENT=0!
@@ -1185,8 +1213,8 @@ class MemoryReader:
         if not self._entvars_Scanned:
             self._scan_server_entvars([])
 
-        # Ensure self.local_pev_addr (Host Player edict #1) is always located even if the host was in Spectator, crouching, or dead during scan:
-        if self.local_pev_addr is None and self._server_origins:
+        # Ensure self.local_pev_addr (Host Player edict #1) and _spawn_armoury_pevs are always located:
+        if (self.local_pev_addr is None or not getattr(self, "_spawn_armoury_pevs", None)) and self._server_origins:
             self._locate_local_pev_from_bots(self._server_origins, local_origin=local_origin)
 
         # Primary path: Drive & read live server CCSBot entities directly via pev + csbot_ptr
@@ -1220,11 +1248,22 @@ class MemoryReader:
                 lp_buf = (ctypes.c_char * 4)()
                 df_buf = (ctypes.c_char * 4)()
                 vo_buf = (ctypes.c_char * 4)()
+                fr_buf = (ctypes.c_char * 4)()
                 lo_buf = (ctypes.c_char * 12)()
-                if self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x08), lo_buf, 12, None):
+                if not getattr(self, "local_is_dead", False) and self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x08), lo_buf, 12, None):
                     lx_p, ly_p, _ = struct.unpack("<3f", lo_buf)
                     if math.isfinite(lx_p) and math.isfinite(ly_p) and math.hypot(lx_p - player_x, ly_p - player_y) > 300.0:
                         self._locate_local_pev_from_bots(self._server_origins, local_origin=local_origin)
+                # Track official GoldSrc scoreboard frags (pev->frags at +0x164) so NO player kill is ever missed!
+                if getattr(self, "real_combat_mode", False) and self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x164), fr_buf, 4, None):
+                    lp_frags = struct.unpack("<f", fr_buf)[0]
+                    if math.isfinite(lp_frags):
+                        prev_frags = getattr(self, "_prev_local_frags", None)
+                        if prev_frags is not None and lp_frags > prev_frags + 0.5:
+                            frag_diff = int(round(lp_frags - prev_frags))
+                            if 1 <= frag_diff <= 5:
+                                self._pending_scoreboard_frags = getattr(self, "_pending_scoreboard_frags", 0) + frag_diff
+                        self._prev_local_frags = lp_frags
                 if self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x160), lp_buf, 4, None):
                     lp_hp = struct.unpack("<f", lp_buf)[0]
                     lp_dead = 0
@@ -1244,10 +1283,10 @@ class MemoryReader:
                         self.kernel32.WriteProcessMemory(
                             self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x1BC), struct.pack("<f", 100.0), 4, None
                         )
-                    elif lp_dead != 0 or lp_hp <= 1.0 or (math.isfinite(lp_view_z) and lp_view_z < -1.0):
+                    elif lp_dead != 0 or lp_hp <= 0.5:
                         self.local_is_dead = True
-                        # Player reached 0 HP -> record death ONCE (with 2.5s cooldown so round-end deadflag never inflates deaths)
-                        if not getattr(self, "_local_was_dead", False) and (now - getattr(self, "_last_player_death_t", 0.0)) > 2.5:
+                        # Player reached 0 HP -> record death ONCE per CS 1.6 round (with 4.5s cooldown matching CS 1.6 round restart delay)
+                        if not getattr(self, "_local_was_dead", False) and (now - getattr(self, "_last_player_death_t", 0.0)) > 4.5:
                             self._local_was_dead = True
                             self._last_player_death_t = now
                             self._pending_player_died = True
@@ -1277,7 +1316,8 @@ class MemoryReader:
                         self.local_is_dead = False
                         if getattr(self, "_local_was_dead", False) and (player_y < 480.0 or player_y > 1040.0):
                             self.local_spawn_side = 1 if player_y > 763.0 else 2
-                        self._local_was_dead = False
+                        if lp_hp >= 50.0 and lp_dead == 0:
+                            self._local_was_dead = False
                         prev_lp = float(getattr(self, "_prev_local_hp", lp_hp))
                         if lp_hp < prev_lp - 0.5:
                             dmg_taken = prev_lp - lp_hp
@@ -1298,24 +1338,48 @@ class MemoryReader:
                                     self.kernel32.WriteProcessMemory(
                                         self.hProc, ctypes.c_void_p(lw_ptr + 0xCC), clip30, 4, None
                                     )
+                            wep_id = 28
+                            if l_prim > 0x10000:
+                                wid_buf = (ctypes.c_char * 4)()
+                                if self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(l_prim + 0xAC), wid_buf, 4, None):
+                                    wep_id = struct.unpack("<i", wid_buf)[0]
                             self.local_holding_secondary = bool(l_prim > 0x10000 and l_act != l_prim)
-                            self.local_missing_primary = bool(l_prim <= 0x10000)
-                            if self.local_missing_primary and not self.local_is_dead:
+                            self.local_wrong_primary = bool(l_prim > 0x10000 and wep_id != 28)
+                            self.local_missing_primary = bool(l_prim <= 0x10000 or wep_id != 28)
+                            if self.local_missing_primary and not self.local_is_dead and self.mp_base:
                                 arm_list = getattr(self, "_spawn_armoury_pevs", None)
                                 if arm_list:
                                     a_pev, a_priv, _, _, _ = arm_list[0]
-                                    pz_a = -143.0
-                                    pos_a = struct.pack("<3f", float(player_x), float(player_y), pz_a)
-                                    abs_min = struct.pack("<3f", float(player_x) - 36.0, float(player_y) - 36.0, pz_a - 36.0)
-                                    abs_max = struct.pack("<3f", float(player_x) + 36.0, float(player_y) + 36.0, pz_a + 36.0)
-                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x08), pos_a, 12, None)
-                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x14), pos_a, 12, None)
-                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x124), abs_min, 12, None)
-                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x130), abs_max, 12, None)
-                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x118), struct.pack("<i", 0), 4, None)
-                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x158), struct.pack("<i", 1), 4, None)
-                                    # CArmoury::m_iItem (+0x88) = 4 (AK47), m_iCount (+0x8C) = 30
-                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_priv + 0x88), struct.pack("<2i", 4, 30), 8, None)
+                                    ca_vt = self.mp_base + 0x1359FC
+                                    vt_chk = (ctypes.c_char * 8)()
+                                    pv_chk = (ctypes.c_char * 4)()
+                                    ed_chk = (ctypes.c_char * 4)()
+                                    valid_arm = False
+                                    if (
+                                        self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(a_priv), vt_chk, 8, None)
+                                        and self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(a_pev - 0x04), pv_chk, 4, None)
+                                        and self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x208), ed_chk, 4, None)
+                                    ):
+                                        a_vt, a_ent_pev = struct.unpack("<2I", vt_chk)
+                                        a_pv = struct.unpack("<I", pv_chk)[0]
+                                        a_ed = struct.unpack("<I", ed_chk)[0]
+                                        valid_arm = (a_vt == ca_vt and a_ent_pev == a_pev and a_pv == a_priv and a_ed == (a_pev - 0x80))
+                                    if valid_arm:
+                                        pz_a = -143.0
+                                        pos_a = struct.pack("<3f", float(player_x), float(player_y), pz_a)
+                                        abs_min = struct.pack("<3f", float(player_x) - 36.0, float(player_y) - 36.0, pz_a - 36.0)
+                                        abs_max = struct.pack("<3f", float(player_x) + 36.0, float(player_y) + 36.0, pz_a + 36.0)
+                                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x08), pos_a, 12, None)
+                                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x14), pos_a, 12, None)
+                                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x0C4), abs_min, 12, None)
+                                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x0D0), abs_max, 12, None)
+                                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x118), struct.pack("<i", 0), 4, None)
+                                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_pev + 0x10C), struct.pack("<i", 1), 4, None)
+                                        # CArmoury::m_iItem (+0x88) = 4 (AK47), m_iCount (+0x8C) = 30
+                                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(a_priv + 0x88), struct.pack("<2i", 4, 30), 8, None)
+                                    else:
+                                        self._spawn_armoury_pevs = []
+                                        self._entvars_Scanned = False
 
             # Pure Spawn-Zone Side Latching on $2000$ (aim_ai_sandbox.bsp):
             # - Top Spawn (Team 1 / T): Y > 1020.0 (center Y = 1375.0)
@@ -1362,6 +1426,10 @@ class MemoryReader:
                 if b_team != local_team_id:
                     has_opposing_team_in_match = True
 
+            max_combat_bots = getattr(self, "max_combat_bots", 1)
+            if max_combat_bots is None:
+                max_combat_bots = 1
+            enemy_slot_idx = 0
             for bot_idx, (pev_addr, csbot_addr, init_x, init_y, init_z) in enumerate(self._server_origins):
                 if getattr(self, "real_combat_mode", False) and has_opposing_team_in_match and bot_teams.get(pev_addr) == local_team_id:
                     continue  # Strictly skip allied teammate bot in 5v5 / 2v1 mode!
@@ -1377,24 +1445,96 @@ class MemoryReader:
                 if deadflag != 0 or not math.isfinite(health) or health <= 0.0:
                     st_dead = self._strafe_state.get(pev_addr)
                     if st_dead is not None:
-                        if getattr(self, "real_combat_mode", False) and not st_dead.get("counted_death", False):
+                        if getattr(self, "real_combat_mode", False) and not st_dead.get("counted_death", False) and not st_dead.get("parked_curriculum", False):
                             st_dead["counted_death"] = True
-                            # Only count kill for the AI if the AI was targeting or recently damaged this enemy bot!
-                            was_ai_target = (pev_addr == getattr(self, "_locked_target_addr", None)) or (
-                                (now - float(st_dead.get("last_ai_hit_t", 0.0))) < 3.5
+                            # In 1v1 / 1v3 / 1v5 (no allied bots), every active enemy bot death is 100% a kill by our AI!
+                            was_ai_target = (
+                                len(self._server_origins) <= 5
+                                or (pev_addr == getattr(self, "_locked_target_addr", None))
+                                or ((now - float(st_dead.get("last_ai_hit_t", 0.0))) < 5.0)
                             )
                             if was_ai_target:
                                 self._pending_engine_kills += 1
                                 self._pending_engine_hits += 1
                                 logger.info(f"[NATIVE BOT KILLED] Native CS 1.6 bot 0x{pev_addr:X} eliminated by AI!")
+                                # In 1v1 mode, restore AI health to 100 HP upon winning the duel so the next unparked 1v1 duel starts at 100 HP!
+                                if max_combat_bots == 1 and self.local_pev_addr and not getattr(self, "local_is_dead", False):
+                                    self.kernel32.WriteProcessMemory(
+                                        self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x160), struct.pack("<f", 100.0), 4, None
+                                    )
+                                    self.local_real_hp = 100.0
+                                    self._prev_local_hp = 100.0
                             st_dead["last_ai_hit_t"] = 0.0
                         st_dead["active"] = False
                     continue
 
+                # Count slot index ONLY among ALIVE enemy bots so when bot_0 dies in 1v1, bot_1 immediately steps in!
+                cur_enemy_slot = enemy_slot_idx
+                enemy_slot_idx += 1
+
                 if getattr(self, "real_combat_mode", False):
+                    is_client_idle = (now - float(getattr(self, "_last_obs_t", now))) > 1.2
+                    if is_client_idle and self.local_pev_addr and not getattr(self, "local_is_dead", False):
+                        self.kernel32.WriteProcessMemory(
+                            self.hProc, ctypes.c_void_p(self.local_pev_addr + 0x160), struct.pack("<f", 100.0), 4, None
+                        )
+                        self.local_real_hp = 100.0
+                        self._prev_local_hp = 100.0
+                    eff_max_bots = 0 if is_client_idle else max_combat_bots
+                    if eff_max_bots is not None and cur_enemy_slot >= int(eff_max_bots):
+                        # Park surplus (or pause-idled) bot directly under its own spawn CNavArea and empty its clip so it NEVER shoots during AUTO-PAUSE!
+                        b_side_p = bot_teams.get(pev_addr, 1 if local_team_id == 2 else 2)
+                        park_x = -768.0 + max(0, cur_enemy_slot - 1) * 45.0
+                        park_y = 1375.0 if b_side_p == 1 else 155.0
+                        park_z = -420.0
+                        p_bytes = struct.pack("<3f", float(park_x), float(park_y), float(park_z))
+                        z_vec = struct.pack("<3f", 0.0, 0.0, 0.0)
+                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(pev_addr + 0x08), p_bytes, 12, None)
+                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(pev_addr + 0x14), p_bytes, 12, None)
+                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(pev_addr + 0x20), z_vec, 12, None)
+                        # Set clip ammo = 0 while parked so parked bots cannot fire a single bullet
+                        bw_buf = (ctypes.c_char * 24)()
+                        if self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(csbot_addr + 0x5C0), bw_buf, 24, None):
+                            b_prim, b_pist, _, _, _, b_act = struct.unpack("<6I", bw_buf)
+                            zero_clip = struct.pack("<i", 0)
+                            for bw_ptr in (b_prim, b_pist, b_act):
+                                if bw_ptr > 0x10000:
+                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(bw_ptr + 0xCC), zero_clip, 4, None)
+                        st_p = self._strafe_state.get(pev_addr)
+                        if st_p is None:
+                            st_p = {"active": False, "csbot_addr": csbot_addr, "parked_curriculum": True}
+                            self._strafe_state[pev_addr] = st_p
+                        else:
+                            st_p["active"] = False
+                            st_p["parked_curriculum"] = True
+                        continue
+
                     # Phase 8: 100% NATIVE CS 1.6 GAME BOTS (CCSBot::Update, native vision, native pathfinding & shooting):
                     # NEVER teleport bots, NEVER overwrite their v_angle (+0x50), velocity (+0x20), or m_forwardSpeed (+0x9D4)!
                     # Only clean up any leftover 10000.0 sentinel HP from Phase 7 once so bots have standard 100->0 HP.
+                    st_nat = self._strafe_state.get(pev_addr)
+                    if (st_nat is not None and st_nat.get("parked_curriculum", False)) or oz < -240.0 or ox > 2000.0:
+                        # Unpark bot back to the OPPOSITE spawn zone from our player so it never spawns behind/on top of our player!
+                        ox = -768.0 + max(0, cur_enemy_slot) * 85.0
+                        oy = 155.0 if player_y > 763.0 else 1375.0
+                        oz = -143.0
+                        vx, vy, vz = 0.0, 0.0, 0.0
+                        unp_bytes = struct.pack("<3f", float(ox), float(oy), float(oz))
+                        z_vec = struct.pack("<3f", 0.0, 0.0, 0.0)
+                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(pev_addr + 0x08), unp_bytes, 12, None)
+                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(pev_addr + 0x14), unp_bytes, 12, None)
+                        self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(pev_addr + 0x20), z_vec, 12, None)
+                        # Restore 30 bullets in clip when unparked into active combat
+                        bw_buf = (ctypes.c_char * 24)()
+                        if self.kernel32.ReadProcessMemory(self.hProc, ctypes.c_void_p(csbot_addr + 0x5C0), bw_buf, 24, None):
+                            b_prim, b_pist, _, _, _, b_act = struct.unpack("<6I", bw_buf)
+                            full_clip = struct.pack("<i", 30)
+                            for bw_ptr in (b_prim, b_pist, b_act):
+                                if bw_ptr > 0x10000:
+                                    self.kernel32.WriteProcessMemory(self.hProc, ctypes.c_void_p(bw_ptr + 0xCC), full_clip, 4, None)
+                        if st_nat is not None:
+                            st_nat["parked_curriculum"] = False
+                            st_nat["prev_hp"] = float(health)
                     if health > 100.5:
                         health = 100.0
                         self.kernel32.WriteProcessMemory(
@@ -1421,7 +1561,7 @@ class MemoryReader:
                         st_nat["counted_death"] = False
                         prev_b_hp = float(st_nat.get("prev_hp", health))
                         if health < prev_b_hp - 0.5:
-                            if pev_addr == getattr(self, "_locked_target_addr", None):
+                            if len(self._server_origins) <= 5 or pev_addr == getattr(self, "_locked_target_addr", None):
                                 self._pending_engine_hits += 1
                                 st_nat["last_ai_hit_t"] = now
                         st_nat["prev_hp"] = float(health)
@@ -1776,6 +1916,7 @@ class MemoryReader:
         recoil_ticks: number of consecutive spray ticks already fired in the current burst. The aim point is
                       lowered by RECOIL_COMP_DEG_PER_TICK per tick so that crosshair + view punch lands on target.
         """
+        self._last_obs_t = time.time()
         local = self.get_local_player()
         if not local:
             return None
@@ -2506,4 +2647,12 @@ class MemoryReader:
             self.hProc = None
         self.hw_base = None
         self.client_base = None
+        self.mp_base = None
         self.pid = None
+        self._mp_patched = False
+        self._entvars_Scanned = False
+        self.local_pev_addr = None
+        self._server_origins = []
+        self._spawn_armoury_pevs = []
+        if hasattr(self, "_strafe_state") and isinstance(self._strafe_state, dict):
+            self._strafe_state.clear()

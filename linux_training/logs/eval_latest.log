@@ -5,52 +5,52 @@ EVALUATION RESULTS
 Model:             linux_training/models/ppo_cs16_phase8_final.zip
 Aim Control Mode:  PURE AI (100% Neural Network)
 Episodes:          20
-Reward (mean±std): 87.05 ± 60.20
-Reward range:      [0.00, 208.51]
+Reward (mean±std): 83.24 ± 83.37
+Reward range:      [-14.15, 309.18]
 Length (mean±std): 512.0 ± 0.0
-Kills (total):     11 (mean: 0.55)
-Hits (total):      76 (mean: 3.80)
-Hits / Kills:      6.91
-Deaths (total):    17 (mean: 0.85)
-K/D Ratio:         0.65
+Kills (total):     10 (mean: 0.50)
+Hits (total):      64 (mean: 3.20)
+Hits / Kills:      6.40
+Deaths (total):    15 (mean: 0.75)
+K/D Ratio:         0.67
 ------------------------------------------------------------
 Action Distribution:
-  move_forward   : mean=-0.050, std=0.642
-  move_strafe    : mean=+0.008, std=0.522
-  delta_yaw      : mean=+0.034, std=0.408
-  delta_pitch    : mean=-0.122, std=0.645
-  fire_rate      : 0.141
+  move_forward   : mean=-0.151, std=0.614
+  move_strafe    : mean=-0.060, std=0.511
+  delta_yaw      : mean=-0.037, std=0.400
+  delta_pitch    : mean=-0.148, std=0.638
+  fire_rate      : 0.163
 ------------------------------------------------------------
 Firing Mode Choice (3 Mechanics: 1-Tap | 2-Tap Standing | 2-Tap+Crouch-Spray):
-  long  > 550u [decisions]: 1-tap 171 (60.2%) | 2-tap  74 (26.1%) | 2tap+crouch-spray  39 (13.7%)
-  long  > 550u [ticks/hit]: 1-tap 171 (hits 34) | 2-tap 217 (hits 12) | 2tap+crouch-spray 181 (hits 10)
-  close <= 550u [decisions]: 1-tap  10 (27.0%) | 2-tap   5 (13.5%) | 2tap+crouch-spray  22 (59.5%)
-  close <= 550u [ticks/hit]: 1-tap  10 (hits  3) | 2-tap  15 (hits  0) | 2tap+crouch-spray 116 (hits 15)
-  crouch-spray (+duck held):  175 ticks (hits  12)
+  long  > 550u [decisions]: 1-tap 145 (42.4%) | 2-tap 150 (43.9%) | 2tap+crouch-spray  47 (13.7%)
+  long  > 550u [ticks/hit]: 1-tap 145 (hits 18) | 2-tap 449 (hits 19) | 2tap+crouch-spray 213 (hits 13)
+  close <= 550u [decisions]: 1-tap   3 (12.0%) | 2-tap   7 (28.0%) | 2tap+crouch-spray  15 (60.0%)
+  close <= 550u [ticks/hit]: 1-tap   3 (hits  0) | 2-tap  21 (hits  2) | 2tap+crouch-spray  77 (hits 11)
+  crouch-spray (+duck held):  168 ticks (hits   8)
 ------------------------------------------------------------
 Duel Telemetry (1v1 Benchmark):
-  survival_rate (0 deaths) : 4/20 (20.0%)
-  shots_fired / accuracy   : 710 ticks (10.7% hits)
-  reaction_to_1st_shot     : 12.97 ticks (~519 ms)
-  time_to_1st_hit          : 26.04 ticks (~1042 ms)
-  aim_error_at_fire        : 2.67 deg
+  survival_rate (0 deaths) : 5/20 (25.0%)
+  shots_fired / accuracy   : 908 ticks (7.0% hits)
+  reaction_to_1st_shot     : 12.28 ticks (~491 ms)
+  time_to_1st_hit          : 34.33 ticks (~1373 ms)
+  aim_error_at_fire        : 2.65 deg
   cover_retreats           : 5
-  shots_err <=5/<=14/>30 deg: 86% / 100% / 0% (median 2.0 deg, n=710)
-  shots_while_moving(>0.30): 3% (median speed 0.06)
-  hits by mode             : tap 37/181 | 2tap 12/232 | spray 25/297
-  spray recoil (dpitch)    : mean=+2.24° | over(>1.5°)=51% | under(<-1.5°)=4% | pull_dir_ok=98%
-  corner slicing vs tank   : smooth_slice=74% | tank_stop=26%
-  map zones (ДЕФ/Кор/Маг)  : spawn_def=80% | corridors=14% | mid_shop=6%
+  shots_err <=5/<=14/>30 deg: 89% / 100% / 0% (median 2.1 deg, n=908)
+  shots_while_moving(>0.30): 5% (median speed 0.06)
+  hits by mode             : tap 18/148 | 2tap 21/470 | spray 24/290
+  spray recoil (dpitch)    : mean=+2.09° | over(>1.5°)=49% | under(<-1.5°)=2% | pull_dir_ok=98%
+  corner slicing vs tank   : smooth_slice=66% | tank_stop=34%
+  map zones (ДЕФ/Кор/Маг)  : spawn_def=60% | corridors=35% | mid_shop=4%
 ------------------------------------------------------------
 Active-Episode View (excluding dead_wait episodes):
   dead_wait episodes       : 0/20
   active / no-contact      : 20 / 1
-  active K/D               : 11/17 = 0.65
-  origin span median/max   : 767 / 1371 units (≈0 => bot not moving or origin sensor frozen)
+  active K/D               : 10/15 = 0.67
+  origin span median/max   : 919 / 1441 units (≈0 => bot not moving or origin sensor frozen)
 ------------------------------------------------------------
 Gameplay Metrics:
-  enemy_visible_rate       : 0.241
-  avg_enemy_distance       : 0.694
-  avg_health               : 0.851
+  enemy_visible_rate       : 0.278
+  avg_enemy_distance       : 0.654
+  avg_health               : 0.782
   min_health               : 0.000
 ============================================================

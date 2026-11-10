@@ -35,6 +35,447 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+class WinStreakHunterCallback(BaseCallback):
+    """
+    Autonomous Win-Streak Evolution & Champion Ratchet Callback (--streak N).
+    - Tracks round-by-round (512-tick episode) Wins, Losses, Kills, Deaths, Hits.
+    - When a round is WON: promotes the current tactical weights into the Champion brain
+      and locks deterministic execution so a winning tactic isn't ruined by random noise.
+    - When a round is LOST: resets current streak to 0, rolls back bad drift to the Champion brain,
+      and applies a structured tactical mutation (cover retreat, peek braking, pillar strafe, trigger timing)
+      so the network actively searches for a counter-strategy until it wins `target_streak` rounds in a row.
+    """
+    def __init__(
+        self,
+        target_streak: int,
+        model_dir: Path,
+        log_dir: Path,
+        aim_anchor_w: torch.Tensor,
+        aim_anchor_b: torch.Tensor,
+        n_bots: int = 1,
+        pause_every: int = 5,
+        raw_cs_env=None,
+        verbose: int = 0,
+    ):
+        super().__init__(verbose)
+        self.target_streak = max(1, int(target_streak))
+        self.model_dir = model_dir
+        self.log_dir = log_dir
+        self.aim_anchor_w = aim_anchor_w.clone()
+        self.aim_anchor_b = aim_anchor_b.clone()
+        self.n_bots = n_bots
+        self.pause_every = int(pause_every) if pause_every is not None else 20
+        self.raw_cs_env = raw_cs_env
+
+        self.current_streak = 0
+        self.best_streak = 0
+        self.round_idx = 0
+        self.mutation_idx = 0
+
+        self.ep_start_kills = None
+        self.ep_start_deaths = None
+        self.ep_hits = 0
+        self.ep_reward = 0.0
+
+        self.total_kills = 0
+        self.total_deaths = 0
+        self.total_hits = 0
+        self.total_wins = 0
+        self.total_losses = 0
+        self.round_history = []
+
+        self.champion_w = aim_anchor_w.clone()
+        self.champion_b = aim_anchor_b.clone()
+        self.record_w = aim_anchor_w.clone()
+        self.record_b = aim_anchor_b.clone()
+        self.active_mutation_desc = "Базовый Эталон (Champion)"
+        self.rng = np.random.default_rng(int(time.time()) % 100000)
+        self.instance_token = f"{os.getpid()}_{int(time.time() * 1000)}"
+        if self.log_dir is not None:
+            try:
+                (self.log_dir / "active_instance.txt").write_text(self.instance_token, encoding="utf-8")
+            except Exception:
+                pass
+
+        # Load 7/10+ Record Champion weights from ppo_cs16_phase8_streak_best.zip if available:
+        if self.model_dir is not None:
+            best_zip = self.model_dir / "ppo_cs16_phase8_streak_best.zip"
+            if best_zip.exists():
+                try:
+                    best_m = PPO.load(str(best_zip), device=aim_anchor_w.device)
+                    bw = best_m.policy.action_net.weight.data.clone()
+                    bb = best_m.policy.action_net.bias.data.clone()
+                    bw[2:4, :].copy_(self.aim_anchor_w[2:4, :])
+                    bb[2:4].copy_(self.aim_anchor_b[2:4])
+                    self.record_w.copy_(bw)
+                    self.record_b.copy_(bb)
+                    self.champion_w.copy_(bw)
+                    self.champion_b.copy_(bb)
+                    logger.info(f"[STREAK RECORD ANCHOR] Loaded best streak weights from {best_zip.name}")
+                except Exception as e:
+                    logger.debug(f"Could not load streak_best weights: {e}")
+
+        # Seamlessly resume streak & round counters if streak_status.txt was recently active in the same 1vN mode:
+        if self.log_dir is not None:
+            st_file = self.log_dir / "streak_status.txt"
+            if st_file.exists() and (time.time() - st_file.stat().st_mtime) < 1200.0:
+                try:
+                    import re
+                    txt = st_file.read_text(encoding="utf-8")
+                    if f"(1v{self.n_bots})" in txt:
+                        m_r = re.search(r"Сыграно раундов\s*:\s*(\d+)", txt)
+                        m_s = re.search(r"Текущая серия побед\s*:\s*(\d+)\s*/\s*(\d+)", txt)
+                        m_b = re.search(r"Рекордная серия\s*:\s*(\d+)\s*/\s*(\d+)", txt)
+                        m_wl = re.search(r"Побед / Поражений\s*:\s*(\d+)\s*W\s*/\s*(\d+)\s*L", txt)
+                        m_kd = re.search(r"Общий K/D и Хиты\s*:\s*(\d+)\s*Kills\s*/\s*(\d+)\s*Deaths.*\|\s*(\d+)\s*Hits", txt)
+                        m_tac = re.search(r"Активная тактика\s*:\s*(.+)", txt)
+                        m_mut = re.search(r"Мутация #(\d+)", txt)
+                        if m_b and int(m_b.group(1)) < self.target_streak:
+                            if m_r:
+                                self.round_idx = int(m_r.group(1))
+                            if m_s:
+                                self.current_streak = int(m_s.group(1))
+                            if m_b:
+                                self.best_streak = int(m_b.group(1))
+                            if m_wl:
+                                self.total_wins = int(m_wl.group(1))
+                                self.total_losses = int(m_wl.group(2))
+                            if m_kd:
+                                self.total_kills = int(m_kd.group(1))
+                                self.total_deaths = int(m_kd.group(2))
+                                self.total_hits = int(m_kd.group(3))
+                            if m_tac:
+                                self.active_mutation_desc = m_tac.group(1).strip()
+                            if m_mut:
+                                self.mutation_idx = int(m_mut.group(1))
+                            for line in txt.splitlines():
+                                if line.strip().startswith("Раунд #"):
+                                    self.round_history.append(line.strip())
+                            logger.info(
+                                f"[STREAK RESUME] Restored Round #{self.round_idx} | Streak: {self.current_streak}/{self.target_streak} "
+                                f"(Best: {self.best_streak}/{self.target_streak}) | W/L: {self.total_wins}/{self.total_losses} | K/D: {self.total_kills}/{self.total_deaths}"
+                            )
+                except Exception as e:
+                    logger.debug(f"Could not restore streak_status.txt: {e}")
+
+    def _write_status_file(self, is_paused: bool = False):
+        if self.log_dir is None:
+            return
+        try:
+            status_file = self.log_dir / "streak_status.txt"
+            kd_overall = self.total_kills / max(1, self.total_deaths)
+            wr = 100.0 * self.total_wins / max(1, self.total_wins + self.total_losses)
+            w_diff = float(torch.norm(self.champion_w[0:2, :] - self.aim_anchor_w[0:2, :]).item())
+            lines = [
+                "=" * 74,
+                f"ОТЧЁТ ОХОТЫ ЗА СЕРИЕЙ ПОБЕД (1v{self.n_bots}) | Статус: {'НА ПАУЗЕ (ОЖИДАЕТ ПРОВЕРКИ)' if is_paused else 'В БОЮ'}",
+                "=" * 74,
+                f"Время обновления    : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                f"Сыграно раундов     : {self.round_idx}",
+                f"Текущая серия побед : {self.current_streak} / {self.target_streak}",
+                f"Рекордная серия     : {self.best_streak} / {self.target_streak}",
+                f"Побед / Поражений   : {self.total_wins} W / {self.total_losses} L (WinRate: {wr:.1f}%)",
+                f"Общий K/D и Хиты    : {self.total_kills} Kills / {self.total_deaths} Deaths (K/D: {kd_overall:.2f}) | {self.total_hits} Hits",
+                f"Активная тактика    : {self.active_mutation_desc}",
+                f"Сдвиг весов Чемпиона: L2 delta_footwork = {w_diff:.4f} (AimX/AimY = 100% Locked v1.4)",
+                "-" * 74,
+                "Последние раунды:",
+            ]
+            for h_line in self.round_history[-15:]:
+                lines.append("  " + h_line)
+            lines.append("=" * 74)
+            status_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        except Exception as e:
+            logger.debug(f"Failed to write streak_status.txt: {e}")
+
+    def _apply_tactical_mutation(self):
+        """Generate a coherent episode-level tactical variation anchored to the Record Champion."""
+        self.mutation_idx += 1
+        # Snap champion back toward the proven 7/10+ Record Champion on loss so 1-win flukes never cause random-walk drift!
+        self.champion_w[0:2, :] = 0.80 * self.record_w[0:2, :] + 0.20 * self.champion_w[0:2, :]
+        self.champion_b[0:2] = 0.80 * self.record_b[0:2] + 0.20 * self.champion_b[0:2]
+        self.champion_w[4, :] = 0.85 * self.record_w[4, :] + 0.15 * self.champion_w[4, :]
+        self.champion_b[4] = 0.85 * self.record_b[4] + 0.15 * self.champion_b[4]
+
+        w = self.champion_w.clone()
+        b = self.champion_b.clone()
+
+        # Structured tactical archetypes + Gaussian micro-search on footwork (rows 0, 1) and trigger timing (row 4)
+        archetype = self.mutation_idx % 5
+        noise_w01 = torch.tensor(self.rng.normal(0.0, 0.045, size=w[0:2, :].shape), dtype=w.dtype, device=w.device)
+        noise_b01 = torch.tensor(self.rng.normal(0.0, 0.035, size=(2,)), dtype=b.dtype, device=b.device)
+        w[0:2, :] += noise_w01
+        b[0:2] += noise_b01
+
+        if archetype == 1:
+            # Archetype 1: Aggressive Jiggle & Fast Peek Braking
+            b[0] -= 0.06
+            desc = f"Мутация #{self.mutation_idx} [Резкий стоп при пике + Контр-стрейф]"
+        elif archetype == 2:
+            # Archetype 2: High Survival & Pillar Cover Hugging
+            b[0] -= 0.09
+            b[1] += float(self.rng.choice([-0.08, 0.08]))
+            desc = f"Мутация #{self.mutation_idx} [Глубокий отход за колонну + Стрейф]"
+        elif archetype == 3:
+            # Archetype 3: Sharp 1-Tap / 2-Tap Trigger Discipline
+            b[4] = torch.clamp(self.record_b[4] + float(self.rng.uniform(-0.06, 0.05)),
+                               self.aim_anchor_b[4] - 0.10, self.aim_anchor_b[4] + 0.10)
+            desc = f"Мутация #{self.mutation_idx} [Калибровка тайминга 1-Tap/2-Tap]"
+        elif archetype == 4:
+            # Archetype 4: Tight Pillar Counter-Strafe & Hold Angle (replaces wide open corridor push)
+            b[0] -= 0.07
+            b[1] += float(self.rng.choice([-0.06, 0.06]))
+            desc = f"Мутация #{self.mutation_idx} [Удержание угла у колонны + Контр-стрейф]"
+        else:
+            # Archetype 0: Pure Record Champion + Micro-adaptation
+            desc = f"Мутация #{self.mutation_idx} [Микро-поиск вокруг Чемпиона]"
+
+        # Bound L2 footwork delta within the proven [0.90..1.35] sweet spot around v1.4 so random walk never saturates movement
+        delta_fw = w[0:2, :] - self.aim_anchor_w[0:2, :]
+        fw_norm = float(torch.norm(delta_fw).item())
+        if fw_norm > 1.35:
+            w[0:2, :] = self.aim_anchor_w[0:2, :] + delta_fw * (1.35 / fw_norm)
+
+        # Always keep AimX/AimY (rows 2, 3) 100% locked to v1.4 Champion!
+        w[2:4, :].copy_(self.aim_anchor_w[2:4, :])
+        b[2:4].copy_(self.aim_anchor_b[2:4])
+        # Clamp trigger row 4 within safe sniper envelope around v1.4
+        w[4, :] = torch.clamp(w[4, :], self.aim_anchor_w[4, :] - 0.08, self.aim_anchor_w[4, :] + 0.08)
+        b[4] = torch.clamp(b[4], self.aim_anchor_b[4] - 0.10, self.aim_anchor_b[4] + 0.10)
+
+        self.model.policy.action_net.weight.data.copy_(w)
+        self.model.policy.action_net.bias.data.copy_(b)
+        self.active_mutation_desc = desc
+
+    def _on_step(self) -> bool:
+        if self.log_dir is not None and getattr(self, "ep_ticks", 0) % 50 == 0:
+            inst_file = self.log_dir / "active_instance.txt"
+            if inst_file.exists():
+                try:
+                    if inst_file.read_text(encoding="utf-8").strip() != self.instance_token:
+                        logger.info("[SUPERSEDED] Newer train_ppo.py instance started; stopping old instance cleanly.")
+                        return False
+                except Exception:
+                    pass
+        infos = self.locals.get("infos", [])
+        rewards = self.locals.get("rewards", [0.0])
+        dones = self.locals.get("dones", [False])
+
+        if not infos:
+            return True
+
+        inf = infos[0]
+        cur_k = int(inf.get("kills", 0))
+        cur_d = int(inf.get("deaths", 0))
+
+        if self.ep_start_kills is None:
+            self.ep_start_kills = cur_k
+            self.ep_start_deaths = cur_d
+        else:
+            if cur_k < self.ep_start_kills:
+                self.ep_start_kills = cur_k
+            if cur_d < self.ep_start_deaths:
+                self.ep_start_deaths = cur_d
+
+        if inf.get("hit", False):
+            self.ep_hits += 1
+        self.ep_reward += float(rewards[0])
+        self.ep_ticks = getattr(self, "ep_ticks", 0) + 1
+
+        rk_live = max(0, cur_k - self.ep_start_kills)
+        rd_live = max(0, cur_d - self.ep_start_deaths)
+        if bool(dones[0]) and rk_live == 0 and rd_live == 0 and self.ep_hits == 0 and self.ep_ticks < 80:
+            self.ep_start_kills = cur_k
+            self.ep_start_deaths = cur_d
+            self.ep_reward = 0.0
+            self.ep_ticks = 0
+            return True
+        # In CS 1.6, a real round ends immediately when all active enemies (n_bots) are eliminated OR our player dies (or at 512-tick timeout)
+        round_ended = bool(dones[0]) or (rd_live >= 1 and self.ep_ticks >= 25) or (rk_live >= self.n_bots and self.ep_ticks >= 25)
+
+        if round_ended:
+            self.round_idx += 1
+            rk = rk_live
+            rd = rd_live
+            rh = self.ep_hits
+            r_rew = self.ep_reward
+
+            # Reset episode counters for next round
+            self.ep_start_kills = cur_k
+            self.ep_start_deaths = cur_d
+            self.ep_hits = 0
+            self.ep_reward = 0.0
+            self.ep_ticks = 0
+
+            self.total_kills += rk
+            self.total_deaths += rd
+            self.total_hits += rh
+            kd_overall = self.total_kills / max(1, self.total_deaths)
+
+            is_no_contact = (rk == 0 and rd == 0 and rh == 0)
+            # Round is WON if bot out-fragged enemies (rk > rd) OR survived with 0 deaths while landing hits/kills
+            is_win = (rk > rd) or (rd == 0 and (rk >= 1 or rh >= 1))
+
+            if is_win:
+                self.current_streak += 1
+                self.total_wins += 1
+                is_new_record = self.current_streak > self.best_streak
+                self.best_streak = max(self.best_streak, self.current_streak)
+
+                # Promote winning tactical weights into Champion only on multi-win streaks (>= 2) so 1-win flukes don't cause drift
+                cur_w = self.model.policy.action_net.weight.data
+                cur_b = self.model.policy.action_net.bias.data
+                if self.current_streak >= 2:
+                    self.champion_w[0:2, :] = 0.65 * self.champion_w[0:2, :] + 0.35 * cur_w[0:2, :]
+                    self.champion_b[0:2] = 0.65 * self.champion_b[0:2] + 0.35 * cur_b[0:2]
+                    self.champion_w[4, :] = 0.75 * self.champion_w[4, :] + 0.25 * cur_w[4, :]
+                    self.champion_b[4] = 0.75 * self.champion_b[4] + 0.25 * cur_b[4]
+                    self.champion_w[2:4, :].copy_(self.aim_anchor_w[2:4, :])
+                    self.champion_b[2:4].copy_(self.aim_anchor_b[2:4])
+                    # Keep exact promoted policy active
+                    self.model.policy.action_net.weight.data.copy_(self.champion_w)
+                    self.model.policy.action_net.bias.data.copy_(self.champion_b)
+                else:
+                    # On 1st win, keep current winning mutation active in action_net without polluting champion_w yet
+                    self.model.policy.action_net.weight.data[2:4, :].copy_(self.aim_anchor_w[2:4, :])
+                    self.model.policy.action_net.bias.data[2:4].copy_(self.aim_anchor_b[2:4])
+
+                if is_new_record:
+                    self.record_w.copy_(self.champion_w)
+                    self.record_b.copy_(self.champion_b)
+                    if self.model_dir is not None:
+                        self.model.save(str(self.model_dir / "ppo_cs16_phase8_final"))
+                        self.model.save(str(self.model_dir / f"ppo_cs16_phase8_streak_best"))
+
+                status_str = f"✅ ПОБЕДА! (Kills: {rk}, Deaths: {rd}, Hits: {rh}, Rew: {r_rew:+.1f})"
+                brain_str = f"🔒 Победная тактика закреплена в Эталоне ({self.active_mutation_desc})"
+                tag = "WIN "
+            elif is_no_contact:
+                status_str = f"⏸️ БЕЗ КОНТАКТА (Kills: 0, Deaths: 0, Hits: 0) — серия сохранена"
+                brain_str = f"Ожидание контакта ({self.active_mutation_desc})"
+                tag = "IDLE"
+            else:
+                self.current_streak = 0
+                self.total_losses += 1
+                status_str = f"❌ ПОРАЖЕНИЕ (Kills: {rk}, Deaths: {rd}, Hits: {rh}, Rew: {r_rew:+.1f})"
+                self._apply_tactical_mutation()
+                brain_str = f"🧬 Откат к Эталону + Поиск новой тактики -> {self.active_mutation_desc}"
+                tag = "LOSS"
+
+            self.round_history.append(
+                f"Раунд #{self.round_idx:3d} [{tag}] | K/D/H: {rk}/{rd}/{rh} | Rew: {r_rew:+6.1f} | Серия: {self.current_streak}/{self.target_streak} (Рекорд: {self.best_streak}) | {self.active_mutation_desc}"
+            )
+            self._write_status_file(is_paused=False)
+
+            banner = (
+                f"\n{'=' * 74}\n"
+                f"[РАУНД #{self.round_idx:3d} | 1v{self.n_bots}] {status_str}\n"
+                f"🔥 СЕРИЯ ПОБЕД: {self.current_streak:2d} / {self.target_streak:2d}  |  "
+                f"🏆 РЕКОРД: {self.best_streak:2d} / {self.target_streak:2d}  |  "
+                f"W/L: {self.total_wins}/{self.total_losses}  |  K/D: {self.total_kills}/{self.total_deaths} ({kd_overall:.2f})\n"
+                f"🧠 Мозг: {brain_str}\n"
+                f"{'=' * 74}\n"
+            )
+            logger.info(banner.strip())
+
+            if self.current_streak >= self.target_streak:
+                streak_path = self.model_dir / f"ppo_cs16_phase8_streak{self.target_streak}"
+                final_path = self.model_dir / "ppo_cs16_phase8_final"
+                self.model.policy.action_net.weight.data.copy_(self.champion_w)
+                self.model.policy.action_net.bias.data.copy_(self.champion_b)
+                self.model.save(str(streak_path))
+                self.model.save(str(final_path))
+                self._write_status_file(is_paused=False)
+                win_msg = (
+                    f"\n{'*' * 74}\n"
+                    f"🏆 ЦЕЛЬ ДОСТИГНУТА! БОТ ВЫИГРАЛ {self.current_streak} РАУНДОВ ПОДРЯД! 🏆\n"
+                    f"Сохранено в: {streak_path}.zip и {final_path}.zip\n"
+                    f"{'*' * 74}\n"
+                )
+                logger.info(win_msg.strip())
+                print(win_msg, flush=True)
+                return False
+
+            # Interactive Check-In Pause every `pause_every` rounds (or when pause.trigger exists):
+            if self.log_dir is not None:
+                pe_file = self.log_dir / "pause_every.txt"
+                if pe_file.exists():
+                    try:
+                        self.pause_every = max(0, int(pe_file.read_text(encoding="utf-8").strip()))
+                    except Exception:
+                        pass
+            trigger_file = (self.log_dir / "pause.trigger") if self.log_dir is not None else None
+            has_trigger = trigger_file is not None and trigger_file.exists()
+            if has_trigger:
+                try:
+                    trigger_file.unlink()
+                except Exception:
+                    pass
+            if (self.pause_every > 0 and self.round_idx % self.pause_every == 0 and self.current_streak < 4) or has_trigger:
+                # Save current Champion checkpoint before pausing
+                if self.model_dir is not None and (self.total_kills > 0 or self.total_hits > 0):
+                    cur_w_bak = self.model.policy.action_net.weight.data.clone()
+                    cur_b_bak = self.model.policy.action_net.bias.data.clone()
+                    self.model.policy.action_net.weight.data.copy_(self.champion_w)
+                    self.model.policy.action_net.bias.data.copy_(self.champion_b)
+                    self.model.save(str(self.model_dir / "ppo_cs16_phase8_final"))
+                    self.model.policy.action_net.weight.data.copy_(cur_w_bak)
+                    self.model.policy.action_net.bias.data.copy_(cur_b_bak)
+                if self.raw_cs_env is not None and hasattr(self.raw_cs_env, "_send_request"):
+                    try:
+                        self.raw_cs_env._send_request({"type": "reset_inputs"})
+                    except Exception:
+                        pass
+                self._write_status_file(is_paused=True)
+                pause_box = (
+                    f"\n{'#' * 74}\n"
+                    f"⏸️  АВТО-ПАУЗА ДЛЯ ПРОВЕРКИ ПРОГРЕССА (Раунд #{self.round_idx} | Режим 1v{self.n_bots} | Пауза каждые {self.pause_every} раундов)\n"
+                    f"{'-' * 74}\n"
+                    f"🔥 Серия побед : {self.current_streak} / {self.target_streak} (Рекорд: {self.best_streak} / {self.target_streak})\n"
+                    f"📊 Побед/Пораж.: {self.total_wins} W / {self.total_losses} L  |  K/D: {self.total_kills}/{self.total_deaths} ({kd_overall:.2f})  |  Hits: {self.total_hits}\n"
+                    f"📄 Отчёт для ИИ: {self.log_dir / 'streak_status.txt'}\n"
+                    f"{'-' * 74}\n"
+                    f"👉 Напишите ИИ в чат «посмотри логи», чтобы он проверил прогресс!\n"
+                    f"👉 Нажмите [ENTER], чтобы ПРОДОЛЖИТЬ (или введите число раундов для паузы, либо q для выхода): "
+                )
+                logger.info(f"[AUTO-PAUSE] Waiting for user at round #{self.round_idx} (streak={self.current_streak}/{self.target_streak}, best={self.best_streak})")
+                try:
+                    ans = input(pause_box).strip().lower()
+                except EOFError:
+                    ans = ""
+                if ans in ("q", "й", "quit", "exit", "stop", "выход"):
+                    logger.info("User requested stop at pause prompt.")
+                    return False
+                if ans.isdigit():
+                    self.pause_every = max(0, int(ans))
+                    if self.log_dir is not None:
+                        try:
+                            (self.log_dir / "pause_every.txt").write_text(f"{self.pause_every}\n", encoding="utf-8")
+                        except Exception:
+                            pass
+                    logger.info(f"[AUTO-PAUSE] Updated pause_every to {self.pause_every} rounds.")
+                print(">>> Возврат в окно CS 1.6! Продолжаем через 3 секунды...", flush=True)
+                for sec in range(3, 0, -1):
+                    print(f"    {sec}...", flush=True)
+                    time.sleep(1.0)
+                if self.raw_cs_env is not None and hasattr(self.raw_cs_env, "set_curriculum_mode"):
+                    try:
+                        self.raw_cs_env.set_curriculum_mode(
+                            f"phase8_combat_1v{self.n_bots}", phase_num=8, max_bots=self.n_bots
+                        )
+                    except Exception:
+                        pass
+                # Re-sync episode kill/death counters after pause so any death during idle pause is never counted!
+                self.ep_start_kills = None
+                self.ep_start_deaths = None
+                self.ep_hits = 0
+                self.ep_reward = 0.0
+                self.ep_ticks = 0
+                self._write_status_file(is_paused=False)
+
+        return True
+
+
 class RolloutSummaryCallback(BaseCallback):
     """Prints and logs compact rollout summary (with real-game Kills, Deaths, Hits, K/D) and auto-saves checkpoint every rollout."""
     def __init__(self, model_dir: Path = None, phase: int = 7, verbose=0):
@@ -169,11 +610,14 @@ def train(config: dict, phase: int = 1, resume_path: str = None, vecnorm_path: s
     training_config = config.get('training', {})
     ppo_config = config.get('ppo', {})
     
-    # Setup paths
-    log_dir = Path(training_config.get('log_dir', './logs'))
+    # Setup paths (resolve relative './models' and './logs' inside linux_training/ where checkpoints live)
+    script_dir = Path(__file__).parent
+    raw_log_dir = Path(training_config.get('log_dir', './logs'))
+    log_dir = (script_dir / raw_log_dir) if not raw_log_dir.is_absolute() and (script_dir / "models").exists() else raw_log_dir
     log_dir.mkdir(parents=True, exist_ok=True)
     
-    model_dir = Path(training_config.get('model_dir', './models'))
+    raw_model_dir = Path(training_config.get('model_dir', './models'))
+    model_dir = (script_dir / raw_model_dir) if not raw_model_dir.is_absolute() and (script_dir / "models").exists() else raw_model_dir
     model_dir.mkdir(parents=True, exist_ok=True)
     
     tensorboard_log = log_dir / "tensorboard"
@@ -216,7 +660,7 @@ def train(config: dict, phase: int = 1, resume_path: str = None, vecnorm_path: s
     elif phase == 7:
         default_timesteps = 55000
     elif phase == 8:
-        default_timesteps = 35000
+        default_timesteps = 12288  # 6 rollouts (2048 each): 4096 steps (1v1) -> 4096 steps (1v3) -> 4096 steps (1v5)
     else:
         default_timesteps = 250000
 
@@ -228,6 +672,7 @@ def train(config: dict, phase: int = 1, resume_path: str = None, vecnorm_path: s
     # Auto-link Phase 8 -> Phase 7 final, or Phase 7 -> latest / corners / Phase 6 if resume path was not explicitly given
     if phase == 8 and not resume_path:
         for cand_m, cand_v, label in [
+            (model_dir / "ppo_cs16_phase8_streak_best.zip", model_dir / "vecnormalize_phase8.pkl", "Phase 8 Best Streak Champion model"),
             (model_dir / "ppo_cs16_phase8_final.zip", model_dir / "vecnormalize_phase8.pkl", "Phase 8 final model"),
             (model_dir / "ppo_cs16_phase8_latest.zip", model_dir / "vecnormalize_phase8_latest.pkl", "Phase 8 rolling checkpoint"),
             (model_dir / "ppo_cs16_phase7_final.zip", model_dir / "vecnormalize_phase7.pkl", "Phase 7 final model"),
@@ -345,8 +790,10 @@ def train(config: dict, phase: int = 1, resume_path: str = None, vecnorm_path: s
         if vec_cand is not None:
             try:
                 env = VecNormalize.load(str(vec_cand), env.venv)
-                env.training = True
-                logger.info(f"Loaded VecNormalize statistics from {vec_cand}")
+                # In Phase 8, keep obs_rms frozen (training=False) so observation normalization is 100% identical to evaluate_agent.py!
+                env.training = (phase < 8)
+                env.norm_reward = (phase < 8)
+                logger.info(f"Loaded VecNormalize statistics from {vec_cand} (obs_rms frozen={not env.training})")
                 
                 # Protect enemy_visible: reset statistics when transitioning to Phase 4 or loading phase3 stats
                 if hasattr(env, "obs_rms") and isinstance(env.obs_rms, dict) and "enemy_visible" in env.obs_rms:
@@ -436,6 +883,106 @@ def train(config: dict, phase: int = 1, resume_path: str = None, vecnorm_path: s
         time.sleep(1.0)
     logger.info(">>> СТАРТ ТРЕНИРОВКИ! <<<")
     
+    Wa_init_backup = None
+    ba_init_backup = None
+    streak_cb = None
+    target_streak = training_config.get('_cli_streak', None)
+    if phase == 8 and hasattr(model, "policy"):
+        # Surgical Aim & Trigger Lock (v1.5 Curriculum 1 -> 3 -> 5 Bots & Autonomous Win-Streak Evolution):
+        # 1. Freeze the 256x256 policy_net feature extractor and action_net rows 2..3 (delta_yaw, delta_pitch)
+        #    so v1.4's K/D 2.00 sniper accuracy (0.00° center, 22.4% 1-Tap rate, recoil pull-down) is 100% protected!
+        # 2. Train action_net rows 0..1 (move_forward, move_strafe) + Critic (value_net) with Champion Ratchet!
+        Wa_init_backup = model.policy.action_net.weight.data.clone()
+        ba_init_backup = model.policy.action_net.bias.data.clone()
+        v14_path = model_dir / "ppo_cs16_phase8_champion_kd200.zip"
+        if v14_path.exists():
+            try:
+                v14_m = PPO.load(str(v14_path), device=Wa_init_backup.device)
+                Wa_init_backup.copy_(v14_m.policy.action_net.weight.data)
+                ba_init_backup.copy_(v14_m.policy.action_net.bias.data)
+            except Exception:
+                pass
+        for p in model.policy.mlp_extractor.policy_net.parameters():
+            p.requires_grad = False
+        if hasattr(model.policy, "log_std"):
+            model.policy.log_std.data[0] = -1.35  # move_forward exploration std ~ 0.26
+            model.policy.log_std.data[1] = -1.35  # move_strafe exploration std ~ 0.26
+            model.policy.log_std.data[2] = -1.65
+            model.policy.log_std.data[3] = -1.60
+            model.policy.log_std.data[4] = -2.10
+            model.policy.log_std.requires_grad = False
+
+        if target_streak is not None:
+            streak_bots = int(training_config.get('_cli_bots', 1) or 1)
+            pause_every = int(training_config.get('_cli_pause_every', 20))
+            raw_cs_env_ref = env.venv.envs[0].unwrapped
+            streak_cb = WinStreakHunterCallback(
+                target_streak=int(target_streak),
+                model_dir=model_dir,
+                log_dir=log_dir,
+                aim_anchor_w=Wa_init_backup,
+                aim_anchor_b=ba_init_backup,
+                n_bots=streak_bots,
+                pause_every=pause_every,
+                raw_cs_env=raw_cs_env_ref,
+            )
+            callbacks.append(streak_cb)
+            callback_list = CallbackList(callbacks)
+
+        def _hybrid_deterministic_aim_forward(obs, deterministic: bool = False):
+            features = model.policy.extract_features(obs)
+            if model.policy.share_features_extractor:
+                latent_pi, latent_vf = model.policy.mlp_extractor(features)
+            else:
+                pi_features, vf_features = features
+                latent_pi = model.policy.mlp_extractor.forward_actor(pi_features)
+                latent_vf = model.policy.mlp_extractor.forward_critic(vf_features)
+            values = model.policy.value_net(latent_vf)
+            distribution = model.policy._get_action_dist_from_latent(latent_pi)
+            # When riding an active winning streak in --streak mode, execute 100% deterministically so random noise never breaks a streak!
+            on_streak = (streak_cb is not None and streak_cb.current_streak >= 1)
+            actions = distribution.get_actions(deterministic=(deterministic or on_streak))
+            # Lock AimX, AimY, and Fire (indices 2, 3, 4) to 100% deterministic mean (exact evaluate_agent.py behavior!)
+            actions[:, 2:5] = distribution.distribution.loc[:, 2:5]
+            log_prob = distribution.log_prob(actions)
+            actions = actions.reshape((-1, *model.policy.action_space.shape))
+            return actions, values, log_prob
+
+        model.policy.forward = _hybrid_deterministic_aim_forward
+
+        orig_opt_step = model.policy.optimizer.step
+
+        def _locked_aim_opt_step(*args, **kwargs):
+            w_p = model.policy.action_net.weight
+            b_p = model.policy.action_net.bias
+            active_w_bak = w_p.data.clone()
+            active_b_bak = b_p.data.clone()
+            anchor_w = streak_cb.champion_w if streak_cb is not None else Wa_init_backup
+            anchor_b = streak_cb.champion_b if streak_cb is not None else ba_init_backup
+            if w_p.grad is not None:
+                w_p.grad.data[2:5, :] = 0.0
+                w_p.grad.data[0:2, :] += 0.025 * (w_p.data[0:2, :] - anchor_w[0:2, :])
+            if b_p.grad is not None:
+                b_p.grad.data[2:5] = 0.0
+                b_p.grad.data[0:2] += 0.025 * (b_p.data[0:2] - anchor_b[0:2])
+            res = orig_opt_step(*args, **kwargs)
+            if streak_cb is not None and streak_cb.current_streak >= 1:
+                # Never overwrite an active winning streak tactic with noisy rollout gradients!
+                w_p.data.copy_(active_w_bak)
+                b_p.data.copy_(active_b_bak)
+            else:
+                w_p.data[2:4, :].copy_(Wa_init_backup[2:4, :])
+                b_p.data[2:4].copy_(ba_init_backup[2:4])
+                w_p.data[4, :].copy_(anchor_w[4, :])
+                b_p.data[4].copy_(anchor_b[4])
+            return res
+
+        model.policy.optimizer.step = _locked_aim_opt_step
+        logger.info(
+            "[SURGICAL AIM LOCK] Frozen v1.4 Champion AimX/AimY/Fire (action_net[2:5] & policy_net); "
+            "training Combat Footwork (move_forward/move_strafe) + Critic (value_net)!"
+        )
+
     try:
         if phase == 7:
             # Combined 2-Stage Training Pipeline in a SINGLE run:
@@ -480,10 +1027,59 @@ def train(config: dict, phase: int = 1, resume_path: str = None, vecnorm_path: s
             model.learn(**learn_kwargs_s2)
             # Restore bridge to Phase 7 mode after training completes
             raw_cs_env.set_curriculum_mode("phase7_corners", phase_num=7)
+        elif phase == 8:
+            raw_cs_env = env.venv.envs[0].unwrapped
+            fixed_bots = training_config.get('_cli_bots', None)
+            if streak_cb is not None:
+                st_bots = int(fixed_bots or 1)
+                st_steps_streak = total_timesteps if training_config.get('_cli_timesteps', False) else 102400
+                stages_135 = [(
+                    f"AUTONOMOUS WIN-STREAK HUNT: Target {streak_cb.target_streak} Wins in a Row (1v{st_bots})",
+                    st_bots,
+                    st_steps_streak,
+                )]
+            elif fixed_bots is not None:
+                st_steps_single = total_timesteps if training_config.get('_cli_timesteps', False) else 4096
+                stages_135 = [(f"Single-Stage 1v{fixed_bots} Combat ({fixed_bots} Bots)", int(fixed_bots), st_steps_single)]
+            else:
+                s1 = max(2048, (total_timesteps // 3 // 2048) * 2048 or 2048)
+                s2 = max(2048, (total_timesteps // 3 // 2048) * 2048 or 2048)
+                s3 = max(2048, total_timesteps - s1 - s2)
+                stages_135 = [
+                    ("STAGE 1/3: 1v1 Duel & PUSH/DEF Angles (1 Bot)", 1, s1),
+                    ("STAGE 2/3: 1v3 Pillar Isolation & Target Switching (3 Bots)", 3, s2),
+                    ("STAGE 3/3: 1v5 High-Pressure Crowd Control & Survival (5 Bots)", 5, s3),
+                ]
+            for st_idx, (st_label, n_bots, st_steps) in enumerate(stages_135):
+                logger.info("=" * 70)
+                logger.info(f">>> {st_label} — max {st_steps} steps (max_bots={n_bots}) <<<")
+                logger.info("=" * 70)
+                raw_cs_env.set_curriculum_mode(f"phase8_combat_1v{n_bots}", phase_num=8, max_bots=n_bots)
+                if streak_cb is not None:
+                    model.policy.action_net.weight.data.copy_(streak_cb.champion_w)
+                    model.policy.action_net.bias.data.copy_(streak_cb.champion_b)
+                elif Wa_init_backup is not None:
+                    model.policy.action_net.weight.data[2:5, :].copy_(Wa_init_backup[2:5, :])
+                    model.policy.action_net.bias.data[2:5].copy_(ba_init_backup[2:5])
+                learn_kwargs_8 = {
+                    'total_timesteps': st_steps,
+                    'callback': callback_list,
+                    'reset_num_timesteps': (st_idx == 0),
+                    'progress_bar': (streak_cb is None),
+                }
+                if has_tensorboard:
+                    learn_kwargs_8['tb_log_name'] = f"{run_name}_1v{n_bots}"
+                model.learn(**learn_kwargs_8)
+                if streak_cb is not None:
+                    model.policy.action_net.weight.data.copy_(streak_cb.champion_w)
+                    model.policy.action_net.bias.data.copy_(streak_cb.champion_b)
+                elif Wa_init_backup is not None:
+                    model.policy.action_net.weight.data[2:5, :].copy_(Wa_init_backup[2:5, :])
+                    model.policy.action_net.bias.data[2:5].copy_(ba_init_backup[2:5])
+                stage_ckpt = model_dir / f"ppo_cs16_phase8_stage{st_idx+1}_1v{n_bots}"
+                model.save(str(stage_ckpt))
+                logger.info(f"[Stage {st_idx+1} Saved] {stage_ckpt}.zip")
         else:
-            if phase == 8:
-                raw_cs_env = env.venv.envs[0].unwrapped
-                raw_cs_env.set_curriculum_mode("phase8_combat_1v5", phase_num=8)
             learn_kwargs = {
                 'total_timesteps': total_timesteps,
                 'callback': callback_list,
@@ -500,6 +1096,20 @@ def train(config: dict, phase: int = 1, resume_path: str = None, vecnorm_path: s
         logger.error(f"Training error: {e}")
         raise
     finally:
+        if phase == 8 and hasattr(model, "policy"):
+            for p in model.policy.mlp_extractor.policy_net.parameters():
+                p.requires_grad = True
+            if streak_cb is not None:
+                model.policy.action_net.weight.data.copy_(streak_cb.champion_w)
+                model.policy.action_net.bias.data.copy_(streak_cb.champion_b)
+            elif Wa_init_backup is not None:
+                model.policy.action_net.weight.data[2:5, :].copy_(Wa_init_backup[2:5, :])
+                model.policy.action_net.bias.data[2:5].copy_(ba_init_backup[2:5])
+            if hasattr(model.policy, "log_std"):
+                model.policy.log_std.data[2] = -1.65
+                model.policy.log_std.data[3] = -1.60
+                model.policy.log_std.data[4] = -2.10
+                model.policy.log_std.requires_grad = True
         # Save final model for this phase (preserving vertical pitch sensitivity in VecNormalize)
         # In Phase 8, only overwrite ppo_cs16_phase8_final if real combat occurred during this run!
         summary_cb = next((cb for cb in callbacks if isinstance(cb, RolloutSummaryCallback)), None)
@@ -551,8 +1161,14 @@ def main():
                         help='Path to model to resume from (e.g. models/ppo_cs16_phase3_final.zip)')
     parser.add_argument('--vecnorm', type=str, default=None,
                         help='Path to VecNormalize pkl to load (e.g. models/vecnormalize_phase3.pkl)')
+    parser.add_argument('--bots', type=int, default=None,
+                        help='Fix bot count (e.g. 1, 3, 5); if omitted in Phase 8, runs automatic 1 -> 3 -> 5 cascade')
+    parser.add_argument('--streak', type=int, nargs='?', const=10, default=None,
+                        help='Autonomous Win-Streak Hunter mode: evolve tactics until winning N rounds in a row (default: 10)')
+    parser.add_argument('--pause-every', dest='pause_every', type=int, default=20,
+                        help='In --streak mode, pause every N rounds so AI can inspect logs/progress (default: 20, 0 to disable)')
     args = parser.parse_args()
-    if args.phase8:
+    if args.phase8 or args.streak is not None:
         args.phase = 8
     elif args.phase7:
         args.phase = 7
@@ -568,6 +1184,11 @@ def main():
     if args.timesteps:
         config.setdefault('training', {})['total_timesteps'] = args.timesteps
         config['training']['_cli_timesteps'] = True
+    if args.bots is not None:
+        config.setdefault('training', {})['_cli_bots'] = int(args.bots)
+    if args.streak is not None:
+        config.setdefault('training', {})['_cli_streak'] = int(args.streak)
+        config.setdefault('training', {})['_cli_pause_every'] = int(args.pause_every)
     if args.learning_rate is not None:
         config.setdefault('training', {})['learning_rate'] = args.learning_rate
         
